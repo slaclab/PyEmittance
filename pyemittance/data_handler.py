@@ -8,9 +8,9 @@ import numpy as np
 # TODO: implement class
 
 def check_symmetry(x, y):
-    """Check symmetry of quad scan around min of scan
+    '''Check symmetry of quad scan around min of scan
     and find side (left or right) and num of beamsize
-    points to add to get a full curve"""
+    points to add to get a full curve'''
 
     if len(y) != len(x):
         raise Exception('Array lengths do not match!')
@@ -44,9 +44,9 @@ def check_symmetry(x, y):
     return add_to_side, x_add
 
 def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
-    """Add beamsize measurements on left or right side based on
+    '''Add beamsize measurements on left or right side based on
     symmetry of scan curve.
-    x_add are the quad scan values k in units of 1/m^2"""
+    x_add are the quad scan values k in units of 1/m^2'''
 
     # set indices for get_beamsizes fn data
     # get_beamsizes fn returns [xsize, ysize, xerr, yerr]
@@ -81,8 +81,8 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
     return np.array(new_x_list), np.array(new_y_list), np.array(new_y_err_list)
 
 def find_inflection_pnt(x, y, show_plots=True):
-    """Find inflection points in curve and remove
-    points outside of convex region around min"""
+    '''Find inflection points in curve and remove
+    points outside of convex region around min'''
 
     y = np.array(y)**2 # since we are fitting sizes**2
 
