@@ -12,9 +12,7 @@ setup(
     version='v0.1.1',
     author='Sara Miskovich',
     author_email='smiskov@slac.stanford.edu',
-    packages=find_packages(where='pyemittance'),
-
-    package_dir={'':'pyemittance'},
+    packages=find_packages(),
     url='https://github.com/slaclab/PyEmittance',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
