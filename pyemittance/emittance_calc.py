@@ -98,6 +98,3 @@ class EmitCalc:
         
         return emit, err
 
-    self.sig_quad = [s11, s12, s22]
-
-
