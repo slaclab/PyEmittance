@@ -6,7 +6,6 @@ from pyemittance.optics import quad_drift_mat2, propagate_sigma, estimate_sigma_
 class EmitCalc:
     '''
     Uses info recorded in Observer to do an emittance fit
-
     '''
 
     def __init__(self, quad_vals=None, beam_vals=None):
