@@ -18,5 +18,5 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=requirements,
     include_package_data=True,
-    python_requires='>=3.5'
+    python_requires='>=3.7'
 )
