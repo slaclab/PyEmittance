@@ -100,7 +100,7 @@ class EmitCalc:
     def drift_mat2(self, L):
         return np.array([[1, L], [0, 1]])
 
-    def quad_mat2(sel, kL, L=0):
+    def quad_mat2(self, kL, L=0):
         """
         Quadrupole transfer matrix, 2x2. Note that
 
