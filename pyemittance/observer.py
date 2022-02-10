@@ -4,10 +4,9 @@ class Observer:
     '''
     Observer reads beamsizes and sets measurement quad
     Observer stores values for beamsizes and quad settings
-
     '''
 
-    def __init__(self, quad_meas=np.empty(0, ), beam_meas={'x': np.empty(0, ), 'y': np.empty(0, )}):
+    def __init__(self, quad_meas, beam_meas):
         self.quad_meas = quad_meas
         self.beam_meas = beam_meas
         self.use_model = True
