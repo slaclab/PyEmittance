@@ -4,6 +4,32 @@ from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
 import matplotlib.pyplot as plt
 
+def get_gradient(b_field, l_eff=0.108):
+    '''
+    Returns the quad field gradient [T/m]
+    l_eff: effective length [m]
+    b_field: integrated field [kG]
+    '''
+    return np.array(b_field) * 0.1 / l_eff
+
+
+def get_k1(g, energy=0.135, m_0=0.000511):
+    '''
+    Returns quad strength [1/m^2]
+    g: quad field gradient [T/m]
+    p: momentum [GeV] (or alternatively beta*E [GeV])
+    '''
+    gamma = energy / m_0
+    beta = np.sqrt(1 - 1 / gamma ** 2)
+    return 0.2998 * g / energy / beta
+
+def get_quad_field(k, energy=0.135, l=0.108, m_0=0.000511):
+    '''Get quad field [kG] from k1 [1/m^2]'''
+    gamma = energy / m_0
+    beta = np.sqrt(1 - 1 / gamma ** 2)
+    return np.array(k) * l / 0.1 / 0.2998 * energy * beta
+
+
 def thin_quad_mat2(kL):
     '''
     Quad transport matrix, 2x2, assuming thin quad
