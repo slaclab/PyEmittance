@@ -92,11 +92,6 @@ class EmitCalc:
 
         err = np.std(np.absolute(self.sig_11 - bs))
         
-#         print(emit, err)
-#         err_cov = self.error_propagation(self.get_emit_gradient(self.sig_quad, emit))
-
-#         print(emit, err, err_cov)
-        
         return emit, err
 
     def thin_quad_mat2(self, kL):
@@ -204,11 +199,6 @@ class EmitCalc:
             r11, r12, r21, r22 = mat2.flatten()
             r_mat_factor = np.array([r11 ** 2, 2 * r11 * r12, r12 ** 2]) 
             B.append(r_mat_factor * weight)  # corresponding weight multiplication
-            
-#         w_diag = np.eye(len(weights))*weights
-#         self.covariance_matrix = scipy.linalg.pinv( 
-#             r_mat_factor @ w_diag @ r_mat_factor.T
-#         )
                                      
         B = np.array(B)
 
