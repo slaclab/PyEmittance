@@ -1,6 +1,7 @@
 # Module containing functions for beam optics calculations
 import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
+import scipy.linalg
 import matplotlib.pyplot as plt
 
 def thin_quad_mat2(kL):

@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.linalg
-from pyemittance.optics import quad_drift_mat2, propagate_sigma, estimate_sigma_mat_thick_quad_drift
+from pyemittance.optics import estimate_sigma_mat_thick_quad_drift
 
 class EmitCalc:
     '''
@@ -11,9 +10,9 @@ class EmitCalc:
     def __init__(self, quad_vals=None, beam_vals=None):
         self.quad_vals = np.empty(0, ) if quad_vals is None else quad_vals
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
-        self.beam_vals_err = {dim: beam_vals[dim]*0.1 for dim in beam_vals}
-        self.x_use = np.arange(0, len(beam_vals['x']), 1)
-        self.y_use = np.arange(0, len(beam_vals['y']), 1)
+        self.beam_vals_err = {dim: self.beam_vals[dim]*0.1 for dim in self.beam_vals}
+        self.x_use = np.arange(0, len(self.beam_vals['x']), 1)
+        self.y_use = np.arange(0, len(self.beam_vals['y']), 1)
 
         self.sig_11 = []
         self.sig_12 = []
@@ -85,13 +84,13 @@ class EmitCalc:
         weights = self.weighting_func(bs, bs_err)
 
         if self.test_mode == False:
-            emit, self.sig_11, self.sig_12, self._sig_22 = self.estimate_sigma_mat_thick_quad_drift(bs, q, weights)
+            emit, self.sig_11, self.sig_12, self._sig_22 = estimate_sigma_mat_thick_quad_drift(bs, q, weights)
             plt.show()
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
             print("NOISE")
-            emit, self.sig_11, self.sig_12, self._sig_22 = self.estimate_sigma_mat_thick_quad_drift(bs, q, weights)
+            emit, self.sig_11, self.sig_12, self._sig_22 = estimate_sigma_mat_thick_quad_drift(bs, q, weights)
             plt.show()
 
         err = np.std(np.absolute(self.sig_11 - bs))
