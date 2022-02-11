@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pyemittance.optics import estimate_sigma_mat_thick_quad_drift
+from pyemittance.optics import estimate_sigma_mat_thick_quad_drift, twiss_and_bmag
+from beam_io import get_twiss0
 
 class EmitCalc:
     '''
@@ -14,10 +15,9 @@ class EmitCalc:
         self.x_use = np.arange(0, len(self.beam_vals['x']), 1)
         self.y_use = np.arange(0, len(self.beam_vals['y']), 1)
 
-        self.sig_11 = []
-        self.sig_12 = []
-        self.sig_22 = []
-        self.sig_quad = []
+        self.sig_mat = {'x': [], 'y': []}
+        self.twiss0 = get_twiss0() # emit, beta, alpha
+        self.twiss = {'x': [], 'y': []} # emit, beta, alpha
         self.covariance_matrix = None
         
         self.test_mode = False
@@ -68,7 +68,7 @@ class EmitCalc:
         emit_gradient = 1/(2*emit) * np.array([[s11, -2*s12, s22]]).T
         return emit_gradient
 
-    def do_emit_fit(self, dim='x'):
+    def get_emit(self, dim='x'):
         '''
         Get emittance at quad from beamsizes and quad scan
         :param dim: 'x' or 'y'
@@ -84,16 +84,31 @@ class EmitCalc:
         weights = self.weighting_func(bs, bs_err)
 
         if self.test_mode == False:
-            emit, self.sig_11, self.sig_12, self._sig_22 = estimate_sigma_mat_thick_quad_drift(bs, q, weights)
+            emit, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
             plt.show()
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
             print("NOISE")
-            emit, self.sig_11, self.sig_12, self._sig_22 = estimate_sigma_mat_thick_quad_drift(bs, q, weights)
+            emit, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
             plt.show()
 
-        err = np.std(np.absolute(self.sig_11 - bs))
+        err = np.std(np.absolute(sig_11 - bs))
+
+        self.sig_mat[dim] = [sig_11, sig_12, sig_22]
         
         return emit, err
+
+    def get_twiss_bmag(self, self.sig_mat, self.twiss0, dim='x'):
+
+        sig_11, sig_12, sig_22 = self.sig_mat[dim][0], self.sig_mat[dim][1], self.sig_mat[dim][2]
+        # twiss0 in x or y
+        beta0, alpha0 = self.twiss0[dim][1], self.twiss0[dim][2]
+        # return dict of emit, beta, alpha, bmag
+        twiss = twiss_and_bmag(sig_11, sig_12, sig_22, beta0=beta0, alpha0=alpha0)
+        self.twiss[dim] = twiss['emit'], twiss['beta'], twiss['alpha']
+
+        return twiss['bmag']
+
+
 
