@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pyemittance.optics import estimate_sigma_mat_thick_quad_drift, twiss_and_bmag
-from beam_io import get_twiss0
+from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag
+from pyemittance.beam_io import get_twiss0
 
 class EmitCalc:
     '''
@@ -11,15 +11,16 @@ class EmitCalc:
     def __init__(self, quad_vals=None, beam_vals=None):
         self.quad_vals = np.empty(0, ) if quad_vals is None else quad_vals
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
-        self.beam_vals_err = {dim: self.beam_vals[dim]*0.1 for dim in self.beam_vals}
+        self.beam_vals_err = {dim: self.beam_vals[dim]*0.05 for dim in self.beam_vals}
         self.x_use = np.arange(0, len(self.beam_vals['x']), 1)
         self.y_use = np.arange(0, len(self.beam_vals['y']), 1)
 
-        self.sig_mat = {'x': [], 'y': []}
+        self.sig_mat_screen = {'x': [], 'y': []}
         self.twiss0 = get_twiss0() # emit, beta, alpha
-        self.twiss = {'x': [], 'y': []} # emit, beta, alpha
-        self.covariance_matrix = None
-        
+        self.twiss_screen = {'x': [], 'y': []} # emit, beta, alpha
+        self.beta_err = None
+        self.alpha_err = None
+
         self.test_mode = False
         self.noise_red = 50000
 
@@ -41,8 +42,8 @@ class EmitCalc:
         :param err_beamsizes: error on RMS estimate
         :return: weights for fitting
         '''
-        var_bs = ( 2 * beamsizes * beamsizes_err )**2
-        weights = 1 / beamsizes + 1 / var_bs
+        sig_bs = 2 * beamsizes * beamsizes_err
+        weights = 1 / beamsizes + 1 / sig_bs
         return weights
 
     def error_propagation(self, gradient):
@@ -52,21 +53,6 @@ class EmitCalc:
         :return: error on emittance from fit
         '''
         return np.sqrt( (gradient.T @ self.covariance_matrix) @ gradient)
-
-    def get_emit_gradient(self, sig_ele, emit):
-        '''
-        Gradient of emittance to calculate cov of parameters estimated
-        :param s11: ME11 of r matrix at screen
-        :param s12: ME12 of r matrix at screen
-        :param s22: ME12 of r matrix at screen
-        @param emit: emittance from fit
-        :return: gradient of emittance
-        '''
-        s11 = sig_ele[0]
-        s12 = sig_ele[1]
-        s22 = sig_ele[2]
-        emit_gradient = 1/(2*emit) * np.array([[s11, -2*s12, s22]]).T
-        return emit_gradient
 
     def get_emit(self, dim='x'):
         '''
@@ -84,31 +70,39 @@ class EmitCalc:
         weights = self.weighting_func(bs, bs_err)
 
         if self.test_mode == False:
-            emit, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
+            emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
             plt.show()
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
             print("NOISE")
-            emit, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
+            emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
             plt.show()
 
-        err = np.std(np.absolute(sig_11 - bs))
+        err = np.std(np.absolute(np.sqrt(sig_11) - bs))
 
-        self.sig_mat[dim] = [sig_11, sig_12, sig_22]
-        
+        self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
+        self.beta_err = beta_rel_err
+        self.alpha_err = alpha_rel_err
+
+        print(f"emit: {emit/1e-6:.3}, emit err: {emit_err/1e-6:.3}, bs er: {err/1e-6:.3}")
         return emit, err
 
-    def get_twiss_bmag(self, self.sig_mat, self.twiss0, dim='x'):
+    def get_twiss_bmag(self, dim='x'):
 
-        sig_11, sig_12, sig_22 = self.sig_mat[dim][0], self.sig_mat[dim][1], self.sig_mat[dim][2]
-        # twiss0 in x or y
+        sig_11, sig_12, sig_22 = self.sig_mat_screen[dim][0], self.sig_mat_screen[dim][1], self.sig_mat_screen[dim][2]
+
+        # twiss0 in x or y AT THE SCREEN
         beta0, alpha0 = self.twiss0[dim][1], self.twiss0[dim][2]
-        # return dict of emit, beta, alpha, bmag
-        twiss = twiss_and_bmag(sig_11, sig_12, sig_22, beta0=beta0, alpha0=alpha0)
-        self.twiss[dim] = twiss['emit'], twiss['beta'], twiss['alpha']
 
-        return twiss['bmag']
+        # return dict of emit, beta, alpha, bmag
+        twiss = twiss_and_bmag(sig_11, sig_12, sig_22,
+                               self.beta_err, self.alpha_err,
+                               beta0=beta0, alpha0=alpha0)
+        # Save twiss at screen
+        self.twiss_screen[dim] = twiss['emit'], twiss['beta'], twiss['alpha']
+
+        return twiss['bmag'], twiss['bmag_err']
 
 
 

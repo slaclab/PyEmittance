@@ -3,7 +3,7 @@ import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
 import matplotlib.pyplot as plt
-from beam_io import get_rmat
+from pyemittance.beam_io import get_rmat
 
 def get_gradient(b_field, l_eff=0.108):
     '''
@@ -91,7 +91,7 @@ def propagate_sigma(mat2_init, mat2_ele):
     '''
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
-def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Ltot=2.26, Lquad=0.108, plot=True):
+def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot=True):
     '''
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
@@ -123,7 +123,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Ltot=2.26, Lquad=
         mat2 = quad_rmat_mat2(kL, Lquad=Lquad)
         mat2s.append(mat2)
         r11, r12, r21, r22 = mat2.flatten()
-        r_mat_factor = np.array([r11 ** 2, 2 * r11 * r12, r12 ** 2] )
+        r_mat_factor = np.array([r11 ** 2, 2 * r11 * r12, r12 ** 2])
         B.append(r_mat_factor * weight)  # corresponding weight multiplication
 
     B = np.array(B)
@@ -136,6 +136,9 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Ltot=2.26, Lquad=
     emit = np.sqrt(emit2)
     beta = s11 / emit
     alpha = -s12 / emit
+
+    # Get error on emittance from fitted params
+    emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
 
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
@@ -166,27 +169,33 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Ltot=2.26, Lquad=
         plt.ylim(0, None)
         plt.legend()
 
-    return emit, s11_screen, s12_screen, s22_screen
+    return emit, emit_err, beta_err/beta, alpha_err/alpha, s11_screen, s12_screen, s22_screen
 
 
-def twiss_and_bmag(sig_11, sig_12, sig_22, beta0=1, alpha0=0):
-    """
+def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
+    '''
     Calculates Twiss ang Bmag from the sigma matrix.
-    """
-    emit = np.sqrt(sig_11 * sig_22 - sig_12 ** 2)
-    beta = sig_11 / emit
-    alpha = -sig_12 / emit
-    gamma = sig_22 / emit
+    '''
+
+    # Twiss at screen
+    emit  = np.sqrt(sig11 * sig22 - sig12**2)
+    beta  = sig11/emit
+    alpha = -sig12/emit
+    gamma = sig22/emit
 
     # Form bmag
     gamma0 = (1 + alpha0 ** 2) / beta0
     bmag = (beta * gamma0 - 2 * alpha * alpha0 + gamma * beta0) / 2
+    # Add err in quadrature (assuming twiss0 has no uncertainty)
+    # Taking relative error as measured at quad
+    bmag_err = bmag * np.sqrt( (beta_err)**2 + (alpha_err)**2 )
 
     d = {}
     d['emit'] = emit
     d['beta'] = beta
     d['alpha'] = alpha
     d['bmag'] = bmag
+    d['bmag_err'] = bmag_err
 
     return d
 
@@ -202,10 +211,10 @@ def gradient_mat3(emit, a1, a2, a3):
     '''
 
     emit_gradient = 1./(2*emit) * np.array( [a3, -2*a2, a1] )
-    beta_gradient = 1./(2*emit**3) * np.array( [2*emit**3-a3, 2*a2*a1, -a1**2] )
-    alpha_gradient = -1./(2*emit) * np.array( [a2*a3, 2*emit+2*a2, a1*a2] )
+    beta_gradient = 1./(2*emit**3) * np.array( [2*emit**4-a1*a3, 2*a2*a1, -a1**2] )
+    alpha_gradient = -1./(2*emit) * np.array( [a2*a3, 2*emit**2-2*a2**2, a1*a2] )
 
-    f_gradient = np.array( [emit_gradient, beta_gradient, alpha_gradient])
+    f_gradient = np.array( [emit_gradient, beta_gradient, alpha_gradient]).T
 
     return f_gradient
 
@@ -215,11 +224,31 @@ def get_fit_param_error(f_gradient, B):
     and the Twiss params. See 10.3204/DESY-THESIS-2005-014 p.10
     :param f_gradient: gradient of the 3-vector Twiss params
     :param B: B matrix incl. all scanned quad values
-    :return: sqrt of the diagonal of the error matrix
+    :return: sqrt of the diagonal of the error matrix (emit_err, beta_err, alpha_err)
     '''
 
     C = scipy.linalg.pinv( B.T @ B )
+
     error_matrix = f_gradient.T @ C @ f_gradient
     twiss_error = np.sqrt( np.diag( error_matrix ) )
 
     return twiss_error
+
+def get_twiss_error(emit, a1, a2, a3, B):
+    '''
+    Get error on the twiss params from fitted params
+    :param emit: emittance parameter estimate
+    :param a1: matrix element s11
+    :param a2: matrix element s12
+    :param a3: matrix element s22
+    :param B:  B matrix incl. all scanned quad values
+    :return: emit_err, beta_err, alpha_err
+    '''
+
+    # get gradient of twiss params
+    f_gradient =  gradient_mat3(emit, a1, a2, a3)
+    # calculate errors on twiss from var and covar
+    twiss_error = get_fit_param_error(f_gradient, B)
+
+    return twiss_error
+

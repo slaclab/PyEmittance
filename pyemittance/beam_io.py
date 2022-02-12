@@ -1,7 +1,11 @@
+import numpy as np
 import json
+import os
+this_dir, this_filename = os.path.split(__file__)
+DATA_PATH = os.path.join(this_dir, "configs")
 
 
-def get_twiss0(filepath='configs/beamline_info.json'):
+def get_twiss0(filepath= DATA_PATH+'/beamline_info.json'):
     '''Import Twiss0 from config file'''
 
     beamline_info = json.load(open(filepath))
@@ -13,7 +17,7 @@ def get_twiss0(filepath='configs/beamline_info.json'):
 
     return twiss0_by_dim
 
-def get_rmat(filepath='configs/beamline_info.json'):
+def get_rmat(filepath=DATA_PATH+'/beamline_info.json'):
     '''Import r-matrix from config file'''
 
     beamline_info = json.load(open(filepath))
