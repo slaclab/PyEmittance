@@ -2,6 +2,8 @@
 import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
+# TODO update fns
+from scipy.constants import c as c_light, m_e as m0
 import matplotlib.pyplot as plt
 from pyemittance.beam_io import get_rmat
 
@@ -23,8 +25,18 @@ def get_k1(g, energy=0.135, m_0=0.000511):
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return 0.2998 * g / energy / beta
 
+def normalize_emit(emit, err, energy=0.135, m_0=0.000511):
+    gamma = energy / m_0
+    beta = np.sqrt(1 - 1 / gamma ** 2)
+    return emit*gamma*beta, err*gamma*beta
+
+def get_kL(quad_vals, l=0.108, energy=0.135, m_0=0.000511):
+    kL = get_k1(get_gradient(quad_vals), energy=energy, m_0=m_0) * l
+    return kL
+
 def get_quad_field(k, energy=0.135, l=0.108, m_0=0.000511):
     '''Get quad field [kG] from k1 [1/m^2]'''
+
     gamma = energy / m_0
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return np.array(k) * l / 0.1 / 0.2998 * energy * beta
@@ -103,7 +115,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot
     :return: emittance, sig11, sig12 and sig22 at measurement screen
     '''
 
-    # measuerement vector
+    # measurement vector
+    sizes = np.array(sizes)
     b = sizes ** 2
     n = len(b)
 
@@ -113,6 +126,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot
     assert len(weights) == n
 
     # Multiply by weights. This should correspond to the other weight multiplication below
+    weights = np.array(weights)
     b = weights * sizes ** 2
 
     # form B matrix
@@ -133,6 +147,12 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot
 
     # Twiss calc just before the quad
     emit2 = s11 * s22 - s12 ** 2
+
+    #return NaN if emit can't be calculated
+    if emit2 < 0:
+        print("NaN")
+        return [np.nan]
+
     emit = np.sqrt(emit2)
     beta = s11 / emit
     alpha = -s12 / emit
@@ -158,18 +178,22 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot
 
     if plot:
         # Plot the data
-        plt.scatter(kLlist, sizes ** 2, marker='x', label=f'Measurements')
+        quad = get_quad_field(kLlist / Lquad)
+        plt.scatter(quad, sizes, marker='x', label=f'Measurements')
 
         # Model prediction
-        plt.scatter(kLlist, s11_screen, marker='.', label=f'Model')
+        plt.scatter(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
 
         plt.title(f'beta={beta:.1f} m, alpha = {alpha:0.2f}, emit = {emit * 1e9:0.2f} nm')
-        plt.xlabel('kL (1/m)')
-        plt.ylabel(f'sizes^2 (m$^2$)')
-        plt.ylim(0, None)
+        #plt.xlabel('kL (1/m)')
+        plt.xlabel('B (kG)')
+        plt.ylabel(f'sizes (m)')
+        #plt.ylim(0, None)
         plt.legend()
+        plt.show()
+        plt.close()
 
-    return emit, emit_err, beta_err/beta, alpha_err/alpha, s11_screen, s12_screen, s22_screen
+    return [emit, emit_err, beta_err/beta, alpha_err/alpha, s11_screen, s12_screen, s22_screen]
 
 
 def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):

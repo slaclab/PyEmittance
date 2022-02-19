@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag
+from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
 from pyemittance.beam_io import get_twiss0
 
 class EmitCalc:
@@ -9,9 +9,9 @@ class EmitCalc:
     '''
 
     def __init__(self, quad_vals=None, beam_vals=None):
-        self.quad_vals = np.empty(0, ) if quad_vals is None else quad_vals
+        self.quad_vals = np.empty(0, ) if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
-        self.beam_vals_err = {dim: self.beam_vals[dim]*0.05 for dim in self.beam_vals}
+        self.beam_vals_err = {dim: np.array(self.beam_vals[dim])*0.05 for dim in self.beam_vals}
         self.x_use = np.arange(0, len(self.beam_vals['x']), 1)
         self.y_use = np.arange(0, len(self.beam_vals['y']), 1)
 
@@ -23,6 +23,7 @@ class EmitCalc:
 
         self.test_mode = False
         self.noise_red = 50000
+        self.plot = True
 
     def check_conditions(self, ):
 
@@ -42,7 +43,12 @@ class EmitCalc:
         :param err_beamsizes: error on RMS estimate
         :return: weights for fitting
         '''
+        beamsizes = np.array(beamsizes)
+        beamsizes_err = np.array(beamsizes_err)
+
+        # Here the weight is 1/sigma
         sig_bs = 2 * beamsizes * beamsizes_err
+        # Here the weight is 1/sigma
         weights = 1 / beamsizes + 1 / sig_bs
         return weights
 
@@ -63,30 +69,39 @@ class EmitCalc:
 
         # todo update based on x_use, y_use for throwing away fit points
         q = self.quad_vals
+        # quad vals are passed in machine units
+        kL = get_kL(q)
 
         bs = self.beam_vals[dim]
         bs_err = self.beam_vals_err[dim]
 
-        weights = self.weighting_func(bs, bs_err)
+        weights = self.weighting_func(bs, bs_err) # 1/sigma
 
         if self.test_mode == False:
-            emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
-            plt.show()
+            res = estimate_sigma_mat_thick_quad(bs, kL, weights, plot=self.plot)
+            if np.isnan(res[0]):
+                return np.nan, np.nan
+            else:
+                emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = res
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
             print("NOISE")
-            emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = estimate_sigma_mat_thick_quad(bs, q, weights)
-            plt.show()
+            res = estimate_sigma_mat_thick_quad(bs, kL, weights, plot=self.plot)
+            if np.isnan(res[0]):
+                return np.nan, np.nan
+            else:
+                emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = res
 
+        emit, emit_err = normalize_emit(emit, emit_err)
         err = np.std(np.absolute(np.sqrt(sig_11) - bs))
 
         self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
         self.beta_err = beta_rel_err
         self.alpha_err = alpha_rel_err
 
-        print(f"emit: {emit/1e-6:.3}, emit err: {emit_err/1e-6:.3}, bs er: {err/1e-6:.3}")
-        return emit, err
+        # print(f"emit: {emit/1e-6:.3}, emit err: {emit_err/1e-6:.3}, bs er: {err/1e-6:.3}")
+        return emit, emit_err
 
     def get_twiss_bmag(self, dim='x'):
 

@@ -1,11 +1,115 @@
 # module containing function to add/remove points to quad emit scan
 import numpy as np
+from scipy.optimize import curve_fit
+from pyemittance.optics import get_k1, get_gradient, get_quad_field
 # on sim
 # from beam_io_sim import get_beamsizes
 # on lcls
 # from beam_io import get_beamsizes, setquad, quad_control
+# TODO: import m_0
+m_0  = 0.000511
 
-# TODO: implement class
+def adapt_range(x, y, axis, w=None, energy=0.135,
+                cutoff_percent=0.3, num_points=5,
+                save_plot=False, show_plots=True):
+    """Returns new scan quad values AS LIST"""
+    x = np.array(x)
+    y = np.array(y)
+
+    # Remove points that are too large
+    # Do this only if bs more than double from min
+    bs_range = y.max() - y.min()
+
+    if bs_range / y.min() > 1:
+        cutoff_lim = y.min() + bs_range * cutoff_percent
+        idx = np.argwhere(y < cutoff_lim).flatten()
+
+        if len(idx) >= 3:
+            x = x[idx]
+            y = y[idx]
+            if w is not None:
+                w = w[idx]
+
+    # Set weights for polyfit (here the weight is sigma)
+    if w is not None:
+        w = np.array(w)
+        w = 2 * w * y
+    else:
+        # Take weight as beamsize
+        w = y
+
+    # quad vals are passed in machine units
+    x = get_k1(get_gradient(x), energy=energy, m_0=m_0)
+
+    # y-dimensions has opposite polarity
+    sign = -1 if axis == "y" else 1
+    x = sign * x
+    min_x, max_x = x.min(), x.max()
+
+    # we need a poly fit here to find roots, poly_ylim, etc
+    fit_coefs, fit_cov = curve_fit(func, x, y ** 2, sigma=w, absolute_sigma=True, method='trf')
+
+    # space over which to fit
+    x_fit = np.linspace(min_x, max_x, 100)
+
+    # no more restrictions on quad vals, just staying within
+    # the region already scanned (can increase this if need be)
+    min_x_range, max_x_range = min([min_x, x[np.argmin(y)] - 2.5]), max([max_x, x[np.argmin(y)] + 2.5])
+
+    c2, c1, c0 = fit_coefs
+
+    if c2 < 0: # same if s11q is negative
+        print("Adjusting concave poly.")
+        # go to lower side of concave polynomials
+        # (assuming it is closer to the local minimum)
+        x_min_concave = x[np.argmin(y)]
+        # find the direction of sampling to minimum
+        if (x[np.argmin(y)] - x[abs(np.argmin(y) - 2)]) < 0:
+            x_max_concave = min_x_range
+        else:
+            x_max_concave = max_x_range
+
+        x_fine_fit = np.linspace(x_min_concave, x_max_concave, num_points)
+        return [sign * get_quad_field(ele) for ele in x_fine_fit]
+
+    # find range within 2-3x the focus size
+    # cutoff = 1.2-1.3 for lcls, 2 last MD
+    # cutoff = 4 for facet and surrogate
+    cutoff = 2
+    # from data
+    y_lim = y.min()** 2 * cutoff
+
+    # from polyfit
+    y_min_poly = np.polyval(fit_coefs, x_fit).min()
+    if y_lim < y_min_poly:
+        # in this case the roots won't exist
+        y_lim = y_min_poly * cutoff
+
+    if y_lim < 0:
+        print(f"{axis} axis: min. of poly fit is negative. Setting it to a small val.")
+        y_lim = np.mean(y ** 2) / 5
+
+    roots = np.roots((c2, c1, c0 - y_lim))
+
+    # Flag bad fit with complex roots
+    if np.iscomplex(roots).any():
+        raise ComplexRootError("Cannot adapt quad ranges, complex root encountered.")
+
+    # if roots are outside quad scanning range, set to scan range lim
+    if roots.min() < min_x_range:
+        roots[np.argmin(roots)] = min_x_range
+    if roots.max() > max_x_range:
+        roots[np.argmax(roots)] = max_x_range
+
+    if axis=="x":
+        x_fine_fit = np.linspace(roots.min(), roots.max(), num_points)
+    else:
+        # instead of reversing array later
+        x_fine_fit = np.linspace(roots.max(), roots.min(), num_points)
+
+    # return the new quad measurement range for this axis (in kG!!)
+    return [sign * get_quad_field(ele) for ele in x_fine_fit]
+
 
 def check_symmetry(x, y):
     '''Check symmetry of quad scan around min of scan
@@ -98,7 +202,7 @@ def find_inflection_pnt(x, y, show_plots=True):
     if len(infls)==1:
         infls = int(infls)
         if infls == np.argmin(y):
-            # not sure what else to do here
+            # if the only pnt is the min, don't do anything
             return None, None
         # check if point is on left or right of min
         if infls < np.argmin(y):
@@ -110,48 +214,54 @@ def find_inflection_pnt(x, y, show_plots=True):
         infls = np.array([infls])
 
     elif len(infls)>1:
-        if len(infls)>2:
-            #print("old ", infls)
-            infls = list(infls)
-            # cut it down to 2 closest to min
+        # cut it down to 2 closest to min
+        if ( np.argmin(y) in infls and len(infls > 2) ) or ( np.argmin(y) not in infls ):
             if np.argmin(y) in infls:
+                infls = list(infls)
                 infls.remove(np.argmin(y))
-            pnt1 = min(infls, key=lambda x: abs(x - np.argmin(y)))
-            infls.remove(pnt1)
-            pnt2 = min(infls, key=lambda x: abs(x - np.argmin(y)))
-            # make new list of infls pnts
-            infls = np.array([pnt1, pnt2])
-            #print("new ", infls)
+                infls = np.array(infls)
 
-        # find min and max limits for slicing
-        if np.max(infls) > np.argmin(y) and np.min(infls) > np.argmin(y):
-            right = np.min(infls)
-            left = None
-        elif np.max(infls) < np.argmin(y) and np.min(infls) < np.argmin(y):
-            left = np.max(infls)
-            right = None
-        elif np.min(infls)<np.argmin(y) and np.max(infls)>np.argmin(y):
-            left = np.min(infls)
+            # pick closest point from left side of min
+            idx1 = np.argwhere(infls < np.argmin(y)).flatten()
+            # pick closest point from right side of min
+            idx2 = np.argwhere(infls > np.argmin(y)).flatten()
+
+            if idx1.size == 0:
+                left = None
+            else:
+                left = min(infls[idx1], key=lambda x: abs(x - np.argmin(y)))
+
+            if idx2.size == 0:
+                right = None
+            else:
+                right = min(infls[idx2], key=lambda x: abs(x - np.argmin(y)))
+            # make new list of infls pnts
+            infls = np.array([left, right])
+
+        elif np.argmin(y) in infls and np.min(infls) == np.argmin(y):
+            left = np.min(infls) - 1  # here - not +!
             right = np.max(infls)
-        elif np.min(infls)==np.argmin(y):
-            left = np.min(infls) + 1
-            right = np.max(infls)
-        elif np.max(infls)==np.argmin(y):
+
+        elif np.argmin(y) in infls and np.max(infls) == np.argmin(y):
             left = np.min(infls)
             right = np.max(infls) + 1
+
         else:
             print("Case not implemented. Keeping data as is.")
             print(f"infls: {infls}, min: {np.argmin(y)}")
-            left = None
-            right = None
+            return None, None
+
+    # if we end up with less than 3 points, don't do anything
+    # not sure this would ever happen?
+    if ( None not in list([right, left]) ) and (right-left) == 1:
+       return None, None
 
     if show_plots:
         y_new, x_new = y[left:right], x[left:right]
+        print("xnew ", x_new, " ynew ", y_new)
 
         import matplotlib.pyplot as plt
         from numpy.polynomial import polynomial as P
-
-        fig = plt.figure(figsize=(10,5))
 
         x_fit = np.linspace(np.min(x), np.max(x), 50)
         # original polynomial for visuals
@@ -160,6 +270,8 @@ def find_inflection_pnt(x, y, show_plots=True):
         # updated polynomial for visuals
         c, stats = P.polyfit(x_new, y_new, 2, full=True)
         plt.plot(x_fit, P.polyval(x_fit, c))
+        # remove nones from infls
+        infls  = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
             plt.axvline(x=x[infl], color='k', label=f'Inflection Point {i}')
@@ -171,3 +283,22 @@ def find_inflection_pnt(x, y, show_plots=True):
         plt.close()
 
     return left, right
+
+def func(x, a, b, c):
+    '''
+    Second degree polynomial function of the form
+    f(x) = ax^2 + bx + c
+    :param x: input variable
+    :param a: second deg coeff
+    :param b: first deg coeff
+    :param c: zeroth deg coeff
+    :return: f(x)
+    '''
+    return a*x**2 + b*x + c
+
+class ComplexRootError(Exception):
+    '''
+    Raised when the adapted range emit
+    fit results in polynomial with complex root(s)
+    '''
+    pass
