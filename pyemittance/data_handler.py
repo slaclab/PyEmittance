@@ -192,6 +192,7 @@ def find_inflection_pnt(x, y, show_plots=True):
 
     # compute second derivative
     y_d2 = np.gradient(np.gradient(y))
+    print(y_d2)
     # find switching points
     infls = np.where(np.diff(np.sign(y_d2)))[0]
 
@@ -282,7 +283,8 @@ def find_inflection_pnt(x, y, show_plots=True):
         plt.show()
         plt.close()
 
-    return left, right
+    # return right+1 since right side slice index is exclusive
+    return left, right + 1
 
 def func(x, a, b, c):
     '''
