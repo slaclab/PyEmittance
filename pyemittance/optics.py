@@ -103,7 +103,7 @@ def propagate_sigma(mat2_init, mat2_ele):
     '''
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
-def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot=True):
+def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, calc_bmag=False, plot=True):
     '''
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
@@ -160,6 +160,13 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot
     # Get error on emittance from fitted params
     emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
 
+    if plot or calc_bmag:
+        s11_screen, s12_screen, s22_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, plot)
+        return [emit, emit_err, beta_err / beta, alpha_err / alpha, s11_screen, s12_screen, s22_screen]
+
+    return [emit, emit_err, beta_err/beta, alpha_err/alpha]
+
+def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, plot):
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
 
@@ -184,17 +191,14 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, plot
         # Model prediction
         plt.scatter(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
 
-        plt.title(f'beta={beta:.1f} m, alpha = {alpha:0.2f}, emit = {emit * 1e9:0.2f} nm')
-        #plt.xlabel('kL (1/m)')
+        plt.title(f'emit = {emit * 1e6:0.2f} um')
         plt.xlabel('B (kG)')
         plt.ylabel(f'sizes (m)')
-        #plt.ylim(0, None)
         plt.legend()
         plt.show()
         plt.close()
 
-    return [emit, emit_err, beta_err/beta, alpha_err/alpha, s11_screen, s12_screen, s22_screen]
-
+    return s11_screen, s12_screen, s22_screen
 
 def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
     '''
