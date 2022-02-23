@@ -24,6 +24,7 @@ class EmitCalc:
         self.test_mode = False
         self.noise_red = 50000
         self.plot = True
+        self.calc_bmag = False
 
     def check_conditions(self, ):
 
@@ -64,7 +65,7 @@ class EmitCalc:
         '''
         Get emittance at quad from beamsizes and quad scan
         :param dim: 'x' or 'y'
-        :return: emittance and error
+        :return: normalized emittance and error
         '''
 
         # todo update based on x_use, y_use for throwing away fit points
@@ -82,7 +83,10 @@ class EmitCalc:
             if np.isnan(res[0]):
                 return np.nan, np.nan
             else:
-                emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = res
+                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
+                if self.calc_bmag:
+                    sigmat_screen = res[4:]
+                    sig_11, sig_12, sig_22 = sigmat_screen
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
@@ -91,14 +95,20 @@ class EmitCalc:
             if np.isnan(res[0]):
                 return np.nan, np.nan
             else:
-                emit, emit_err, beta_rel_err, alpha_rel_err, sig_11, sig_12, sig_22 = res
+                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
+                if self.calc_bmag:
+                    sigmat_screen = res[4:]
+                    sig_11, sig_12, sig_22 = sigmat_screen
 
         emit, emit_err = normalize_emit(emit, emit_err)
-        err = np.std(np.absolute(np.sqrt(sig_11) - bs))
 
-        self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
-        self.beta_err = beta_rel_err
-        self.alpha_err = alpha_rel_err
+        if self.calc_bmag:
+            self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
+            self.beta_err = beta_rel_err
+            self.alpha_err = alpha_rel_err
+
+            bmag, bmag_err = self.get_twiss_bmag(dim=self.dim)
+            return emit, emit_err, bmag, bmag_err
 
         # print(f"emit: {emit/1e-6:.3}, emit err: {emit_err/1e-6:.3}, bs er: {err/1e-6:.3}")
         return emit, emit_err

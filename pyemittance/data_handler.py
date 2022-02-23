@@ -192,8 +192,9 @@ def find_inflection_pnt(x, y, show_plots=True):
 
     # compute second derivative
     y_d2 = np.gradient(np.gradient(y))
+
     # find switching points
-    infls = np.where(np.diff(np.sign(y_d2)))[0]
+    infls = np.where(np.diff(np.sign(y_d2)))[0] + 1
 
     if len(infls)==0:
         # No turning points found
@@ -258,7 +259,6 @@ def find_inflection_pnt(x, y, show_plots=True):
 
     if show_plots:
         y_new, x_new = y[left:right], x[left:right]
-        print("xnew ", x_new, " ynew ", y_new)
 
         import matplotlib.pyplot as plt
         from numpy.polynomial import polynomial as P
