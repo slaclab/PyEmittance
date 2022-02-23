@@ -161,12 +161,12 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, calc
     emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
 
     if plot or calc_bmag:
-        s11_screen, s12_screen, s22_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, plot)
-        return [emit, emit_err, beta_err / beta, alpha_err / alpha, s11_screen, s12_screen, s22_screen]
+        sigmat_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, emit, plot)
+        return [emit, emit_err, beta_err / beta, alpha_err / alpha, sigmat_screen]
 
     return [emit, emit_err, beta_err/beta, alpha_err/alpha]
 
-def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, plot):
+def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, emit, plot):
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
 
@@ -191,7 +191,6 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, plot):
         # Model prediction
         plt.scatter(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
 
-        plt.title(f'emit = {emit * 1e6:0.2f} um')
         plt.xlabel('B (kG)')
         plt.ylabel(f'sizes (m)')
         plt.legend()

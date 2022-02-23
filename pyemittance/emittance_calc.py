@@ -65,7 +65,7 @@ class EmitCalc:
         '''
         Get emittance at quad from beamsizes and quad scan
         :param dim: 'x' or 'y'
-        :return: emittance and error
+        :return: normalized emittance and error
         '''
 
         # todo update based on x_use, y_use for throwing away fit points
@@ -85,7 +85,8 @@ class EmitCalc:
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
                 if self.calc_bmag:
-                    sig_11, sig_12, sig_22 = res[4:]
+                    sigmat_screen = res[4:]
+                    sig_11, sig_12, sig_22 = sigmat_screen
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
@@ -96,7 +97,8 @@ class EmitCalc:
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
                 if self.calc_bmag:
-                    sig_11, sig_12, sig_22 = res[4:]
+                    sigmat_screen = res[4:]
+                    sig_11, sig_12, sig_22 = sigmat_screen
 
         emit, emit_err = normalize_emit(emit, emit_err)
 
