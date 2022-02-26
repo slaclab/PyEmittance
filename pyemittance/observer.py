@@ -21,7 +21,6 @@ class Observer:
         self.config = None
 
     def measure_beam(self, quad_list):
-        """ADD ERRORS TOO!!!"""
         xrms = []
         yrms = []
         xrms_err = []
