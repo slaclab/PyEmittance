@@ -5,18 +5,10 @@ import os
 this_dir, this_filename = os.path.split(__file__)
 DATA_PATH = os.path.join(this_dir, "configs")
 
-
-# these two should have the same input/output!
-# takes quad
-# returns xrms, yrms, xrms_err, yrms_err
-# units!!!
-def get_beamsizes_model(fn=None):
-    pass
-
 def get_beamsizes_machine():
+    '''Takes quad value as input,
+     returns xrms, yrms, xrms_err, yrms_err'''
     pass
-###
-
 
 def get_twiss0(filepath= DATA_PATH+'/beamline_info.json'):
     '''Import Twiss0 from config file'''

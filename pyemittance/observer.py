@@ -1,6 +1,5 @@
 import numpy as np
 import bisect
-from pyemittance.beam_io import get_beamsizes_model
 from pyemittance.beam_io import get_beamsizes_machine
 
 class Observer:
