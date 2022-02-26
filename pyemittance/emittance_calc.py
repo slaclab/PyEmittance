@@ -8,10 +8,10 @@ class EmitCalc:
     Uses info recorded in Observer to do an emittance fit
     '''
 
-    def __init__(self, quad_vals=None, beam_vals=None):
-        self.quad_vals = np.empty(0, ) if quad_vals is None else quad_vals # in kG
+    def __init__(self, quad_vals=None, beam_vals=None, beam_vals_err=None):
+        self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
-        self.beam_vals_err = {dim: np.array(self.beam_vals[dim])*0.05 for dim in self.beam_vals}
+        self.beam_vals_err = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals_err is None else beam_vals_err
         self.x_use = np.arange(0, len(self.beam_vals['x']), 1)
         self.y_use = np.arange(0, len(self.beam_vals['y']), 1)
 
@@ -68,8 +68,7 @@ class EmitCalc:
         :return: normalized emittance and error
         '''
 
-        # todo update based on x_use, y_use for throwing away fit points
-        q = self.quad_vals
+        q = self.quad_vals[dim]
         # quad vals are passed in machine units
         kL = get_kL(q)
 
@@ -79,7 +78,7 @@ class EmitCalc:
         weights = self.weighting_func(bs, bs_err) # 1/sigma
 
         if self.test_mode == False:
-            res = estimate_sigma_mat_thick_quad(bs, kL, weights, plot=self.plot)
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, plot=self.plot)
             if np.isnan(res[0]):
                 return np.nan, np.nan
             else:
@@ -91,7 +90,7 @@ class EmitCalc:
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
             print("NOISE")
-            res = estimate_sigma_mat_thick_quad(bs, kL, weights, plot=self.plot)
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, plot=self.plot)
             if np.isnan(res[0]):
                 return np.nan, np.nan
             else:
@@ -110,7 +109,6 @@ class EmitCalc:
             bmag, bmag_err = self.get_twiss_bmag(dim=self.dim)
             return emit, emit_err, bmag, bmag_err
 
-        # print(f"emit: {emit/1e-6:.3}, emit err: {emit_err/1e-6:.3}, bs er: {err/1e-6:.3}")
         return emit, emit_err
 
     def get_twiss_bmag(self, dim='x'):

@@ -103,7 +103,7 @@ def propagate_sigma(mat2_init, mat2_ele):
     '''
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
-def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, calc_bmag=False, plot=True):
+def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, Lquad=0.108, calc_bmag=False, plot=True):
     '''
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
@@ -161,12 +161,12 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, weights=None, Lquad=0.108, calc
     emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
 
     if plot or calc_bmag:
-        sigmat_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, emit, plot)
+        sigmat_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, emit, plot)
         return [emit, emit_err, beta_err / beta, alpha_err / alpha, sigmat_screen]
 
     return [emit, emit_err, beta_err/beta, alpha_err/alpha]
 
-def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, emit, plot):
+def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, emit, plot):
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
 
@@ -186,10 +186,10 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, emit, plot):
     if plot:
         # Plot the data
         quad = get_quad_field(kLlist / Lquad)
-        plt.scatter(quad, sizes, marker='x', label=f'Measurements')
+        plt.errorbar(quad, sizes, yerr=sizes_err, fmt='o', label=f'Measurements')
 
         # Model prediction
-        plt.scatter(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
+        plt.errorbar(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
 
         plt.xlabel('B (kG)')
         plt.ylabel(f'sizes (m)')

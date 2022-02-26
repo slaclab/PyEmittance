@@ -111,7 +111,7 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
     return [sign * get_quad_field(ele) for ele in x_fine_fit]
 
 
-def check_symmetry(x, y):
+def check_symmetry(x, y, y_err, axis, bs_fn=None):
     '''Check symmetry of quad scan around min of scan
     and find side (left or right) and num of beamsize
     points to add to get a full curve'''
@@ -143,34 +143,19 @@ def check_symmetry(x, y):
         xmax = x[0] - stepsize
         x_add = np.linspace(xmin, xmax, diff)
 
-    # return the x-vals to add
-    # x_add are in same units as passed to fn
-    return add_to_side, x_add
+    return add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn)
 
 def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
     '''Add beamsize measurements on left or right side based on
     symmetry of scan curve.
     x_add are the quad scan values k in units of 1/m^2'''
 
-    # set indices for get_beamsizes fn data
-    # get_beamsizes fn returns [xsize, ysize, xerr, yerr]
-    ax_idx_size = 1 if axis == "y" else 0
-    ax_idx_err = 3 if axis == "y" else 2
-    # y-axis has different field polarity
-    sign = -1 if axis == "y" else 1
-
-    y_add, y_err_add = [], []
-    # get new beamsizes from machine
-    for ele in x_add:
-        # this takes B in kG not K
-        setquad(sign * get_quad_field(ele))
-        # wait for magnet to settle
-        time.sleep(3)
-        # get new beamsizes at each quad val
-        beamsizes = get_beamsizes()
-        y_add.append(beamsizes[ax_idx_size])
-        y_err_add.append(beamsizes[ax_idx_err])
-
+    # get new data points
+    idx_size = 1 if axis == "y" else 0
+    idx_err = 3 if axis == "y" else 2
+    new_data = bs_fn(x_add)
+    y_add, y_err_add = new_data[idx_size], new_data[idx_err]
+        
     # then append to existing dataset
     if add_to_side == "left":
         new_x_list = list(x_add) + list(x)
@@ -180,9 +165,9 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
         new_x_list = list(x) + list(x_add)
         new_y_list = list(y) + list(y_add)
         new_y_err_list = list(y_err) + list(y_err_add)
+            
+    return new_x_list, new_y_list, new_y_err_list
 
-    # returns values in units of 1/m^2
-    return np.array(new_x_list), np.array(new_y_list), np.array(new_y_err_list)
 
 def find_inflection_pnt(x, y, show_plots=True):
     '''Find inflection points in curve and remove
@@ -254,8 +239,8 @@ def find_inflection_pnt(x, y, show_plots=True):
 
     # if we end up with less than 3 points, don't do anything
     # not sure this would ever happen?
-    if ( None not in list([right, left]) ) and (right-left) == 1:
-       return None, None
+    if len(x[left:right]) < 3:
+        return None, None
 
     if show_plots:
         y_new, x_new = y[left:right], x[left:right]
@@ -277,7 +262,7 @@ def find_inflection_pnt(x, y, show_plots=True):
             plt.axvline(x=x[infl], color='k', label=f'Inflection Point {i}')
         plt.scatter(x, y)
         plt.scatter(x_new, y_new, color="blue", label="Use")
-        plt.ylim(np.min(y)*0.7, np.max(y)*1.3)
+        plt.ylim(None, np.max(y)*1.3)
         plt.legend()
         plt.show()
         plt.close()

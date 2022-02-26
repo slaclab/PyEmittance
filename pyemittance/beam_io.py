@@ -1,8 +1,21 @@
+""" This file constains all i/o between package and machine/sim """
 import numpy as np
 import json
 import os
 this_dir, this_filename = os.path.split(__file__)
 DATA_PATH = os.path.join(this_dir, "configs")
+
+
+# these two should have the same input/output!
+# takes quad
+# returns xrms, yrms, xrms_err, yrms_err
+# units!!!
+def get_beamsizes_model(fn=None):
+    pass
+
+def get_beamsizes_machine():
+    pass
+###
 
 
 def get_twiss0(filepath= DATA_PATH+'/beamline_info.json'):
