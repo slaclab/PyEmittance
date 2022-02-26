@@ -8,19 +8,45 @@ import matplotlib.pyplot as plt
 from pyemittance.beam_io import get_rmat
 
 def get_gradient(b_field, l_eff=0.108):
-    '''
-    Returns the quad field gradient [T/m]
-    l_eff: effective length [m]
-    b_field: integrated field [kG]
-    '''
+    """
+    Calculates quadrupole gradient from B field.
+
+    Parameters
+    ----------
+    b_field: ndarray
+        Integrated field [kG]
+    l_eff: float
+        Effective length [m]
+
+    Returns
+    -------
+    array
+    Quad field gradient [T/m]
+    """
     return np.array(b_field) * 0.1 / l_eff
 
 def get_k1(g, energy=0.135, m_0=0.000511):
-    '''
-    Returns quad strength [1/m^2]
-    g: quad field gradient [T/m]
-    p: momentum [GeV] (or alternatively beta*E [GeV])
-    '''
+    """
+    Calculates quadrupole strength from gradient.
+
+    Parameters
+    ----------
+    g: ndarray
+        Quad field gradient [T/m]
+    energy: float
+        Beam energy [GeV]
+        # TODO: update to eV
+    m_0: float
+        Electron mass [GeV]
+        # TODO: update to kg
+
+    Returns
+    -------
+    ndarray
+    Quad strength [1/m^2]
+
+    """
+
     gamma = energy / m_0
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return 0.2998 * g / energy / beta
@@ -35,34 +61,34 @@ def get_kL(quad_vals, l=0.108, energy=0.135, m_0=0.000511):
     return kL
 
 def get_quad_field(k, energy=0.135, l=0.108, m_0=0.000511):
-    '''Get quad field [kG] from k1 [1/m^2]'''
+    """Get quad field [kG] from k1 [1/m^2]"""
 
     gamma = energy / m_0
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return np.array(k) * l / 0.1 / 0.2998 * energy * beta
 
 def thin_quad_mat2(kL):
-    '''
+    """
     Quad transport matrix, 2x2, assuming thin quad
     :param kL: quad strength * quad length (1/m)
     :return: thin quad transport matrix
-    '''
+    """
     return np.array([[1, 0], [-kL, 1]])
 
 def r_mat2():
-    '''
+    """
     Transport matrix after quad to screen, 2x2
-    '''
+    """
     return get_rmat()
 
 def quad_mat2(kL, L=0):
-    '''
+    """
     Quadrupole transfer matrix, 2x2, assuming some quad thickness
     L = 0 returns thin quad matrix
     :param kL: quad strength * quad length (1/m)
     :param L: quad length (m)
     :return: thick quad transport matrix
-    '''
+    """
 
     if L == 0:
         return thin_quad_mat2(kL)
@@ -85,26 +111,26 @@ def quad_mat2(kL, L=0):
     return mat2
 
 def quad_rmat_mat2(kL, Lquad=0):
-    '''
+    """
     Composite [quad, drift] 2x2 transfer matrix
     :param kL: quad strength * quad length (1/m)
     :param Lquad: quad length (m)
     :return:
-    '''
+    """
 
     return r_mat2() @ quad_mat2(kL, Lquad)
 
 def propagate_sigma(mat2_init, mat2_ele):
-    '''
+    """
     Propagate a transport matrix through beamline from point A to B
     :param sigma_mat2: 2x2 matrix at A
     :param mat2: total 2x2 trasport matrix of elements between point A and B
     :return: 2x2 matrix at B
-    '''
+    """
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
 def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, Lquad=0.108, calc_bmag=False, plot=True):
-    '''
+    """
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
     :param sizes: measured beam sizes at the screen
@@ -113,7 +139,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     :param Lquad:  length of the quadrupole magnet (m)
     :param plot: bool to plot ot not
     :return: emittance, sig11, sig12 and sig22 at measurement screen
-    '''
+    """
 
     # measurement vector
     sizes = np.array(sizes)
@@ -200,9 +226,9 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, e
     return s11_screen, s12_screen, s22_screen
 
 def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
-    '''
+    """
     Calculates Twiss ang Bmag from the sigma matrix.
-    '''
+    """
 
     # Twiss at screen
     emit  = np.sqrt(sig11 * sig22 - sig12**2)
@@ -227,7 +253,7 @@ def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
     return d
 
 def gradient_mat3(emit, a1, a2, a3):
-    '''
+    """
     Gradient of f = { emittance, beta, alpha }
     where f is obtained at the scanning location (quad)
     :param eps: emittance parameter estimate
@@ -235,7 +261,7 @@ def gradient_mat3(emit, a1, a2, a3):
     :param a2: matrix element s12
     :param a3: matrix element s22
     :return: gradient of f
-    '''
+    """
 
     emit_gradient = 1./(2*emit) * np.array( [a3, -2*a2, a1] )
     beta_gradient = 1./(2*emit**3) * np.array( [2*emit**4-a1*a3, 2*a2*a1, -a1**2] )
@@ -246,13 +272,13 @@ def gradient_mat3(emit, a1, a2, a3):
     return f_gradient
 
 def get_fit_param_error(f_gradient, B):
-    '''
+    """
     Error estimation of the fitted params (s11, s12, s22)
     and the Twiss params. See 10.3204/DESY-THESIS-2005-014 p.10
     :param f_gradient: gradient of the 3-vector Twiss params
     :param B: B matrix incl. all scanned quad values
     :return: sqrt of the diagonal of the error matrix (emit_err, beta_err, alpha_err)
-    '''
+    """
 
     C = scipy.linalg.pinv( B.T @ B )
 
@@ -262,7 +288,7 @@ def get_fit_param_error(f_gradient, B):
     return twiss_error
 
 def get_twiss_error(emit, a1, a2, a3, B):
-    '''
+    """
     Get error on the twiss params from fitted params
     :param emit: emittance parameter estimate
     :param a1: matrix element s11
@@ -270,7 +296,7 @@ def get_twiss_error(emit, a1, a2, a3, B):
     :param a3: matrix element s22
     :param B:  B matrix incl. all scanned quad values
     :return: emit_err, beta_err, alpha_err
-    '''
+    """
 
     # get gradient of twiss params
     f_gradient =  gradient_mat3(emit, a1, a2, a3)

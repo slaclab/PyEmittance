@@ -4,9 +4,9 @@ from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, ge
 from pyemittance.beam_io import get_twiss0
 
 class EmitCalc:
-    '''
+    """
     Uses info recorded in Observer to do an emittance fit
-    '''
+    """
 
     def __init__(self, quad_vals=None, beam_vals=None, beam_vals_err=None):
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
@@ -38,12 +38,12 @@ class EmitCalc:
         self.y_use = np.argwhere(self.beam_vals['y'] < 2.0 * miny)
 
     def weighting_func(self, beamsizes, beamsizes_err):
-        '''
+        """
         Weigh the fit with Var(sizes) and the sizes themselves
         :param beamsizes: RMS beamsizes measured on screen
         :param err_beamsizes: error on RMS estimate
         :return: weights for fitting
-        '''
+        """
         beamsizes = np.array(beamsizes)
         beamsizes_err = np.array(beamsizes_err)
 
@@ -54,19 +54,19 @@ class EmitCalc:
         return weights
 
     def error_propagation(self, gradient):
-        '''
+        """
         Propagate error from var(y) to emittance
         :param gradient: gradient of emittance
         :return: error on emittance from fit
-        '''
+        """
         return np.sqrt( (gradient.T @ self.covariance_matrix) @ gradient)
 
     def get_emit(self, dim='x'):
-        '''
+        """
         Get emittance at quad from beamsizes and quad scan
         :param dim: 'x' or 'y'
         :return: normalized emittance and error
-        '''
+        """
 
         q = self.quad_vals[dim]
         # quad vals are passed in machine units
