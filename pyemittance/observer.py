@@ -55,7 +55,7 @@ class Observer:
                     
                     # compare to values before and after
                     diff_prev = abs(val - self.quad_meas[loc-1])
-                    diff_next = abs(val - self.quad_meas[loc+1]) 
+                    diff_next = abs(self.quad_meas[loc] - val) 
 
                 if (loc == 0 or 
                     loc == len(self.quad_meas)-1 or 
@@ -85,7 +85,7 @@ class Observer:
                     if diff_prev <= diff_next:
                         use_loc = loc-1
                     else:
-                        use_loc = loc+1
+                        use_loc = loc
 
                     # return already measured value (closest)
                     xrms.append(self.beam_meas['x'][use_loc])

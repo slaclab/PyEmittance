@@ -15,6 +15,8 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
     y = np.array(y)
+    if w is not None:
+        w = np.array(w)
 
     # Remove points that are too large
     # Do this only if bs more than double from min
@@ -32,7 +34,6 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
 
     # Set weights for polyfit (here the weight is sigma)
     if w is not None:
-        w = np.array(w)
         w = 2 * w * y
     else:
         # Take weight as beamsize
