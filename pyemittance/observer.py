@@ -3,10 +3,10 @@ import bisect
 from pyemittance.beam_io import get_beamsizes_machine
 
 class Observer:
-    '''
+    """
     Observer reads beamsizes and sets measurement quad
     Observer stores values for beamsizes and quad settings
-    '''
+    """
 
     def __init__(self, quad_meas, beam_meas, beam_meas_err):
         self.quad_meas = quad_meas
@@ -21,7 +21,7 @@ class Observer:
         self.config = None
 
     def measure_beam(self, quad_list):
-        '''ADD ERRORS TOO!!!'''
+        """ADD ERRORS TOO!!!"""
         xrms = []
         yrms = []
         xrms_err = []
@@ -98,7 +98,7 @@ class Observer:
                                     
         
     def get_beamsizes(self, val):
-        '''Define where the beamsizes are acquired from'''
+        """Define where the beamsizes are acquired from"""
         if self.use_model == True:
             return self.get_beamsizes_model(self.config, val)
 

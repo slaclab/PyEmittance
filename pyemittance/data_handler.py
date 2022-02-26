@@ -112,9 +112,9 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
 
 
 def check_symmetry(x, y, y_err, axis, bs_fn=None):
-    '''Check symmetry of quad scan around min of scan
+    """Check symmetry of quad scan around min of scan
     and find side (left or right) and num of beamsize
-    points to add to get a full curve'''
+    points to add to get a full curve"""
 
     if len(y) != len(x):
         raise Exception('Array lengths do not match!')
@@ -146,9 +146,9 @@ def check_symmetry(x, y, y_err, axis, bs_fn=None):
     return add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn)
 
 def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
-    '''Add beamsize measurements on left or right side based on
+    """Add beamsize measurements on left or right side based on
     symmetry of scan curve.
-    x_add are the quad scan values k in units of 1/m^2'''
+    x_add are the quad scan values k in units of 1/m^2"""
 
     # get new data points
     idx_size = 1 if axis == "y" else 0
@@ -170,8 +170,8 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
 
 
 def find_inflection_pnt(x, y, show_plots=True):
-    '''Find inflection points in curve and remove
-    points outside of convex region around min'''
+    """Find inflection points in curve and remove
+    points outside of convex region around min"""
 
     y = np.array(y)**2 # since we are fitting sizes**2
 
@@ -270,7 +270,7 @@ def find_inflection_pnt(x, y, show_plots=True):
     return left, right
 
 def func(x, a, b, c):
-    '''
+    """
     Second degree polynomial function of the form
     f(x) = ax^2 + bx + c
     :param x: input variable
@@ -278,12 +278,12 @@ def func(x, a, b, c):
     :param b: first deg coeff
     :param c: zeroth deg coeff
     :return: f(x)
-    '''
+    """
     return a*x**2 + b*x + c
 
 class ComplexRootError(Exception):
-    '''
+    """
     Raised when the adapted range emit
     fit results in polynomial with complex root(s)
-    '''
+    """
     pass

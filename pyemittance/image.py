@@ -2,7 +2,7 @@ import numpy as np
 from bs_fitting_methods import fit_gaussian_linear_background, find_rms_cut_area
 
 class Image:
-    '''Beam image processing and fitting for beamsize, amplitude, centroid'''
+    """Beam image processing and fitting for beamsize, amplitude, centroid"""
 
     def __init__(self, image, ncol, nrow, bg_image = None):
         self.ncol = ncol
@@ -28,13 +28,13 @@ class Image:
         self.yamp_error = None
                 
     def reshape_im(self, im = None):
-        '''Reshapes flattened OTR image to 2D array'''
+        """Reshapes flattened OTR image to 2D array"""
 
         self.proc_image = self.flat_image.reshape(self.ncol, self.nrow)
         return self.proc_image
     
     def subtract_bg(self):
-        '''Subtracts bg image'''
+        """Subtracts bg image"""
 
         if self.bg_image is not None:
 
@@ -60,7 +60,7 @@ class Image:
         return self.proc_image
 
     def get_im_projection(self, subtract_baseline=True):
-        '''Expects ndarray, return x (axis=0) or y (axis=1) projection'''
+        """Expects ndarray, return x (axis=0) or y (axis=1) projection"""
 
         self.x_proj = np.sum(self.proc_image, axis=0)
         self.y_proj = np.sum(self.proc_image, axis=1)
@@ -79,9 +79,9 @@ class Image:
         return fit_type_dict[name](*args, **kwargs)
 
     def get_sizes(self, method = "gaussian", show_plots = False, cut_area = 0.05):
-        '''Takes an image (2D array) and optional bg image, finds x and y projections,
+        """Takes an image (2D array) and optional bg image, finds x and y projections,
         and fits with desired method. Current options are "gaussian" or "rms cut area".
-        Returns size in x, size in y, error on x size, error on  y size'''
+        Returns size in x, size in y, error on x size, error on  y size"""
         
         # Find statistics
         para_x, para_error_x = self.dispatch(method,

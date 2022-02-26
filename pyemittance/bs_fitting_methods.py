@@ -4,15 +4,15 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
 def gaussian_linear_background(x, amp, mu, sigma, slope=0, offset=0):
-    '''Gaussian plus linear background fn'''
+    """Gaussian plus linear background fn"""
     return amp * np.exp( -(x-mu)**2 / 2 / sigma**2 ) + slope * x + offset
 
 def fit_gaussian_linear_background(y, para0 = None, show_plots=True, cut_area = None):
-    '''
+    """
     Takes a function y and inputs and fits and Gaussian with
     linear bg to it. Returns the best fit estimates of the parameters 
     amp, mu, sigma and their associated 1sig error
-    '''
+    """
 
     x = np.arange(y.shape[0])
 
@@ -54,10 +54,10 @@ def fit_gaussian_linear_background(y, para0 = None, show_plots=True, cut_area = 
     return para_vals, para_err_vals 
 
 def find_rms_cut_area(y, para0 = None, show_plots=False, cut_area = 0.05):
-    '''
+    """
     Takes a distribution (ndarray) and the desired cut area (5% is default).
     Returns the amp (max of array), mean of distribution, and rms (std) of dist
-    '''
+    """
 
     x = np.arange(y.shape[0])
     y = np.array([0 if ele < 0 else ele for ele in y])
@@ -90,9 +90,9 @@ def find_rms_cut_area(y, para0 = None, show_plots=False, cut_area = 0.05):
     return para, para_errors
 
 def plot_fit(x, y, para_x,  savepath='', show_plots=False, save_plots=False):
-    '''
+    """
     Plot  beamsize fit in x or y direction
-    '''
+    """
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     fig = plt.figure(figsize=(7 ,5))
     plt.plot(x, y, 'b-', label='data')
