@@ -47,7 +47,6 @@ class EmitCalc:
         beamsizes = np.array(beamsizes)
         beamsizes_err = np.array(beamsizes_err)
 
-        # Here the weight is 1/sigma
         sig_bs = 2 * beamsizes * beamsizes_err
         # Here the weight is 1/sigma
         weights = 1 / beamsizes + 1 / sig_bs
@@ -78,26 +77,26 @@ class EmitCalc:
         weights = self.weighting_func(bs, bs_err) # 1/sigma
 
         if self.test_mode == False:
-            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, plot=self.plot)
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, 
+                                                calc_bmag=self.calc_bmag, plot=self.plot)
             if np.isnan(res[0]):
                 return np.nan, np.nan
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
                 if self.calc_bmag:
-                    sigmat_screen = res[4:]
-                    sig_11, sig_12, sig_22 = sigmat_screen
+                    sig_11, sig_12, sig_22 = res[4:]
 
         if self.test_mode == True:
             bs = bs + np.random.rand(len(bs)) / self.noise_red
             print("NOISE")
-            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, plot=self.plot)
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, 
+                                                calc_bmag=self.calc_bmag, plot=self.plot)
             if np.isnan(res[0]):
                 return np.nan, np.nan
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
                 if self.calc_bmag:
-                    sigmat_screen = res[4:]
-                    sig_11, sig_12, sig_22 = sigmat_screen
+                    sig_11, sig_12, sig_22 = res[4:]
 
         emit, emit_err = normalize_emit(emit, emit_err)
 
@@ -106,7 +105,7 @@ class EmitCalc:
             self.beta_err = beta_rel_err
             self.alpha_err = alpha_rel_err
 
-            bmag, bmag_err = self.get_twiss_bmag(dim=self.dim)
+            bmag, bmag_err = self.get_twiss_bmag(dim=dim)
             return emit, emit_err, bmag, bmag_err
 
         return emit, emit_err

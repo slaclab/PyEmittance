@@ -187,8 +187,9 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
 
     if plot or calc_bmag:
-        sigmat_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, emit, plot)
-        return [emit, emit_err, beta_err / beta, alpha_err / alpha, sigmat_screen]
+        s11_screen, s12_screen, s22_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, 
+                                                                 Lquad, sizes, sizes_err, emit, plot)
+        return [emit, emit_err, beta_err / beta, alpha_err / alpha, s11_screen, s12_screen, s22_screen]
 
     return [emit, emit_err, beta_err/beta, alpha_err/alpha]
 
