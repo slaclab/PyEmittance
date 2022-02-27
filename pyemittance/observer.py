@@ -19,6 +19,9 @@ class Observer:
         self.use_model = True
         self.get_beamsizes_model = None
         self.config = None
+        
+        # if using machine
+        self.use_profmon = False
 
     def measure_beam(self, quad_list):
         xrms = []
@@ -102,5 +105,5 @@ class Observer:
             return self.get_beamsizes_model(self.config, val)
 
         if self.use_model == False:
-            return get_beamsizes_machine(val)
+            return get_beamsizes_machine(val, self.use_profmon)
         
