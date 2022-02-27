@@ -1,5 +1,5 @@
 import numpy as np
-from bs_fitting_methods import fit_gaussian_linear_background, find_rms_cut_area
+from pyemittance.bs_fitting_methods import fit_gaussian_linear_background, find_rms_cut_area
 
 class Image:
     """Beam image processing and fitting for beamsize, amplitude, centroid"""

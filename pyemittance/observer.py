@@ -102,5 +102,5 @@ class Observer:
             return self.get_beamsizes_model(self.config, val)
 
         if self.use_model == False:
-            return get_beamsizes_machine
+            return get_beamsizes_machine(val)
         
