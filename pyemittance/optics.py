@@ -143,6 +143,19 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
 
     # measurement vector
     sizes = np.array(sizes)
+    if np.isnan(sizes).any():
+        idx_not_nan = ~np.isnan(sizes)
+        sizes = sizes[idx_not_nan]
+        kLlist = np.array(kLlist)[idx_not_nan]
+        sizes_err = np.array(sizes_err)[idx_not_nan]
+        if weights is not None:
+            weights = np.array(weights)
+            weights = weights[idx_not_nan]
+        
+    if len(sizes) < 3:
+        print("Less than 3 data points were passed. Returning NaN.")
+        return [np.nan,np.nan,np.nan,np.nan]
+        
     b = sizes ** 2
     n = len(b)
 
@@ -152,7 +165,6 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     assert len(weights) == n
 
     # Multiply by weights. This should correspond to the other weight multiplication below
-    weights = np.array(weights)
     b = weights * sizes ** 2
 
     # form B matrix
@@ -176,8 +188,9 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
 
     #return NaN if emit can't be calculated
     if emit2 < 0:
-        print("NaN")
-        return [np.nan]
+        print("Emittance can't be computed. Returning NaN.")
+        #plt.plot(kLlist, sizes**2)
+        return [np.nan,np.nan,np.nan,np.nan]
 
     emit = np.sqrt(emit2)
     beta = s11 / emit

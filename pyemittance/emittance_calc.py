@@ -73,6 +73,7 @@ class EmitCalc:
 
         bs = self.beam_vals[dim]
         bs_err = self.beam_vals_err[dim]
+        
 
         weights = self.weighting_func(bs, bs_err) # 1/sigma
 
@@ -80,7 +81,7 @@ class EmitCalc:
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, 
                                                 calc_bmag=self.calc_bmag, plot=self.plot)
             if np.isnan(res[0]):
-                return np.nan, np.nan
+                return np.nan, np.nan, np.nan, np.nan
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
                 if self.calc_bmag:
@@ -92,7 +93,7 @@ class EmitCalc:
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, 
                                                 calc_bmag=self.calc_bmag, plot=self.plot)
             if np.isnan(res[0]):
-                return np.nan, np.nan
+                return np.nan, np.nan, np.nan, np.nan
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
                 if self.calc_bmag:
@@ -106,7 +107,7 @@ class EmitCalc:
             self.alpha_err = alpha_rel_err
 
             bmag, bmag_err = self.get_twiss_bmag(dim=dim)
-            return emit, emit_err, bmag, bmag_err
+            return emit, emit_err, min(bmag), bmag_err[np.argmin(bmag)]
 
         return emit, emit_err
 

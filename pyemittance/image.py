@@ -68,7 +68,7 @@ class Image:
             self.x_proj = self.x_proj - np.mean(self.x_proj[0:self.offset])
             self.y_proj = self.y_proj - np.mean(self.y_proj[0:self.offset])
         #self.x_proj = np.clip(self.x_proj, -500, np.inf)
-        self.y_proj = np.clip(self.y_proj, 800, np.inf)
+        #self.y_proj = np.clip(self.y_proj, 800, np.inf)
         return self.x_proj, self.y_proj    
             
     def dispatch(self, name, *args, **kwargs):

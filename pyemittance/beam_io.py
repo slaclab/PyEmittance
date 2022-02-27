@@ -15,7 +15,7 @@ import epics
 this_dir, this_filename = os.path.split(__file__)
 CONFIG_PATH = os.path.join(this_dir, "configs")
 
-online = False
+online = True
 
 def get_beamsizes_machine(quad_val, use_profmon):
     """what pyemittance calls"""
@@ -108,6 +108,10 @@ meas_read_pv = PV(meas_pv_info['meas_device']['pv']['read'])
 opt_pv_info = json.load(open(CONFIG_PATH+'/opt_pv_info.json'))
 opt_pvs = opt_pv_info['opt_vars']
 
+
+# load info about where to put saving of raw images and summaries; make directories if needed and start headings
+savepaths = json.load(open(CONFIG_PATH+'/savepaths.json'))
+
 if online:
     sol_cntrl_pv = PV(opt_pvs[0])
     cq_cntrl_pv = PV(opt_pvs[1])
@@ -128,8 +132,6 @@ if online:
     mkdir_p(savepaths['summaries'])
     mkdir_p(savepaths['fits'])
 
-# load info about where to put saving of raw images and summaries; make directories if needed and start headings
-savepaths = json.load(open(CONFIG_PATH+'/savepaths.json'))
 
 
 if online:
@@ -289,6 +291,7 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims, subtract_bg=subtrac
                 repeat = False
             elif count == 3:
                 # if still bad after 3 tries, return nan
+                print(xamp[i], xrms[i])
                 xrms[i], yrms[i], xrms_err[i], yrms_err[i], xamp[i], yamp[
                     i] = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
                 repeat = False
@@ -405,10 +408,10 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True, save_summary=True, po
                 xrms_err = xrms_err * resolution
                 yrms_err = yrms_err * resolution
 
-                print('bzs', beamsizes)
+                #print('bzs', beamsizes)
 
                 # print('res',resolution)
-                print('after', xrms, min_sigma, yrms, min_sigma, xrms, max_sigma, yrms, max_sigma)
+                #print('after', xrms, min_sigma, yrms, min_sigma, xrms, max_sigma, yrms, max_sigma)
 
                 if count == 1:
                     # resample beamsize only 3 times

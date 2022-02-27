@@ -255,12 +255,12 @@ def find_inflection_pnt(x, y, show_plots=True):
         plt.plot(x_fit, P.polyval(x_fit,c))
         # updated polynomial for visuals
         c, stats = P.polyfit(x_new, y_new, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c))
+        plt.plot(x_fit, P.polyval(x_fit, c), color="blue", linestyle="--")
         # remove nones from infls
         infls  = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
-            plt.axvline(x=x[infl], color='k', label=f'Inflection Point {i}')
+            plt.axvline(x=x[infl], color='gray', label=f'Inflection Point {i}', linestyle="--" )
         plt.scatter(x, y)
         plt.scatter(x_new, y_new, color="blue", label="Use")
         plt.ylim(None, np.max(y)*1.3)
