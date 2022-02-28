@@ -47,7 +47,8 @@ def fit_gaussian_linear_background(y, para0 = None, show_plots=True, cut_area = 
     # taking relevant parameters
     para_vals = para[0:3]
     if np.any(np.diag(para_error)<0) or np.any(np.diag(para_error)==0):
-        para_err_vals = [0]*len(para_vals)
+        # hardcoded 5% error on init guess
+        para_err_vals = list( np.array(para_vals) * 5/100 )
     else:
         para_err_vals = np.sqrt(np.diag(para_error))[0:3] 
         
