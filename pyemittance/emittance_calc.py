@@ -107,7 +107,7 @@ class EmitCalc:
             self.alpha_err = alpha_rel_err
 
             bmag, bmag_err = self.get_twiss_bmag(dim=dim)
-            return emit, emit_err, min(bmag), bmag_err[np.argmin(bmag)]
+            return emit, emit_err, min(bmag), bmag_err[np.argmin(bmag)], q[np.argmin(bmag)]
 
         return emit, emit_err
 
