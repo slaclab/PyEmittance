@@ -112,7 +112,7 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
     return [sign * get_quad_field(ele) for ele in x_fine_fit]
 
 
-def check_symmetry(x, y, y_err, axis, bs_fn=None):
+def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
     """Check symmetry of quad scan around min of scan
     and find side (left or right) and num of beamsize
     points to add to get a full curve"""
@@ -144,13 +144,20 @@ def check_symmetry(x, y, y_err, axis, bs_fn=None):
         xmax = x[0] - stepsize
         x_add = np.linspace(xmin, xmax, diff)
 
-    return add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn)
+    if add_meas:
+        return add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn)
+    else:
+        return add_to_side, x_add
+
 
 def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
     """Add beamsize measurements on left or right side based on
     symmetry of scan curve.
     x_add are the quad scan values k in units of 1/m^2"""
 
+    if not bs_fn:
+        return None
+    
     # get new data points
     idx_size = 1 if axis == "y" else 0
     idx_err = 3 if axis == "y" else 2
