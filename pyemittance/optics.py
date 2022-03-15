@@ -5,7 +5,7 @@ import scipy.linalg
 # TODO update fns
 from scipy.constants import c as c_light, m_e as m0
 import matplotlib.pyplot as plt
-from pyemittance.beam_io import get_rmat
+from pyemittance.machine_settings import get_rmat
 
 def get_gradient(b_field, l_eff=0.108):
     """

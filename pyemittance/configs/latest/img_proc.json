@@ -1,0 +1,1 @@
+{"subtract_bg": true, "use_roi": false, "avg_ims": true, "n_to_acquire": 4, "background_im":"/home/fphysics/smiskov/20220227/background_571.npy", "amp_threshold": 10, "min_sigma": 1.0, "max_sigma": 10000, "max_samples": 1, "roi": {"xmin": 0, "xmax": 100, "ymin": 0, "ymax": 100}}

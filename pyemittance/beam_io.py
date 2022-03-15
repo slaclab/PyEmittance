@@ -1,16 +1,14 @@
 # SETUP FILE FOR LCLS CU INJECTOR
 import numpy as np
-import sys, os, errno
+import os, errno
 import json
 import time
 import datetime
-import matplotlib.pyplot as plt
 
 from pyemittance.image import Image
 from os.path import exists
 
 from epics import caget, caput, PV
-import epics
 
 this_dir, this_filename = os.path.split(__file__)
 CONFIG_PATH = os.path.join(this_dir, "configs")
@@ -29,32 +27,6 @@ def get_beamsizes_machine(quad_val, use_profmon):
     xrms_err = beamsize[2]
     yrms_err = beamsize[3]
     return xrms, yrms, xrms_err, yrms_err
-
-def get_twiss0(filepath= CONFIG_PATH+'/beamline_info.json'):
-    """Import Twiss0 from config file"""
-
-    beamline_info = json.load(open(filepath))
-    twiss0 = beamline_info['Twiss0']
-    # emit, beta, alpha
-    twiss0_by_dim = {'x': [twiss0[0], twiss0[2], twiss0[4]],
-                     'y': [twiss0[1], twiss0[3], twiss0[5]]
-                     }
-
-    return twiss0_by_dim
-
-def get_rmat(filepath=CONFIG_PATH+'/beamline_info.json'):
-    """Import r-matrix from config file"""
-
-    beamline_info = json.load(open(filepath))
-    # if only separated by a drift:
-    # rMat will be [1, L, 0, 1]
-    rmat = beamline_info['rMat']
-    # m11, m12, m21, m22
-    rmat_array = np.array([ [rmat[0], rmat[1]],
-                            [rmat[2], rmat[3]]
-                            ])
-
-    return rmat_array
 
 ##################################
 # TODO refactor all below #######
@@ -92,7 +64,7 @@ pv_savelist = json.load(open(CONFIG_PATH+'/save_scalar_pvs.json'))
 
 
 if online:
-    resolution = epics.caget(
+    resolution = caget(
     'PROF:IN10:571:RESOLUTION') * 10 ** -6  # 12.23*1e-6#PV(meas_pv_info['diagnostic']['pv']['resolution'])*1e-6 #12.23*1e-6 # in meters for emittance calc
     
     im_pv = PV(meas_pv_info['diagnostic']['pv']['image'])
@@ -461,7 +433,7 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True, save_summary=True, po
 def numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp=False, savelist=pv_savelist['scalars'],
                path=savepaths['raw_saves']):
     ts = isotime()
-    x = epics.caget_many(savelist)
+    x = caget_many(savelist)
     x.append(ts)
     if timestamp:
         x.append(timestamp)
@@ -479,7 +451,7 @@ def numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp=False, savelist=pv_save
 
 
 #     ts = isotime()
-#     x = epics.caget_many(savelist)
+#     x = caget_many(savelist)
 #     x.append(ts)
 #     if timestamp:
 #         x.append(timestamp)
@@ -487,11 +459,11 @@ def numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp=False, savelist=pv_save
 #         x.append(ts)
 
 
-#     img=epics.caget('PROF:IN10:571:Image:ArrayData')
-#     nrow = epics.caget('PROF:IN10:571:Image:ArraySize0_RBV')
-#     ncol = epics.caget('PROF:IN10:571:Image:ArraySize1_RBV')
+#     img = caget('PROF:IN10:571:Image:ArrayData')
+#     nrow = caget('PROF:IN10:571:Image:ArraySize0_RBV')
+#     ncol = caget('PROF:IN10:571:Image:ArraySize1_RBV')
 
-#     res = epics.caget('PROF:IN10:571:RESOLUTION')
+#     res = caget('PROF:IN10:571:RESOLUTION')
 
 #     nrow1 = caget("CAMR:LT10:900:Image:ArraySize0_RBV")
 #     ncol1 = caget("CAMR:LT10:900:Image:ArraySize1_RBV")

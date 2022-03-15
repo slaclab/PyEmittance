@@ -2,10 +2,6 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from pyemittance.optics import get_k1, get_gradient, get_quad_field
-# on sim
-# from beam_io_sim import get_beamsizes
-# on lcls
-# from beam_io import get_beamsizes, setquad, quad_control
 # TODO: import m_0
 m_0  = 0.000511
 

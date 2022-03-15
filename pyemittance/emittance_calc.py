@@ -1,7 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
-from pyemittance.beam_io import get_twiss0
+from pyemittance.machine_settings import get_twiss0
 
 class EmitCalc:
     """
