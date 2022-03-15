@@ -203,9 +203,10 @@ def find_inflection_pnt(x, y, show_plots=True):
             right = infls
         infls = np.array([infls])
 
+
     elif len(infls)>1:
         # cut it down to 2 closest to min
-        if ( np.argmin(y) in infls and len(infls > 2) ) or ( np.argmin(y) not in infls ):
+        if ( np.argmin(y) in infls and len(infls) > 2 ) or ( np.argmin(y) not in infls ):
             if np.argmin(y) in infls:
                 infls = list(infls)
                 infls.remove(np.argmin(y))

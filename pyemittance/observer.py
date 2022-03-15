@@ -1,4 +1,5 @@
 import bisect
+import numpy as np
 
 class Observer:
     """
@@ -17,6 +18,8 @@ class Observer:
         self.use_model = True
         self.get_beamsizes_model = None
         self.config = None
+        self.add_noise = True
+        self.noise_red = 100000
         
         # if using machine
         self.use_profmon = False
@@ -100,6 +103,15 @@ class Observer:
     def get_beamsizes(self, val):
         """Define where the beamsizes are acquired from"""
         if self.use_model == True:
+            
+            if self.add_noise:
+                beamsizes = self.get_beamsizes_model(self.config, val)
+                xrms = beamsizes[0] + np.random.rand(1) / self.noise_red
+                yrms = beamsizes[1] + np.random.rand(1) / self.noise_red
+                xrms_err = beamsizes[2] + np.random.rand(1) / self.noise_red / 10
+                yrms_err = beamsizes[3] + np.random.rand(1) / self.noise_red / 10
+                return xrms[0], yrms[0], xrms_err[0], yrms_err[0]
+
             return self.get_beamsizes_model(self.config, val)
 
         if self.use_model == False:
