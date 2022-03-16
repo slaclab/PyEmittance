@@ -20,8 +20,6 @@ class EmitCalc:
         self.beta_err = None
         self.alpha_err = None
 
-        self.test_mode = False
-        self.noise_red = 50000
         self.plot = True
         self.calc_bmag = False
 
@@ -76,27 +74,14 @@ class EmitCalc:
 
         weights = self.weighting_func(bs, bs_err) # 1/sigma
 
-        if self.test_mode == False:
-            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, 
-                                                calc_bmag=self.calc_bmag, plot=self.plot)
-            if np.isnan(res[0]):
-                return np.nan, np.nan, np.nan, np.nan
-            else:
-                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
-                if self.calc_bmag:
-                    sig_11, sig_12, sig_22 = res[4:]
-
-        if self.test_mode == True:
-            bs = bs + np.random.rand(len(bs)) / self.noise_red
-            print("NOISE")
-            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, 
-                                                calc_bmag=self.calc_bmag, plot=self.plot)
-            if np.isnan(res[0]):
-                return np.nan, np.nan, np.nan, np.nan
-            else:
-                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
-                if self.calc_bmag:
-                    sig_11, sig_12, sig_22 = res[4:]
+        res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
+                                            calc_bmag=self.calc_bmag, plot=self.plot)
+        if np.isnan(res[0]):
+            return np.nan, np.nan, np.nan, np.nan
+        else:
+            emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
+            if self.calc_bmag:
+                sig_11, sig_12, sig_22 = res[4:]
 
         emit, emit_err = normalize_emit(emit, emit_err)
 
