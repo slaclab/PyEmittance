@@ -129,7 +129,8 @@ def propagate_sigma(mat2_init, mat2_ele):
     """
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
-def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, Lquad=0.108, calc_bmag=False, plot=True):
+def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, Lquad=0.108,
+                                  calc_bmag=False, plot=True, verbose=False):
     """
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
@@ -153,7 +154,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
             weights = weights[idx_not_nan]
         
     if len(sizes) < 3:
-        print("Less than 3 data points were passed. Returning NaN.")
+        if verbose:
+            print("Less than 3 data points were passed. Returning NaN.")
         return [np.nan,np.nan,np.nan,np.nan]
         
     b = sizes ** 2
@@ -188,7 +190,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
 
     #return NaN if emit can't be calculated
     if emit2 < 0:
-        print("Emittance can't be computed. Returning NaN.")
+        if verbose:
+            print("Emittance can't be computed. Returning NaN.")
         #plt.plot(kLlist, sizes**2)
         return [np.nan,np.nan,np.nan,np.nan]
 

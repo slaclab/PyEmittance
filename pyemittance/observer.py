@@ -103,7 +103,7 @@ class Observer:
     def get_beamsizes(self, val):
         """Define where the beamsizes are acquired from"""
         if self.use_model == True:
-            
+
             if self.add_noise:
                 beamsizes = self.get_beamsizes_model(self.config, val)
                 xrms = beamsizes[0] + np.random.rand(1) / self.noise_red

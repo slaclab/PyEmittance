@@ -7,7 +7,8 @@ m_0  = 0.000511
 
 def adapt_range(x, y, axis, w=None, energy=0.135,
                 cutoff_percent=0.3, num_points=5,
-                save_plot=False, show_plots=True):
+                save_plot=False, show_plots=True,
+                verbose=False):
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
     y = np.array(y)
@@ -56,7 +57,8 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
     c2, c1, c0 = fit_coefs
 
     if c2 < 0: # same if s11q is negative
-        print("Adjusting concave poly.")
+        if verbose:
+            print("Adjusting concave poly.")
         # go to lower side of concave polynomials
         # (assuming it is closer to the local minimum)
         x_min_concave = x[np.argmin(y)]
