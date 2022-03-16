@@ -18,7 +18,7 @@ class Observer:
         self.use_model = True
         self.get_beamsizes_model = None
         self.config = None
-        self.add_noise = True
+        self.add_noise = False
         self.noise_red = 100000
         
         # if using machine
