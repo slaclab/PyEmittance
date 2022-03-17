@@ -96,6 +96,7 @@ def quad_mat2(kL, L=0):
     k = kL / L
 
     if k == 0:
+        # Take drift mat
         mat2 = r_mat2()
     elif k > 0:
         # Focusing
@@ -117,6 +118,10 @@ def quad_rmat_mat2(kL, Lquad=0):
     :param Lquad: quad length (m)
     :return:
     """
+
+    if kL == 0:
+        # Return matrix after quad to screen
+        return r_mat2()
 
     return r_mat2() @ quad_mat2(kL, Lquad)
 
@@ -142,7 +147,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     :return: emittance, sig11, sig12 and sig22 at measurement screen
     """
 
-    # measurement vector
+    # Measurement vector
     sizes = np.array(sizes)
     if np.isnan(sizes).any():
         idx_not_nan = ~np.isnan(sizes)
