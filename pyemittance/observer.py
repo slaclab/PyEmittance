@@ -13,7 +13,7 @@ class Observer:
         self.beam_meas_err = beam_meas_err
         self.use_prev_meas = True 
         self.tolerance = 0.1
-        
+
         # if using the surrogate model
         self.use_model = True
         self.get_beamsizes_model = None
@@ -29,8 +29,8 @@ class Observer:
         yrms = []
         xrms_err = []
         yrms_err = []
-                
-        if not self.quad_meas:
+
+        if not self.quad_meas or self.use_prev_meas is False:
                 # if no measurements exist yet, measure all
                 for val in quad_list:
                     # measure bs at this value

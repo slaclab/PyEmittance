@@ -1,4 +1,3 @@
-# SETUP FILE FOR LCLS CU INJECTOR
 import numpy as np
 import os, errno
 import json
@@ -16,7 +15,7 @@ CONFIG_PATH = os.path.join(this_dir, "configs")
 online = True
 
 def get_beamsizes_machine(quad_val, use_profmon):
-    """what pyemittance calls"""
+    """What pyemittance.observer calls"""
     """Takes quad value as input,
      returns xrms, yrms, xrms_err, yrms_err"""
     setquad(quad_val)
@@ -34,7 +33,7 @@ def get_beamsizes_machine(quad_val, use_profmon):
 # load image processing setting info
 im_proc = json.load(open(CONFIG_PATH+'/img_proc.json'))
 subtract_bg = im_proc['subtract_bg']
-print('sb', subtract_bg)
+
 bg_image = im_proc['background_im']  # specify path to bg im in json file
 use_roi = im_proc['use_roi']
 roi_xmin = im_proc['roi']['xmin']

@@ -5,7 +5,9 @@ import scipy.linalg
 # TODO update fns
 from scipy.constants import c as c_light, m_e as m0
 import matplotlib.pyplot as plt
-from pyemittance.machine_settings import get_rmat
+
+from pyemittance.machine_settings import get_rmat, which_machine
+
 
 def get_gradient(b_field, l_eff=0.108):
     """
@@ -146,6 +148,9 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     :param plot: bool to plot ot not
     :return: emittance, sig11, sig12 and sig22 at measurement screen
     """
+    if verbose:
+        # Print which machine settings it is using
+        which_machine()
 
     # Measurement vector
     sizes = np.array(sizes)
@@ -265,12 +270,16 @@ def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
     # Taking relative error as measured at quad
     bmag_err = bmag * np.sqrt( (beta_err)**2 + (alpha_err)**2 )
 
+    bmag_min = min(bmag)
+    bmag_min_err = bmag_err[np.argmin(bmag)]
+
     d = {}
     d['emit'] = emit
     d['beta'] = beta
     d['alpha'] = alpha
-    d['bmag'] = bmag
-    d['bmag_err'] = bmag_err
+    d['bmag'] = bmag_min
+    d['bmag_err'] = bmag_min_err
+    d['min_idx'] = np.argmin(bmag) # best scanning quad val
 
     return d
 

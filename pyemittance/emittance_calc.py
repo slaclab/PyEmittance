@@ -11,8 +11,6 @@ class EmitCalc:
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
         self.beam_vals_err = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals_err is None else beam_vals_err
-        self.x_use = np.arange(0, len(self.beam_vals['x']), 1)
-        self.y_use = np.arange(0, len(self.beam_vals['y']), 1)
 
         self.sig_mat_screen = {'x': [], 'y': []}
         self.twiss0 = get_twiss0() # emit, beta, alpha
@@ -20,19 +18,21 @@ class EmitCalc:
         self.beta_err = None
         self.alpha_err = None
 
-        self.plot = True
         self.calc_bmag = False
+        self.plot = False
+        self.verbose = False
 
-    def check_conditions(self, ):
-
-        self.x_use = np.arange(0, len(beam_vals['x']), 1)
-        self.y_use = np.arange(0, len(beam_vals['y']), 1)
-
-        minx = np.min(self.beam_vals['x'])
-        miny = np.min(self.beam_vals['y'])
-
-        self.x_use = np.argwhere(self.beam_vals['x'] < 2.0 * minx)
-        self.y_use = np.argwhere(self.beam_vals['y'] < 2.0 * miny)
+        # Main output of emittance calc
+        self.out_dict = {'nemitx': None,
+                         'nemity': None,
+                         'nemitx_err': None,
+                         'nemity_err': None,
+                         'bmagx': None,
+                         'bmagy': None,
+                         'bmagx_err': None,
+                         'bmagy_err': None,
+                         'opt_q_x': None,
+                         'opt_q_y': None}
 
     def weighting_func(self, beamsizes, beamsizes_err):
         """
@@ -75,29 +75,41 @@ class EmitCalc:
         weights = self.weighting_func(bs, bs_err) # 1/sigma
 
         res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
-                                            calc_bmag=self.calc_bmag, plot=self.plot)
+                                            calc_bmag=self.calc_bmag, plot=self.plot, verbose=self.verbose)
         if np.isnan(res[0]):
-            return np.nan, np.nan, np.nan, np.nan
+            self.out_dict[f'nemit{dim}'] = np.nan
+            self.out_dict[f'nemit{dim}_err'] = np.nan
+            self.out_dict[f'bmag{dim}'] = np.nan
+            self.out_dict[f'bmag{dim}_err'] = np.nan
+            return self.out_dict
         else:
             emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
             if self.calc_bmag:
                 sig_11, sig_12, sig_22 = res[4:]
 
-        emit, emit_err = normalize_emit(emit, emit_err)
+        norm_emit_res = normalize_emit(emit, emit_err)
+        self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err)[0]
+        self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err)[1]
 
         if self.calc_bmag:
             self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
             self.beta_err = beta_rel_err
             self.alpha_err = alpha_rel_err
 
-            bmag, bmag_err = self.get_twiss_bmag(dim=dim)
-            return emit, emit_err, min(bmag), bmag_err[np.argmin(bmag)], q[np.argmin(bmag)]
+            bmag_calc_res = self.get_twiss_bmag(dim=dim)
+            # Get bmag and bmag_err
+            self.out_dict[f'bmag{dim}'] = bmag_calc_res[0]
+            self.out_dict[f'bmag{dim}_err'] = bmag_calc_res[1]
+            # Get best value for scanning quad
+            self.out_dict[f'opt_q_{dim}'] = q[bmag_calc_res[2]]
 
-        return emit, emit_err
+        return self.out_dict
 
     def get_twiss_bmag(self, dim='x'):
 
-        sig_11, sig_12, sig_22 = self.sig_mat_screen[dim][0], self.sig_mat_screen[dim][1], self.sig_mat_screen[dim][2]
+        sig_11 = self.sig_mat_screen[dim][0]
+        sig_12 = self.sig_mat_screen[dim][1]
+        sig_22 = self.sig_mat_screen[dim][2]
 
         # twiss0 in x or y AT THE SCREEN
         beta0, alpha0 = self.twiss0[dim][1], self.twiss0[dim][2]
@@ -109,7 +121,21 @@ class EmitCalc:
         # Save twiss at screen
         self.twiss_screen[dim] = twiss['emit'], twiss['beta'], twiss['alpha']
 
-        return twiss['bmag'], twiss['bmag_err']
+        return twiss['bmag'], twiss['bmag_err'], twiss['min_idx']
+
+    def get_gmean_emit(self):
+
+        try:
+            nemit = np.sqrt( self.out_dict['nemitx'] * self.out_dict['nemity'] )
+            nemit_err = nemit * ( (self.out_dict['nemitx_err']/self.out_dict['nemitx'])**2 +
+                                  (self.out_dict['nemity_err']/self.out_dict['nemity'])**2 )**0.5
+
+            self.out_dict['nemit'] = nemit
+            self.out_dict['nemit_err'] = nemit_err
+
+        except TypeError:
+            self.out_dict['nemit'] = None
+            self.out_dict['nemit_err'] = None
 
 
 
