@@ -42,9 +42,8 @@ if not file_exists:
     f.close()
 
 file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
-# print('fe',file_exists)
+
 if not file_exists:
-    # print('foo2')
     # todo add others as inputs
     f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
     f.write(

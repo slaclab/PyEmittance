@@ -276,6 +276,13 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
     a certain number of specified measurements within some range
     """
 
+    # Define # of points to add
+    num_meas = num_points - len(y)
+
+    if num_meas <= 0:
+        # do nothing
+        return x, y, y_err
+
     # We want to add points primarily around min
     # Find min location
     argmin = np.argmin(y)
@@ -283,26 +290,20 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
         # if min is not at edge
         # get first step size
         step = (x[argmin+1]-x[argmin])/2
+        # add points to the right of min
         mult_fac = 1
     elif argmin==len(y)-1:
+        # if min is the last data point
         step = (x[argmin] - x[argmin-1]) / 2
+        # add points to the left of the min
         mult_fac = -1
-
-    # Define # of points to add
-    num_meas = num_points - len(y)
 
     x_add = []
     # We want to add points between already measured points
     step_mult = np.arange(1, num_meas*2, 2)
     for i in range(0, num_meas):
+        # get quad values for points to add
         x_add.append(x[argmin] + mult_fac*step*step_mult[i])
-        # Insert new data into original dataset
-        ### CHANGE THIS FOR GOING BACK
-        if mult_fac==-1:
-            print(argmin-i)
-            x.insert(argmin-i, x_add[i])
-        else:
-            x.insert(argmin+step_mult[i], x_add[i])
 
     # Take new measurements
     idx_size = 1 if axis == "y" else 0
@@ -312,18 +313,21 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
 
     # Insert new data into original dataset
     for i in range(0, num_meas):
-        if mult_fac==-1:
-            y.insert(argmin-step_mult[i], y_add[i])
-            y_err.insert(argmin-step_mult[i], y_err_add[i])
-        else:
-            y.insert(argmin+step_mult[i], y_add[i])
-            y_err.insert(argmin+step_mult[i], y_err_add[i])
-
+        if mult_fac == -1:
+            # add points to the left
+            new_idx = abs(argmin-i)
+            x.insert(new_idx, x_add[i])
+            y.insert(new_idx, y_add[i])
+            y_err.insert(new_idx, y_err_add[i])
+        elif mult_fac == 1:
+            # add points to the right
+            # TODO add points to both sides when min is in the middle
+            new_idx = argmin+step_mult[i]
+            x.insert(new_idx, x_add[i])
+            y.insert(new_idx, y_add[i])
+            y_err.insert(new_idx, y_err_add[i])
 
     return x, y, y_err
-
-
-
 
 def func(x, a, b, c):
     """
