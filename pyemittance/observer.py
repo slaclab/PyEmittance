@@ -45,7 +45,7 @@ class Observer:
                     self.beam_meas['x'] = xrms
                     self.beam_meas['y'] = yrms
                     self.beam_meas_err['x'] = xrms_err
-                    self.beam_meas_err['y']= yrms_err
+                    self.beam_meas_err['y'] = yrms_err
                 
         else:
             for val in quad_list:              

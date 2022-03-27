@@ -1,4 +1,5 @@
 import numpy as np
+import json, datetime
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
 from pyemittance.machine_settings import get_twiss0
 
@@ -10,8 +11,18 @@ class EmitCalc:
     def __init__(self, quad_vals=None, beam_vals=None, beam_vals_err=None):
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
-        self.beam_vals_err = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals_err is None else beam_vals_err
 
+        # Define some error on beamsizes in each dimension
+        self.bs_error = (0.015, 0.015)
+        # Make sure error is added to beamsizes if one is provided
+        if beam_vals_err is None  or sum(beam_vals_err['x'])==0 or sum(beam_vals_err['y'])==0:
+            print(beam_vals_err)
+            self.beam_vals_err = {'x': np.asarray(self.beam_vals['x'])*self.bs_error[0],
+                                  'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
+        else:
+            self.beam_vals_err = beam_vals_err
+
+        self.dims = ['x', 'y'] # TODO: make code use provided in self.dims instead of hardcoding 'x' and 'y'
         self.sig_mat_screen = {'x': [], 'y': []}
         self.twiss0 = get_twiss0() # emit, beta, alpha
         self.twiss_screen = {'x': [], 'y': []} # emit, beta, alpha
@@ -21,6 +32,7 @@ class EmitCalc:
         self.calc_bmag = False
         self.plot = False
         self.verbose = False
+        self.save_runs = False
 
         # Main output of emittance calc
         self.out_dict = {'nemitx': None,
@@ -57,51 +69,57 @@ class EmitCalc:
         """
         return np.sqrt( (gradient.T @ self.covariance_matrix) @ gradient)
 
-    def get_emit(self, dim='x'):
+    def get_emit(self):
         """
         Get emittance at quad from beamsizes and quad scan
         :param dim: 'x' or 'y'
         :return: normalized emittance and error
         """
 
-        q = self.quad_vals[dim]
-        # quad vals are passed in machine units
-        kL = get_kL(q)
+        for dim in self.dims:
+            # run emit calc for x and y
 
-        bs = self.beam_vals[dim]
-        bs_err = self.beam_vals_err[dim]
-        
+            q = self.quad_vals[dim]
+            # quad vals are passed in machine units
+            kL = get_kL(q)
 
-        weights = self.weighting_func(bs, bs_err) # 1/sigma
+            bs = self.beam_vals[dim]
+            bs_err = self.beam_vals_err[dim]
 
-        res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
-                                            calc_bmag=self.calc_bmag, plot=self.plot, verbose=self.verbose)
-        if np.isnan(res[0]):
-            self.out_dict[f'nemit{dim}'] = np.nan
-            self.out_dict[f'nemit{dim}_err'] = np.nan
-            self.out_dict[f'bmag{dim}'] = np.nan
-            self.out_dict[f'bmag{dim}_err'] = np.nan
-            return self.out_dict
-        else:
-            emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
+            weights = self.weighting_func(bs, bs_err) # 1/sigma
+
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
+                                                calc_bmag=self.calc_bmag,
+                                                plot=self.plot, verbose=self.verbose)
+            if np.isnan(res[0]):
+                self.out_dict[f'nemit{dim}'] = np.nan
+                self.out_dict[f'nemit{dim}_err'] = np.nan
+                self.out_dict[f'bmag{dim}'] = np.nan
+                self.out_dict[f'bmag{dim}_err'] = np.nan
+                return self.out_dict
+            else:
+                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
+                if self.calc_bmag:
+                    sig_11, sig_12, sig_22 = res[4:]
+
+            norm_emit_res = normalize_emit(emit, emit_err)
+            self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err)[0]
+            self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err)[1]
+
             if self.calc_bmag:
-                sig_11, sig_12, sig_22 = res[4:]
+                self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
+                self.beta_err = beta_rel_err
+                self.alpha_err = alpha_rel_err
 
-        norm_emit_res = normalize_emit(emit, emit_err)
-        self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err)[0]
-        self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err)[1]
+                bmag_calc_res = self.get_twiss_bmag(dim=dim)
+                # Get bmag and bmag_err
+                self.out_dict[f'bmag{dim}'] = bmag_calc_res[0]
+                self.out_dict[f'bmag{dim}_err'] = bmag_calc_res[1]
+                # Get best value for scanning quad
+                self.out_dict[f'opt_q_{dim}'] = q[bmag_calc_res[2]]
 
-        if self.calc_bmag:
-            self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
-            self.beta_err = beta_rel_err
-            self.alpha_err = alpha_rel_err
-
-            bmag_calc_res = self.get_twiss_bmag(dim=dim)
-            # Get bmag and bmag_err
-            self.out_dict[f'bmag{dim}'] = bmag_calc_res[0]
-            self.out_dict[f'bmag{dim}_err'] = bmag_calc_res[1]
-            # Get best value for scanning quad
-            self.out_dict[f'opt_q_{dim}'] = q[bmag_calc_res[2]]
+        if self.save_runs:
+            self.save_run()
 
         return self.out_dict
 
@@ -136,6 +154,16 @@ class EmitCalc:
         except TypeError:
             self.out_dict['nemit'] = None
             self.out_dict['nemit_err'] = None
+
+    def save_run(self):
+        data = {"quad_vals": self.quad_vals,
+                "beam_vals": self.beam_vals,
+                "beam_vals_err": self.beam_vals_err,
+                "output": self.out_dict}
+
+        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+        with open(f"pyemittance_data_{timestamp}.json", "w") as outfile:
+            json.dump(data, outfile)
 
 
 

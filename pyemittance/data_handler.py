@@ -5,10 +5,8 @@ from pyemittance.optics import get_k1, get_gradient, get_quad_field
 # TODO: import m_0
 m_0  = 0.000511
 
-def adapt_range(x, y, axis, w=None, energy=0.135,
-                cutoff_percent=0.3, num_points=5,
-                save_plot=False, show_plots=True,
-                verbose=False):
+def adapt_range(x, y, axis, w=None, energy=0.135, cutoff_percent=0.3,
+                num_points=5, verbose=False):
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
     y = np.array(y)
@@ -148,13 +146,10 @@ def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
         return add_to_side, x_add
 
 
-def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
+def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     """Add beamsize measurements on left or right side based on
     symmetry of scan curve.
     x_add are the quad scan values k in units of 1/m^2"""
-
-    if not bs_fn:
-        return None
     
     # get new data points
     idx_size = 1 if axis == "y" else 0
@@ -275,6 +270,60 @@ def find_inflection_pnt(x, y, show_plots=True):
         plt.close()
 
     return left, right
+
+def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
+    """ This function adds measurements to a dataset to reach
+    a certain number of specified measurements within some range
+    """
+
+    # We want to add points primarily around min
+    # Find min location
+    argmin = np.argmin(y)
+    if argmin<(len(y)-1):
+        # if min is not at edge
+        # get first step size
+        step = (x[argmin+1]-x[argmin])/2
+        mult_fac = 1
+    elif argmin==len(y)-1:
+        step = (x[argmin] - x[argmin-1]) / 2
+        mult_fac = -1
+
+    # Define # of points to add
+    num_meas = num_points - len(y)
+
+    x_add = []
+    # We want to add points between already measured points
+    step_mult = np.arange(1, num_meas*2, 2)
+    for i in range(0, num_meas):
+        x_add.append(x[argmin] + mult_fac*step*step_mult[i])
+        # Insert new data into original dataset
+        ### CHANGE THIS FOR GOING BACK
+        if mult_fac==-1:
+            print(argmin-i)
+            x.insert(argmin-i, x_add[i])
+        else:
+            x.insert(argmin+step_mult[i], x_add[i])
+
+    # Take new measurements
+    idx_size = 1 if axis == "y" else 0
+    idx_err = 3 if axis == "y" else 2
+    new_data = bs_fn(x_add)
+    y_add, y_err_add = new_data[idx_size], new_data[idx_err]
+
+    # Insert new data into original dataset
+    for i in range(0, num_meas):
+        if mult_fac==-1:
+            y.insert(argmin-step_mult[i], y_add[i])
+            y_err.insert(argmin-step_mult[i], y_err_add[i])
+        else:
+            y.insert(argmin+step_mult[i], y_add[i])
+            y_err.insert(argmin+step_mult[i], y_err_add[i])
+
+
+    return x, y, y_err
+
+
+
 
 def func(x, a, b, c):
     """
