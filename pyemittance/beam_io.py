@@ -39,7 +39,7 @@ class MachineIO():
         Returns xrms, yrms, xrms_err, yrms_err
         """
         if self.online:
-            self.setquad(quad)
+            self.setquad(quad_val)
             time.sleep(self.settle_time)
         else:
             print("Not setting online values.")

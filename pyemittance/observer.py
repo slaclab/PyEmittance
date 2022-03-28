@@ -14,15 +14,18 @@ class Observer:
         self.use_prev_meas = True 
         self.tolerance = 0.1
 
-        # if using the surrogate model
-        self.use_model = True
-        self.get_beamsizes_model = None
         self.config = None
+        self.use_model = True
+        # if using the surrogate model
+        self.get_beamsizes_model = None
         self.add_noise = False
         self.noise_red = 100000
         
         # if using machine
         self.use_profmon = False
+        self.online = False
+        self.name = 'LCLS'
+        self.meas_type = 'OTRS'
 
     def measure_beam(self, quad_list):
         xrms = []
@@ -102,7 +105,7 @@ class Observer:
         
     def get_beamsizes(self, val):
         """Define where the beamsizes are acquired from"""
-        if self.use_model == True:
+        if self.use_model:
 
             if self.add_noise:
                 beamsizes = self.get_beamsizes_model(self.config, val)
@@ -114,7 +117,11 @@ class Observer:
 
             return self.get_beamsizes_model(self.config, val)
 
-        if self.use_model == False:
-            from pyemittance.beam_io import get_beamsizes_machine
-            return get_beamsizes_machine(val, self.use_profmon)
+        else:
+            from pyemittance.beam_io import MachineIO
+            io = MachineIO(self.name, self.meas_type)
+            io.online = self.online
+            io.use_profmon = self.use_profmon
+            # note we are not setting the injector on the machine here
+            return io.get_beamsizes_machine(val)
         
