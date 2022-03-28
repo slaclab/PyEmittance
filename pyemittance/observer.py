@@ -11,7 +11,7 @@ class Observer:
         self.quad_meas = quad_meas
         self.beam_meas = beam_meas
         self.beam_meas_err = beam_meas_err
-        self.use_prev_meas = True 
+        self.use_prev_meas = False
         self.tolerance = 0.1
 
         self.config = None
