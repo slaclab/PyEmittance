@@ -13,7 +13,7 @@ class MachineIO():
         self.name = name
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
-        self.online = True
+        self.online = False
         self.use_profmon = False
         self.settle_time = 3 # sleep time in seconds
 
@@ -33,13 +33,14 @@ class MachineIO():
             self.cq_cntrl_pv = PV(self.opt_pvs[1])
             self.sq_cntrl_pv = PV(self.opt_pvs[2])
 
-    def get_beamsizes_machine(self, quad_val):
+    def get_beamsizes_machine(self, config, quad_val):
         """Fn that pyemittance.observer calls
         Takes quad value as input,
         Returns xrms, yrms, xrms_err, yrms_err
         """
         if self.online:
             self.setquad(quad_val)
+            self.setinjector(config)
             time.sleep(self.settle_time)
         else:
             print("Not setting online values.")

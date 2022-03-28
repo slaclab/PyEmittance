@@ -126,5 +126,5 @@ class Observer:
             io.online = self.online
             io.use_profmon = self.use_profmon
             # note we are not setting the injector on the machine here
-            return io.get_beamsizes_machine(val)
+            return io.get_beamsizes_machine(self.config, val)
         

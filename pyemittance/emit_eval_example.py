@@ -4,7 +4,8 @@ from pyemittance.emittance_calc import EmitCalc
 
 # Sample emittance scan function for machine and injector surrogate
 
-def eval_emit_machine(quad_init = [-6, -4, -2, 0],
+def eval_emit_machine(config,
+                      quad_init = [-6, -4, -2, 0],
                       online = False,
                       name = 'LCLS',
                       meas_type = 'OTRS',
@@ -22,6 +23,7 @@ def eval_emit_machine(quad_init = [-6, -4, -2, 0],
     # get initial points from the observer
     o = Observer([], {'x': [], 'y': []}, {'x': [], 'y': []})
     o.use_model = False
+    o.config = config
     o.online = online
     o.name = name
     o.meas_type = meas_type
