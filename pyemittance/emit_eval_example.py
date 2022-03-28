@@ -31,9 +31,12 @@ def eval_emit_machine(quad_init = [-6, -4, -2, 0],
     # get initial beamsizes (rough scan)
     bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(quad_init)
 
+    quad_range_x = quad_init
+    quad_range_y = quad_init
+
     if adapt_ranges:
-        quad_range_x = adapt_range(quad_init, bs_x_list, 'x', w=bs_x_list_err, num_points=num_points)
-        quad_range_y = adapt_range(quad_init, bs_y_list, 'y', w=bs_y_list_err, num_points=num_points)
+        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, num_points=num_points)
+        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, num_points=num_points)
 
         new_beamsize_x = o.measure_beam(quad_range_x)
         bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
@@ -92,13 +95,15 @@ def eval_emit_machine(quad_init = [-6, -4, -2, 0],
     # get geom mean of normalized emittances
     ef.get_gmean_emit()
 
-    return ef.out_dict
+    total_points_measured = len(o.quad_meas)
+
+    return ef.out_dict, total_points_measured
 
 def eval_emit_surrogate(get_bs_model,
                         config,
                         quad_init = [-6, -4, -2, 0],
                         adapt_ranges = True,
-                        num_pnts = 7,
+                        num_points = 7,
                         check_sym = True,
                         infl_check = True,
                         add_pnts = True,
@@ -123,8 +128,8 @@ def eval_emit_surrogate(get_bs_model,
     quad_range_y = quad_init
 
     if adapt_ranges:
-        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, num_points=num_pnts)
-        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, num_points=num_pnts)
+        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, num_points=num_points)
+        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, num_points=num_points)
 
         new_beamsize_x = o.measure_beam(quad_range_x)
         bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
@@ -163,9 +168,9 @@ def eval_emit_surrogate(get_bs_model,
 
     if add_pnts:
         quad_range_x, bs_x_list, bs_x_list_err = add_measurements_btwn_pnts(quad_range_x, bs_x_list, bs_x_list_err,
-                                                                        num_pnts, 'x', bs_fn=o.measure_beam)
+                                                                        num_points, 'x', bs_fn=o.measure_beam)
         quad_range_y, bs_y_list, bs_y_list_err = add_measurements_btwn_pnts(quad_range_y, bs_y_list, bs_y_list_err,
-                                                                        num_pnts, 'y', bs_fn=o.measure_beam)
+                                                                        num_points, 'y', bs_fn=o.measure_beam)
 
     # finally get emittance
     ef = EmitCalc({'x': quad_range_x, 'y': quad_range_y},
@@ -181,4 +186,6 @@ def eval_emit_surrogate(get_bs_model,
     # get geom mean of normalized emittances
     ef.get_gmean_emit()
 
-    return ef.out_dict
+    total_points_measured = len(o.quad_meas)
+
+    return ef.out_dict, total_points_measured
