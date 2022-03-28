@@ -14,9 +14,8 @@ class EmitCalc:
 
         # Define some error on beamsizes in each dimension
         self.bs_error = (0.015, 0.015)
-        # Make sure error is added to beamsizes if one is provided
-        if beam_vals_err is None  or sum(beam_vals_err['x'])==0 or sum(beam_vals_err['y'])==0:
-            print(beam_vals_err)
+        # Make sure error is added to beamsizes if none is provided
+        if beam_vals_err is None or sum(beam_vals_err['x'])==0 or sum(beam_vals_err['y'])==0:
             self.beam_vals_err = {'x': np.asarray(self.beam_vals['x'])*self.bs_error[0],
                                   'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
         else:

@@ -11,7 +11,7 @@ def eval_emit_machine(quad_init = [-6, -4, -2, 0],
                       adapt_ranges = True,
                       num_points = 7,
                       check_sym = True,
-                      infl_chck = True,
+                      infl_check = True,
                       add_pnts = True,
                       show_plots = True,
                       use_prev_meas = True,
@@ -57,7 +57,7 @@ def eval_emit_machine(quad_init = [-6, -4, -2, 0],
             bs_y_list = add_points_y[1]
             bs_y_list_err = add_points_y[2]
 
-    if infl_chck:
+    if infl_check:
         left_x, right_x = find_inflection_pnt(quad_range_x, bs_x_list, show_plots=show_plots)
         left_y, right_y = find_inflection_pnt(quad_range_y, bs_y_list, show_plots=show_plots)
 
@@ -94,9 +94,9 @@ def eval_emit_surrogate(get_bs_model,
                         config,
                         quad_init = [-6, -4, -2, 0],
                         adapt_ranges = True,
-                        num_points = 7,
+                        num_pnts = 7,
                         check_sym = True,
-                        infl_chck = True,
+                        infl_check = True,
                         add_pnts = True,
                         show_plots = True):
 
@@ -111,17 +111,18 @@ def eval_emit_surrogate(get_bs_model,
     # get initial beamsizes (rough scan)
     bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(quad_init)
 
+    quad_range_x = quad_init
+    quad_range_y = quad_init
+
     if adapt_ranges:
-        quad_range_x = adapt_range(quad_init, bs_x_list, 'x', w=bs_x_list_err, num_points=num_points)
-        quad_range_y = adapt_range(quad_init, bs_y_list, 'y', w=bs_y_list_err, num_points=num_points)
+        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, num_points=num_pnts)
+        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, num_points=num_pnts)
 
         new_beamsize_x = o.measure_beam(quad_range_x)
         bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
+
         new_beamsize_y = o.measure_beam(quad_range_y)
         bs_y_list, bs_y_list_err = new_beamsize_y[1], new_beamsize_y[3]
-    else:
-        quad_range_x = quad_init
-        quad_range_y = quad_init
 
     if check_sym:
         add_points_x = check_symmetry(quad_range_x, bs_x_list, bs_x_list_err, 'x',
@@ -139,7 +140,7 @@ def eval_emit_surrogate(get_bs_model,
             bs_y_list = add_points_y[1]
             bs_y_list_err = add_points_y[2]
 
-    if infl_chck:
+    if infl_check:
         left_x, right_x = find_inflection_pnt(quad_range_x, bs_x_list, show_plots=show_plots)
         left_y, right_y = find_inflection_pnt(quad_range_y, bs_y_list, show_plots=show_plots)
 
@@ -154,9 +155,9 @@ def eval_emit_surrogate(get_bs_model,
 
     if add_pnts:
         quad_range_x, bs_x_list, bs_x_list_err = add_measurements_btwn_pnts(quad_range_x, bs_x_list, bs_x_list_err,
-                                                                        num_points, 'x', bs_fn=o.measure_beam)
+                                                                        num_pnts, 'x', bs_fn=o.measure_beam)
         quad_range_y, bs_y_list, bs_y_list_err = add_measurements_btwn_pnts(quad_range_y, bs_y_list, bs_y_list_err,
-                                                                        num_points, 'y', bs_fn=o.measure_beam)
+                                                                        num_pnts, 'y', bs_fn=o.measure_beam)
 
     # finally get emittance
     ef = EmitCalc({'x': quad_range_x, 'y': quad_range_y},

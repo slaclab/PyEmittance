@@ -156,7 +156,7 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     idx_err = 3 if axis == "y" else 2
     new_data = bs_fn(x_add)
     y_add, y_err_add = new_data[idx_size], new_data[idx_err]
-        
+
     # then append to existing dataset
     if add_to_side == "left":
         new_x_list = list(x_add) + list(x)
@@ -166,7 +166,7 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
         new_x_list = list(x) + list(x_add)
         new_y_list = list(y) + list(y_add)
         new_y_err_list = list(y_err) + list(y_err_add)
-            
+
     return new_x_list, new_y_list, new_y_err_list
 
 
