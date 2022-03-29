@@ -145,6 +145,13 @@ class Opt():
 
     def eval_simplex(self, x):
         emit, err = self.evaluate(x[0], x[1], x[2])
+        
+        # save simplex iterations
+        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
+        f = open(f"simplex_iter.txt", "a+")
+        f.write(f'{timestamp},{x[0]},{x[1]},{x[2]},{emit},{emit_err}\n')
+        f.close()
+            
         if err / emit > self.uncertainty_lim:
             return np.nan
         return -1 * self.evaluate(x[0], x[1], x[2])[0]
@@ -169,7 +176,7 @@ class Opt():
                                                                },
                                 )
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-        np.save(f'simplex_{timestamp}.npy', min["allvecs"], allow_pickle=True)
+        np.save(f'simplex_results_{timestamp}.npy', min["allvecs"], allow_pickle=True)
 
         return min
 

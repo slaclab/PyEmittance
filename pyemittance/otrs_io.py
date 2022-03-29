@@ -151,6 +151,7 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
             yrms_err = yrms_err * resolution
 
     if save_summary:
+        print("here")
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
 
         save_config(xrms, yrms, xrms_err, yrms_err, timestamp)

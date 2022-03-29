@@ -1,6 +1,7 @@
 import numpy as np
 from os import path, makedirs
-import errno
+from os.path import exists
+import errno, os
 import json
 import datetime
 
@@ -9,18 +10,24 @@ from epics import caget, caget_many
 this_dir, this_filename = path.split(__file__)
 CONFIG_PATH = path.join(this_dir, "configs")
 pv_savelist = json.load(open(CONFIG_PATH+'/save_scalar_pvs.json'))
-# Load info about where to put saving of raw images and summaries
 savepaths = json.load(open(CONFIG_PATH+'/savepaths.json'))
+opt_pv_info = json.load(open(CONFIG_PATH+'/opt_pv_info.json'))
+meas_pv_info = json.load(open(CONFIG_PATH+'/meas_pv_info.json'))
+
+meas_read_pv = meas_pv_info['meas_device']['pv']['read']
+opt_pvs = opt_pv_info['opt_vars']
+
 
 def mkdir_p(path):
     """Set up dirs for results in working dir"""
     try:
         makedirs(path)
     except OSError as exc:
-        if exc.errno == errno.EEXIST and path.isdir(path):
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:
             raise
+
 # Make directories if needed
 mkdir_p(savepaths['images'])
 mkdir_p(savepaths['summaries'])
@@ -101,7 +108,7 @@ def save_config(xrms, yrms, xrms_err, yrms_err, timestamp,
     varx_cur = caget(opt_pvs[0])
     vary_cur = caget(opt_pvs[1])
     varz_cur = caget(opt_pvs[2])
-    bact_cur = meas_read_pv.get()
+    bact_cur = caget(meas_read_pv)
     f.write(f"{timestamp},{varx_cur},{vary_cur},{varz_cur},"
             f"{bact_cur},{xrms},{yrms},{xrms_err},{yrms_err}\n")
 
