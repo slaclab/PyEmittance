@@ -85,16 +85,20 @@ class EmitCalc:
             bs = self.beam_vals[dim]
             bs_err = self.beam_vals_err[dim]
 
+            # Storing quadvals and beamsizes in self.out_dict for plotting purposes
+            self.out_dict[f'quadvals{dim}'] = q
+            self.out_dict[f'beamsizes{dim}'] = bs
+
             weights = self.weighting_func(bs, bs_err) # 1/sigma
 
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
                                                 calc_bmag=self.calc_bmag,
                                                 plot=self.plot, verbose=self.verbose)
             if np.isnan(res[0]):
-                self.out_dict[f'nemit{dim}'] = np.nan
-                self.out_dict[f'nemit{dim}_err'] = np.nan
-                self.out_dict[f'bmag{dim}'] = np.nan
-                self.out_dict[f'bmag{dim}_err'] = np.nan
+                self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
+                self.out_dict['nemitx_err'], self.out_dict['nemity_err'] = np.nan, np.nan
+                self.out_dict['bmagx'], self.out_dict['bmagy'] = np.nan, np.nan
+                self.out_dict['bmagx_err'], self.out_dict['bmagy_err'] = np.nan, np.nan
                 return self.out_dict
             else:
                 emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
