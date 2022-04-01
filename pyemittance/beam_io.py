@@ -24,14 +24,14 @@ class MachineIO():
         self.meas_pv_info = json.load(open(self.CONFIG_PATH + '/meas_pv_info.json'))
 
         self.meas_read_pv = PV(self.meas_pv_info['meas_device']['pv']['read'])
-        if self.online:
-            # load info about settings to optimize
-            self.opt_pv_info = json.load(open(self.CONFIG_PATH + '/opt_pv_info.json'))
-            self.opt_pvs = self.opt_pv_info['opt_vars']
-            self.meas_cntrl_pv = PV(self.meas_pv_info['meas_device']['pv']['cntrl'])
-            self.sol_cntrl_pv = PV(self.opt_pvs[0])
-            self.cq_cntrl_pv = PV(self.opt_pvs[1])
-            self.sq_cntrl_pv = PV(self.opt_pvs[2])
+        #if self.online:
+        # load info about settings to optimize
+        self.opt_pv_info = json.load(open(self.CONFIG_PATH + '/opt_pv_info.json'))
+        self.opt_pvs = self.opt_pv_info['opt_vars']
+        self.meas_cntrl_pv = PV(self.meas_pv_info['meas_device']['pv']['cntrl'])
+        self.sol_cntrl_pv = PV(self.opt_pvs[0])
+        self.cq_cntrl_pv = PV(self.opt_pvs[1])
+        self.sq_cntrl_pv = PV(self.opt_pvs[2])
 
     def get_beamsizes_machine(self, config, quad_val):
         """Fn that pyemittance.observer calls

@@ -24,12 +24,11 @@ def get_beamsizes_wire(online=False, save_summary=True):
     Returns xrms, yrms, xrms_err, yrms_err
     """
     # run wire scans
-    get_beamsize('x', online=online)
-    get_beamsize('y', online=online)
+    get_beamsize(online=online)
     
     # read in PVs 
-    xrms = x_size_pv.get()
-    yrms = y_size_pv.get()
+    xrms = x_size_pv.get()*1e-6
+    yrms = y_size_pv.get()*1e-6
     # add some error estimate
     xrms_err = xrms*0.02
     yrms_err = yrms*0.02
@@ -41,12 +40,16 @@ def get_beamsizes_wire(online=False, save_summary=True):
     
     return xrms, yrms, xrms_err, yrms_err
 
-def get_beamsize(axis, online):
+def get_beamsize(online):
     if online:
-        if axis =='x':
-            scan_pv.put(1)
-        elif axis == 'y':
-            scan_pv.put(2)
-        while scan_pv.get()!= 0:
-            time.sleep(5)
-            
+        scan_pv.put(1)
+        time.sleep(1)  
+        
+        status = scan_pv.get()
+        if  status == 2:
+            while scan_pv.get()!= 0:
+                time.sleep(5) 
+            time.sleep(3) # to not break the wire scanner
+             
+        else: 
+            print(f"WS did not run. Status {status}.")
