@@ -245,7 +245,7 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, e
         plt.errorbar(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
 
         plt.xlabel('B (kG)')
-        plt.ylabel(f'sizes (m)')
+        plt.ylabel(f'Beam size (m)')
         plt.legend()
         plt.show()
         plt.close()
