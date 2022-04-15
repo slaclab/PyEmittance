@@ -24,7 +24,7 @@ class Observer:
         # if using machine
         self.use_profmon = False
         self.online = False
-        self.name = 'LCLS'
+        self.name = 'sim'
         self.meas_type = 'OTRS'
 
     def measure_beam(self, quad_list):
