@@ -85,7 +85,6 @@ def numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp=False,
                path=savepaths['raw_saves']):
     ts = isotime()
     x = caget_many(savelist)
-    x.append(ts)
     if timestamp:
         x.append(timestamp)
     else:
@@ -95,14 +94,18 @@ def numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp=False,
     x.append(xrms_err)
     x.append(yrms_err)
 
-    np.save(path + ts + '_x_.npy', np.array(x))
+    np.save(path + ts + '_pv_bs_data_.npy', np.array(x))
 
 
 def save_config(xrms, yrms, xrms_err, yrms_err, timestamp,
                 config_path=savepaths['summaries'],
                  im=None,
                 impath=savepaths['images']):
-    f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
+    if timestamp is None:
+        f = open(savepaths['summaries'] + "bax_beamsize_config_info.csv", "a+")
+        timestamp = isotime()
+    else:
+        f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
 
     # todo make more general, pandas etc
     varx_cur = caget(opt_pvs[0])
