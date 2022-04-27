@@ -6,7 +6,7 @@ from scipy import optimize
 
 from pyemittance.emit_eval_example import eval_emit_machine
 
-class Opt():
+class Opt:
     def __init__(self, init_scan=[-6, -4, -2, 0]):
         self.energy = 0.135
         self.varscan = init_scan
@@ -17,13 +17,15 @@ class Opt():
         self.online = False
         self.uncertainty_lim = 0.25
         self.timestamp = None
+        self.total_num_points = 0
+        self.seed = 12
 
     def evaluate(self, varx, vary, varz):
         # fixed initial varscan
         quad_init = self.varscan
         config = [varx, vary, varz]
 
-        out_dict, total_num_points = eval_emit_machine(config,
+        out_dict, self.total_num_points = eval_emit_machine(config,
                                                        quad_init=list(quad_init),
                                                        online=self.online,
                                                        name='LCLS',
@@ -39,8 +41,13 @@ class Opt():
                                                        save_runs=self.save_runs,
                                                        calc_bmag=True)
 
-        emit = out_dict['nemit'] / 1e-6
-        emit_err = out_dict['nemit_err'] / 1e-6
+        return out_dict
+
+    def evaluate_bo(self, varx, vary, varz):
+        out_dict = self.evaluate(varx, vary, varz)
+
+        emit = out_dict['nemit']
+        emit_err = out_dict['nemit_err']
 
         if np.isnan(emit):
             print("NaN emit")
@@ -56,6 +63,8 @@ class Opt():
         return -emit, -emit_err  # in um
 
     def run_bo_opt_w_reject(self, rnd_state=11, init_pnts=3, n_iter=120):
+        np.random.seed(self.seed)
+
         # Set domain
         bounds = {'varx': self.pbounds[0], 'vary': self.pbounds[1], 'varz': self.pbounds[2]}
 
@@ -84,7 +93,7 @@ class Opt():
                    np.random.uniform(self.pbounds[2][0], self.pbounds[2][1])]
             emit_res = self.evaluate(x_i[0], x_i[1], x_i[2])
 
-            if not np.isnan(emit_res[0]) and not np.isnan(emit_res[1]) and abs(emit_res[0]) > 0.58:
+            if not np.isnan(emit_res[0]) and not np.isnan(emit_res[1]):# and abs(emit_res[0]) > 58e-8:
                 # take large init emittances
                 x.append(x_i)
                 emit_list.append(emit_res[0])
@@ -110,7 +119,7 @@ class Opt():
                 color = '\u001b[30m', '\033[0m'
 
             print(
-                f"{color[0]}iter {i} | target {-1 * target:.3f} | config {next_point['varx']:.6f} "
+                f"{color[0]}iter {i} | target {-1 * target/1e-6:.3f} | config {next_point['varx']:.6f} "
                 f"{next_point['vary']:.6f} {next_point['varz']:.6f}{color[1]}")
             target_list.append(target)
 
@@ -128,35 +137,47 @@ class Opt():
                 color = '\u001b[30m', '\033[0m'
 
             print(
-                f"{color[0]}iter {i} | target {-1 * target:.3f} | config {next_point['varx']:.6f}"
+                f"{color[0]}iter {i} | target {-1 * target/1e-6:.3f} | config {next_point['varx']:.6f}"
                 f" {next_point['vary']:.6f} {next_point['varz']:.6f}{color[1]}")
             emit_list.append(target)
             emit_err_list.append(error)
             target_list.append(target)
 
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-        emit_total = emit_list + emit_err_list
-        np.save(f'results_bo/bo_opt_res_emit_list_{rnd_state}_{init_pnts}_{n_iter}_{timestamp}.npy', emit_total,
+
+        np.save(f'bo_opt_res_emit_list_{rnd_state}_{init_pnts}_{n_iter}_{timestamp}.npy', emit_list,
                 allow_pickle=True)
-        np.save(f'results_bo/optimizer_res/bo_opt_res_{rnd_state}_{init_pnts}_{n_iter}_{timestamp}.npy', optimizer.res,
+        np.save(f'bo_opt_res_emit_err_list_{rnd_state}_{init_pnts}_{n_iter}_{timestamp}.npy', emit_err_list,
+                allow_pickle=True)
+        np.save(f'bo_opt_res_{rnd_state}_{init_pnts}_{n_iter}_{timestamp}.npy', optimizer.res,
                 allow_pickle=True)
 
         return optimizer
 
     def eval_simplex(self, x):
-        emit, err = self.evaluate(x[0], x[1], x[2])
-        
-        # save simplex iterations
+        out_dict = self.evaluate(x[0], x[1], x[2])
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-        f = open(f"simplex_iter.txt", "a+")
-        f.write(f'{timestamp},{x[0]},{x[1]},{x[2]},{emit},{emit_err}\n')
+
+        emit = out_dict['nemit']
+        err = out_dict['nemit_err']
+        
+        if np.isnan(emit) or (err / emit > self.uncertainty_lim):
+            print("NaN or high uncertainty emittance, returning 100.")
+            f = open(f"simplex_run.txt", "a+")
+            f.write(f'{timestamp},{x[0]},{x[1]},{x[2]},{np.nan},{np.nan}\n')
+            f.close()
+            return 100
+
+        f = open(f"simplex_run.txt", "a+")
+        f.write(f'{timestamp},{x[0]},{x[1]},{x[2]},{emit},{err}\n')
         f.close()
-            
-        if err / emit > self.uncertainty_lim:
-            return np.nan
-        return -1 * self.evaluate(x[0], x[1], x[2])[0]
+
+        return emit
 
     def run_simplex_opt(self, max_iter):
+
+        np.random.seed(self.seed)
+
         initial_guess = np.array(
             [np.random.uniform(self.pbounds[0][0], self.pbounds[0][1]),
              np.random.uniform(self.pbounds[1][0], self.pbounds[1][1]),
@@ -176,7 +197,11 @@ class Opt():
                                                                },
                                 )
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-        np.save(f'simplex_results_{timestamp}.npy', min["allvecs"], allow_pickle=True)
+        np.save(f'simplex_allvecs_{timestamp}.npy', min["allvecs"], allow_pickle=True)
+
+        f = open(f"simplex_allres_{timestamp}.txt", "a+")
+        f.write(min)
+        f.close()
 
         return min
 
@@ -200,3 +225,51 @@ class Opt():
                            )
 
         return optimizer
+
+    def run_simplex_opt_norm(self, max_iter):
+        np.random.seed(self.seed)
+
+        # below code based on Badger implementation of simplex for the ACR
+
+        # vars init values
+        x0 = [0.46875,
+              (self.pbounds[1][0] + self.pbounds[1][1]) / 2,
+              (self.pbounds[2][0] + self.pbounds[2][1]) / 2
+              ]
+        # lower bounds
+        lb = [self.pbounds[0][0], self.pbounds[1][0], self.pbounds[2][0]]
+        # upper bounds
+        ub = [self.pbounds[0][1], self.pbounds[1][1], self.pbounds[2][1]]
+        # normalization coeff
+        gain = 0.3
+        # tolerance
+        xtol = 1e-9
+
+        # Convert (possible) list to array
+        x0 = np.array(x0)
+        lb = np.array(lb)
+        ub = np.array(ub)
+
+        x0_raw = lb + x0 * (ub - lb)
+        mu = x0_raw - gain * np.sqrt(np.abs(x0_raw))
+        sigma = np.sqrt(np.abs(mu))
+
+        x0_n = (x0_raw - mu) / sigma  # normalized x0
+
+        def _evaluate(x_n):
+            x_n = np.array(x_n)
+            x_raw = mu + sigma * x_n  # denormalization from Ocelot
+            x = (x_raw - lb) / (ub - lb)  # normalization for Badger
+            y = self.eval_simplex(x)
+
+            return y
+
+        res = optimize.fmin(_evaluate, x0_n, maxiter=max_iter, maxfun=max_iter, xtol=xtol, retall=True,
+                            full_output=True)
+
+        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
+        f = open(f"simplex_allres_{timestamp}.txt", "a+")
+        f.write(res)
+        f.close()
+
+        return res
