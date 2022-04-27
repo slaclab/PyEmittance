@@ -6,6 +6,8 @@ import time
 from epics import PV
 from pyemittance.otrs_io import get_beamsizes_otrs
 from pyemittance.wire_io import get_beamsizes_wire
+from pyemittance.saving_io import save_config
+
 
 class MachineIO():
     """Class for handling all machine I/O"""
@@ -82,4 +84,6 @@ class MachineIO():
         Returns xrms and yrms in [m]
         """            
         beamsize = self.get_beamsizes_machine(set_list, quad)
+        # save BAX beam size data
+        save_config(beamsize[0], beamsize[1], beamsize[2], beamsize[3], None)
         return np.array([beamsize[0], beamsize[1]])

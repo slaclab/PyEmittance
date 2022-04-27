@@ -5,7 +5,7 @@ import time
 import datetime
 
 from epics import PV
-from pyemittance.saving_io import save_config, numpy_save
+from pyemittance.saving_io import numpy_save, save_config
 
 
 this_dir, this_filename = path.split(__file__)

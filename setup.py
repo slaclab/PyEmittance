@@ -9,7 +9,7 @@ with open(path.join(cur_dir, 'requirements.txt'), 'r') as f:
 
 setup(
     name='pyemittance',
-    version='v0.1.1',
+    version='v0.2.1',
     author='Sara Miskovich',
     author_email='smiskov@slac.stanford.edu',
     packages=find_packages(),

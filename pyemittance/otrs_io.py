@@ -6,7 +6,7 @@ import datetime
 
 from epics import caget, PV
 from pyemittance.image import Image
-from pyemittance.saving_io import save_image, save_config, numpy_save
+from pyemittance.saving_io import save_image, numpy_save, save_config
 
 
 this_dir, this_filename = path.split(__file__)
@@ -151,9 +151,7 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
             yrms_err = yrms_err * resolution
 
     if save_summary:
-        print("here")
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-
         save_config(xrms, yrms, xrms_err, yrms_err, timestamp)
         numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp)
 
