@@ -7,11 +7,12 @@ from scipy import optimize
 from pyemittance.emit_eval_example import eval_emit_surrogate
 from lcls_functions import Lcls
 
+
 class Opt:
-    def __init__(self, init_scan=np.linspace(-6, 0, 10), bsfn=None):
+    def __init__(self, init_scan=np.linspace(-6, 0, 4), bsfn=None):
         self.energy = 0.135
         self.varscan = init_scan
-        self.num_points_adapt = 15
+        self.num_points_adapt = 7
         self.pbounds = ((0.46, 0.485), (-0.01, 0.01), (-0.01, 0.01))
         self.plot = False
         self.bsfn = None
@@ -77,8 +78,8 @@ class Opt:
         if emit_err / emit < self.uncertainty_lim:
             # save total number of points added
             timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-            f = open(f"bo_points_added_iter_10_15_noisy.txt", "a+")
-            f.write(f'{timestamp},{self.total_num_points},{emit},{emit_err}\n')
+            f = open(f"bo_noisy_seed_{self.seed}.txt", "a+")
+            f.write(f'{varx},{vary},{varz},{emit},{emit_err},{self.total_num_points},{timestamp}\n')
             f.close()
 
         return -emit, -emit_err  # in um
@@ -174,19 +175,20 @@ class Opt:
 
     def eval_simplex(self, x):
         out_dict = self.evaluate(x[0], x[1], x[2])
+        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
 
         emit = out_dict['nemit']
         err = out_dict['nemit_err']
 
         if np.isnan(emit) or (err / emit > self.uncertainty_lim):
             print("NaN emit")
-            f = open(f"./simplex_x0_046875_gain_0_3/simplex_noisy_seed_{self.seed}.txt", "a+")
-            f.write(f'{x[0]},{x[1]},{x[2]},{np.nan},{np.nan}\n')
+            f = open(f"simplex_noisy_seed_{self.seed}.txt", "a+")
+            f.write(f'{x[0]},{x[1]},{x[2]},{np.nan},{np.nan},{self.total_num_points},{timestamp}\n')
             f.close()
             return 100
 
-        f = open(f"./simplex_x0_046875_gain_0_3/simplex_noisy_seed_{self.seed}.txt", "a+")
-        f.write(f'{x[0]},{x[1]},{x[2]},{emit},{err}\n')
+        f = open(f"simplex_noisy_seed_{self.seed}.txt", "a+")
+        f.write(f'{x[0]},{x[1]},{x[2]},{emit},{err},{self.total_num_points},{timestamp}\n')
         f.close()
 
         return emit
@@ -251,13 +253,15 @@ class Opt:
         # below code based on Badger implementation of simplex for the ACR
 
         # vars init values
-        x0 = [0.46875, (self.pbounds[1][0] + self.pbounds[1][1]) / 2, (self.pbounds[2][0] + self.pbounds[2][1]) / 2]
+        # x0 = [0.46875, (self.pbounds[1][0] + self.pbounds[1][1]) / 2, (self.pbounds[2][0] + self.pbounds[2][1]) / 2]
+        # ref point from sim
+        x0 = [0.4779693455075814, -0.001499227120199691, -0.0006872989433749197]
         # lower bounds
         lb = [self.pbounds[0][0], self.pbounds[1][0], self.pbounds[2][0]]
         # upper bounds
         ub = [self.pbounds[0][1], self.pbounds[1][1], self.pbounds[2][1]]
         # normalization coeff
-        gain = 0.3
+        gain = 1.8
         # tolerance
         xtol = 1e-9
 
@@ -283,9 +287,6 @@ class Opt:
         res = optimize.fmin(_evaluate, x0_n, maxiter=max_iter, maxfun=max_iter, xtol=xtol, retall=True,
                             full_output=True)
 
-        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-        f = open(f"simplex_allres_{timestamp}.txt", "a+")
-        f.write(res)
-        f.close()
+        print(res)
 
         return res
