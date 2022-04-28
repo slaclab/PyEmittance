@@ -57,7 +57,7 @@ class Opt:
             # save total number of points added
             timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
             f = open(f"bo_points_meas_iter.txt", "a+")
-            f.write(f'{timestamp},{total_num_points},{emit},{emit_err}\n')
+            f.write(f'{varx},{vary},{varz},{emit},{emit_err},{self.total_num_points},{timestamp}\n')
             f.close()
 
         return -emit, -emit_err  # in um
@@ -164,12 +164,12 @@ class Opt:
         if np.isnan(emit) or (err / emit > self.uncertainty_lim):
             print("NaN or high uncertainty emittance, returning 100.")
             f = open(f"simplex_run.txt", "a+")
-            f.write(f'{timestamp},{x[0]},{x[1]},{x[2]},{np.nan},{np.nan}\n')
+            f.write(f'{x[0]},{x[1]},{x[2]},{np.nan},{np.nan},{self.total_num_points},{timestamp}\n')
             f.close()
             return 100
 
         f = open(f"simplex_run.txt", "a+")
-        f.write(f'{timestamp},{x[0]},{x[1]},{x[2]},{emit},{err}\n')
+        f.write(f'{x[0]},{x[1]},{x[2]},{emit},{err},{self.total_num_points},{timestamp}\n')
         f.close()
 
         return emit
@@ -267,9 +267,6 @@ class Opt:
         res = optimize.fmin(_evaluate, x0_n, maxiter=max_iter, maxfun=max_iter, xtol=xtol, retall=True,
                             full_output=True)
 
-        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-        f = open(f"simplex_allres_{timestamp}.txt", "a+")
-        f.write(res)
-        f.close()
+        print(res)
 
         return res
