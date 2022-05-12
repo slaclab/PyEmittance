@@ -193,7 +193,7 @@ class Opt:
         min = optimize.minimize(self.eval_simplex, initial_guess,
                                 method='Nelder-Mead', options={'maxiter': max_iter,
                                                                'return_all': True,
-                                                               'adaptive': True
+                                                               'adaptive': True,
                                                                'fatol': 0.1 * 0.75,
                                                                'xatol': 0.00001
                                                                },
