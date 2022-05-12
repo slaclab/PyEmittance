@@ -82,7 +82,7 @@ class Opt:
             f.write(f'{varx},{vary},{varz},{emit},{emit_err},{self.total_num_points},{timestamp}\n')
             f.close()
 
-        return -emit, -emit_err  # in um
+        return -emit, -emit_err
 
     def run_bo_opt_w_reject(self, rnd_state=11, init_pnts=3, n_iter=200):
         np.random.seed(self.seed)

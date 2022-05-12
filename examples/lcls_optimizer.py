@@ -37,7 +37,7 @@ class Opt:
                                                        add_pnts=True,
                                                        show_plots=self.plot,
                                                        use_prev_meas=True,
-                                                       quad_tol=0.1,
+                                                       quad_tol=0.02,
                                                        save_runs=self.save_runs,
                                                        calc_bmag=True)
 
@@ -60,7 +60,7 @@ class Opt:
             f.write(f'{varx},{vary},{varz},{emit},{emit_err},{self.total_num_points},{timestamp}\n')
             f.close()
 
-        return -emit, -emit_err  # in um
+        return -emit, -emit_err
 
     def run_bo_opt_w_reject(self, rnd_state=11, init_pnts=3, n_iter=120):
         np.random.seed(self.seed)
@@ -194,6 +194,8 @@ class Opt:
                                 method='Nelder-Mead', options={'maxiter': max_iter,
                                                                'return_all': True,
                                                                'adaptive': True
+                                                               'fatol': 0.1 * 0.75,
+                                                               'xatol': 0.00001
                                                                },
                                 )
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -232,16 +234,16 @@ class Opt:
         # below code based on Badger implementation of simplex for the ACR
 
         # vars init values
-        x0 = [0.46875,
-              (self.pbounds[1][0] + self.pbounds[1][1]) / 2,
-              (self.pbounds[2][0] + self.pbounds[2][1]) / 2
-              ]
+        x0 = [np.random.uniform(self.pbounds[0][0], self.pbounds[0][1]),
+             np.random.uniform(self.pbounds[1][0], self.pbounds[1][1]),
+             np.random.uniform(self.pbounds[2][0], self.pbounds[2][1])
+             ]
         # lower bounds
         lb = [self.pbounds[0][0], self.pbounds[1][0], self.pbounds[2][0]]
         # upper bounds
         ub = [self.pbounds[0][1], self.pbounds[1][1], self.pbounds[2][1]]
         # normalization coeff
-        gain = 0.3
+        gain = 4
         # tolerance
         xtol = 1e-9
 
