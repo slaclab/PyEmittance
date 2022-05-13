@@ -153,6 +153,17 @@ class EmitCalc:
 
             self.out_dict['nemit'] = nemit
             self.out_dict['nemit_err'] = nemit_err
+            
+            if self.out_dict['bmagx'] is not None and self.out_dict['bmagy'] is not None:
+                nbmag = np.sqrt( self.out_dict['bmagx'] * self.out_dict['bmagy'] )
+                bmag_emit_err = nemit*nbmag * ( 
+                    (self.out_dict['nemitx_err']/self.out_dict['nemitx'])**2 +
+                    (self.out_dict['nemity_err']/self.out_dict['nemity'])**2 +
+                    (self.out_dict['bmagx_err']/self.out_dict['bmagx'])**2 +
+                    (self.out_dict['bmagy_err']/self.out_dict['bmagy'])**2)**0.5
+
+                self.out_dict['bmag_emit'] = nemit * nbmag 
+                self.out_dict['bmag_emit_err'] = bmag_emit_err
 
         except TypeError:
             self.out_dict['nemit'] = None

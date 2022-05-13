@@ -16,7 +16,7 @@ def eval_emit_machine(config,
                       add_pnts = True,
                       show_plots = False,
                       use_prev_meas = True,
-                      quad_tol = 0.1,
+                      quad_tol = 0.05,
                       save_runs = False,
                       calc_bmag = False):
 

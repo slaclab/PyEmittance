@@ -4,8 +4,6 @@ import json
 import time
 
 from epics import PV
-from pyemittance.otrs_io import get_beamsizes_otrs
-from pyemittance.wire_io import get_beamsizes_wire
 from pyemittance.saving_io import save_config
 
 
@@ -49,9 +47,11 @@ class MachineIO():
             print("Not setting online values.")
 
         if self.meas_type == 'OTRS':
+            from pyemittance.otrs_io import get_beamsizes_otrs
             return get_beamsizes_otrs(self.use_profmon)
 
         elif self.meas_type == 'WIRE':
+            from pyemittance.wire_io import get_beamsizes_wire
             if self.online:
                 return get_beamsizes_wire(self.online)
             else:
