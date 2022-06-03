@@ -253,21 +253,33 @@ def find_inflection_pnt(x, y, show_plots=True):
         from numpy.polynomial import polynomial as P
 
         x_fit = np.linspace(np.min(x), np.max(x), 50)
+
         # original polynomial for visuals
         c, stats = P.polyfit(x, y, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit,c))
-        # updated polynomial for visuals
-        c, stats = P.polyfit(x_new, y_new, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c), color="blue", linestyle="--")
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='black')
+
+        plt.scatter(x, np.asarray(y) / 1e-12, color='black', label='Data')
+
         # remove nones from infls
-        infls  = filter(None, infls)
+        infls = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
-            plt.axvline(x=x[infl], color='gray', label=f'Inflection Point {i}', linestyle="--" )
-        plt.scatter(x, y)
-        plt.scatter(x_new, y_new, color="blue", label="Use")
-        plt.ylim(None, np.max(y)*1.3)
+            if i == 1:
+                plt.axvline(x=x[infl], color='gray', label=f'Inflection Point', linestyle="--")
+            else:
+                plt.axvline(x=x[infl], color='gray', linestyle="--")
+
+        # updated polynomial for visuals
+        c, stats = P.polyfit(x_new, y_new, 2, full=True)
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='C0', linestyle="--")
+
+        plt.scatter(x_new, y_new / 1e-12, color="C0", label="Use")
+
+        plt.ylim(None, np.max(y) * 1.3 / 1e-12)
+        plt.xlabel('Quadrupole Strength (kG)')
+        plt.ylabel(r'Beam Size Squared ($\mu$m$^2$)')
         plt.legend()
+        #plt.savefig("infl_fit.png", dpi=100)
         plt.show()
         plt.close()
 

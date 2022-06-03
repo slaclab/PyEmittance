@@ -239,14 +239,15 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, e
     if plot:
         # Plot the data
         quad = get_quad_field(kLlist / Lquad)
-        plt.errorbar(quad, sizes, yerr=sizes_err, fmt='o', label=f'Measurements')
+        plt.errorbar(quad, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
 
         # Model prediction
-        plt.errorbar(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
+        plt.errorbar(quad, np.sqrt(s11_screen)/1e-6, marker='.', label=f'Model')
 
-        plt.xlabel('B (kG)')
-        plt.ylabel(f'Beam size (m)')
+        plt.xlabel('Quadrupole Strength (kG)')
+        plt.ylabel(r'Beam Size ($\mu$m)')
         plt.legend()
+        #plt.savefig("emit_fit.png", dpi=100)
         plt.show()
         plt.close()
 
