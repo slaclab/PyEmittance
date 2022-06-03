@@ -43,10 +43,11 @@ def adapt_range(x, y, axis, w=None, energy=0.135, cutoff_percent=0.3,
     min_x, max_x = x.min(), x.max()
 
     # we need a poly fit here to find roots, poly_ylim, etc
-    fit_coefs, fit_cov = curve_fit(func, x, y ** 2, sigma=w, absolute_sigma=True, method='trf')
+    y_squared = y*y
+    fit_coefs, fit_cov = curve_fit(func, x, y_squared)
 
     # space over which to fit
-    x_fit = np.linspace(min_x, max_x, 100)
+    x_fit = np.linspace(min_x, max_x, 25)
 
     # no more restrictions on quad vals, just staying within
     # the region already scanned (can increase this if need be)
@@ -170,11 +171,12 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     return new_x_list, new_y_list, new_y_err_list
 
 
-def find_inflection_pnt(x, y, show_plots=True):
+def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
     """Find inflection points in curve and remove
     points outside of convex region around min"""
 
-    y = np.array(y)**2 # since we are fitting sizes**2
+    y = np.array(y)
+    y = y*y # since we are fitting sizes**2
 
     # compute second derivative
     y_d2 = np.gradient(np.gradient(y))
@@ -251,21 +253,37 @@ def find_inflection_pnt(x, y, show_plots=True):
         from numpy.polynomial import polynomial as P
 
         x_fit = np.linspace(np.min(x), np.max(x), 50)
+
         # original polynomial for visuals
         c, stats = P.polyfit(x, y, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit,c))
-        # updated polynomial for visuals
-        c, stats = P.polyfit(x_new, y_new, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c), color="blue", linestyle="--")
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='gray', linestyle="--")
+
+        plt.scatter(x, np.asarray(y) / 1e-12, color='gray', label='Data')
+
         # remove nones from infls
-        infls  = filter(None, infls)
+        infls = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
-            plt.axvline(x=x[infl], color='gray', label=f'Inflection Point {i}', linestyle="--" )
-        plt.scatter(x, y)
-        plt.scatter(x_new, y_new, color="blue", label="Use")
-        plt.ylim(None, np.max(y)*1.3)
+            if i == 1:
+                plt.axvline(x=x[infl], color='black', label=f'Inflection Point', linestyle="--")
+            else:
+                plt.axvline(x=x[infl], color='black', linestyle="--")
+
+        # updated polynomial for visuals
+        c, stats = P.polyfit(x_new, y_new, 2, full=True)
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='C0', linestyle="--")
+
+        plt.scatter(x_new, y_new / 1e-12, color="C0", label="Use")
+
+        plt.ylim(None, np.max(y) * 1.3 / 1e-12)
+        plt.xlabel('Quadrupole Strength (kG)')
+        plt.ylabel(r'Beam Size Squared ($\mu$m$^2$)')
         plt.legend()
+
+        if save_plots:
+            import datetime
+            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+            plt.savefig(f"infl_fit_{timestamp}.png", dpi=100)
         plt.show()
         plt.close()
 
@@ -339,7 +357,7 @@ def func(x, a, b, c):
     :param c: zeroth deg coeff
     :return: f(x)
     """
-    return a*x**2 + b*x + c
+    return a*x*x + b*x + c
 
 class ComplexRootError(Exception):
     """
