@@ -219,7 +219,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
 
     return [emit, emit_err, beta_err/beta, alpha_err/alpha]
 
-def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, emit, plot):
+def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err,
+                        emit, plot, save_plot=False):
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
 
@@ -247,7 +248,11 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, e
         plt.xlabel('Quadrupole Strength (kG)')
         plt.ylabel(r'Beam Size ($\mu$m)')
         plt.legend()
-        #plt.savefig("emit_fit.png", dpi=100)
+
+        if save_plot:
+            import datetime
+            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+            plt.savefig(f"emit_fit_{timestamp}.png", dpi=100)
         plt.show()
         plt.close()
 

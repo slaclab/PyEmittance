@@ -171,7 +171,7 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     return new_x_list, new_y_list, new_y_err_list
 
 
-def find_inflection_pnt(x, y, show_plots=True):
+def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
     """Find inflection points in curve and remove
     points outside of convex region around min"""
 
@@ -256,18 +256,18 @@ def find_inflection_pnt(x, y, show_plots=True):
 
         # original polynomial for visuals
         c, stats = P.polyfit(x, y, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='black')
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='gray', linestyle="--")
 
-        plt.scatter(x, np.asarray(y) / 1e-12, color='black', label='Data')
+        plt.scatter(x, np.asarray(y) / 1e-12, color='gray', label='Data')
 
         # remove nones from infls
         infls = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
             if i == 1:
-                plt.axvline(x=x[infl], color='gray', label=f'Inflection Point', linestyle="--")
+                plt.axvline(x=x[infl], color='black', label=f'Inflection Point', linestyle="--")
             else:
-                plt.axvline(x=x[infl], color='gray', linestyle="--")
+                plt.axvline(x=x[infl], color='black', linestyle="--")
 
         # updated polynomial for visuals
         c, stats = P.polyfit(x_new, y_new, 2, full=True)
@@ -279,7 +279,11 @@ def find_inflection_pnt(x, y, show_plots=True):
         plt.xlabel('Quadrupole Strength (kG)')
         plt.ylabel(r'Beam Size Squared ($\mu$m$^2$)')
         plt.legend()
-        #plt.savefig("infl_fit.png", dpi=100)
+
+        if save_plots:
+            import datetime
+            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+            plt.savefig(f"infl_fit_{timestamp}.png", dpi=100)
         plt.show()
         plt.close()
 
