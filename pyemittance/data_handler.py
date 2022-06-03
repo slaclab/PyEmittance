@@ -43,10 +43,11 @@ def adapt_range(x, y, axis, w=None, energy=0.135, cutoff_percent=0.3,
     min_x, max_x = x.min(), x.max()
 
     # we need a poly fit here to find roots, poly_ylim, etc
-    fit_coefs, fit_cov = curve_fit(func, x, y ** 2, sigma=w, absolute_sigma=True, method='trf')
+    y_squared = y*y
+    fit_coefs, fit_cov = curve_fit(func, x, y_squared)
 
     # space over which to fit
-    x_fit = np.linspace(min_x, max_x, 100)
+    x_fit = np.linspace(min_x, max_x, 25)
 
     # no more restrictions on quad vals, just staying within
     # the region already scanned (can increase this if need be)
@@ -174,7 +175,8 @@ def find_inflection_pnt(x, y, show_plots=True):
     """Find inflection points in curve and remove
     points outside of convex region around min"""
 
-    y = np.array(y)**2 # since we are fitting sizes**2
+    y = np.array(y)
+    y = y*y # since we are fitting sizes**2
 
     # compute second derivative
     y_d2 = np.gradient(np.gradient(y))
@@ -339,7 +341,7 @@ def func(x, a, b, c):
     :param c: zeroth deg coeff
     :return: f(x)
     """
-    return a*x**2 + b*x + c
+    return a*x*x + b*x + c
 
 class ComplexRootError(Exception):
     """

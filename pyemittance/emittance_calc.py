@@ -91,9 +91,17 @@ class EmitCalc:
 
             weights = self.weighting_func(bs, bs_err) # 1/sigma
 
+            from line_profiler import LineProfiler
+
+            lp = LineProfiler()
+            lp_wrapper = lp(estimate_sigma_mat_thick_quad)
+            lp_wrapper(bs, kL, bs_err, weights,calc_bmag=self.calc_bmag,plot=self.plot, verbose=self.verbose)
+            lp.print_stats()
+
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
                                                 calc_bmag=self.calc_bmag,
                                                 plot=self.plot, verbose=self.verbose)
+
             if np.isnan(res[0]):
                 self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
                 self.out_dict['nemitx_err'], self.out_dict['nemity_err'] = np.nan, np.nan
