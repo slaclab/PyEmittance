@@ -281,6 +281,7 @@ def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
         plt.legend()
 
         if save_plots:
+            plt.tight_layout()
             import datetime
             timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
             plt.savefig(f"infl_fit_{timestamp}.png", dpi=100)
