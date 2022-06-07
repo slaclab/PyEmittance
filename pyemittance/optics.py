@@ -251,6 +251,7 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err,
 
         if save_plot:
             import datetime
+            plt.tight_layout()
             timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
             plt.savefig(f"emit_fit_{timestamp}.png", dpi=100)
         plt.show()
