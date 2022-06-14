@@ -8,7 +8,6 @@ from pyemittance.emit_eval_example import eval_emit_machine
 
 class Opt:
     def __init__(self, init_scan=[-6, -4, -2, 0]):
-        self.energy = 0.135
         self.varscan = init_scan
         self.num_points_adapt = 7
         self.pbounds = ((0.46, 0.485), (-0.01, 0.01), (-0.01, 0.01))

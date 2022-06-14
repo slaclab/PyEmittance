@@ -39,3 +39,10 @@ def get_rmat(filepath=CONFIG_PATH+'/beamline_info.json'):
                            ])
 
     return rmat_array
+
+def get_energy(filepath=CONFIG_PATH+'/beamline_info.json'):
+    """Import beam energy from config file [GeV]"""
+
+    beamline_info = json.load(open(filepath))
+    energy = beamline_info['energy']
+    return energy

@@ -2,10 +2,12 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from pyemittance.optics import get_k1, get_gradient, get_quad_field
+from pyemittance.machine_settings import get_energy
+
 # TODO: import m_0
 m_0  = 0.000511
 
-def adapt_range(x, y, axis, w=None, energy=0.135, cutoff_percent=0.3,
+def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
                 num_points=5, verbose=False):
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
@@ -171,7 +173,7 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     return new_x_list, new_y_list, new_y_err_list
 
 
-def find_inflection_pnt(x, y, show_plots=True, save_plots=True):
+def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
     """Find inflection points in curve and remove
     points outside of convex region around min"""
 
