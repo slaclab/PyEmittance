@@ -1,12 +1,13 @@
 # Module containing functions for beam optics calculations
 import numpy as np
+import os, json
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
 # TODO update fns
 from scipy.constants import c as c_light, m_e as m0
 import matplotlib.pyplot as plt
 
-from pyemittance.machine_settings import get_rmat, which_machine
+from pyemittance.machine_settings import get_rmat, which_machine, get_energy
 
 
 def get_gradient(b_field, l_eff=0.108):
@@ -27,7 +28,7 @@ def get_gradient(b_field, l_eff=0.108):
     """
     return np.array(b_field) * 0.1 / l_eff
 
-def get_k1(g, energy=0.135, m_0=0.000511):
+def get_k1(g, energy=get_energy(), m_0=0.000511):
     """
     Calculates quadrupole strength from gradient.
 
@@ -53,16 +54,16 @@ def get_k1(g, energy=0.135, m_0=0.000511):
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return 0.2998 * g / energy / beta
 
-def normalize_emit(emit, err, energy=0.135, m_0=0.000511):
+def normalize_emit(emit, err, energy=get_energy(), m_0=0.000511):
     gamma = energy / m_0
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return emit*gamma*beta, err*gamma*beta
 
-def get_kL(quad_vals, l=0.108, energy=0.135, m_0=0.000511):
-    kL = get_k1(get_gradient(quad_vals), energy=energy, m_0=m_0) * l
+def get_kL(quad_vals, l=0.108, energy=get_energy(), m_0=0.000511):
+    kL = get_k1(get_gradient(quad_vals), energy, m_0=m_0) * l
     return kL
 
-def get_quad_field(k, energy=0.135, l=0.108, m_0=0.000511):
+def get_quad_field(k, energy=get_energy(), l=0.108, m_0=0.000511):
     """Get quad field [kG] from k1 [1/m^2]"""
 
     gamma = energy / m_0
@@ -239,6 +240,9 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err,
 
     if plot:
         # Plot the data
+        #plt.figure(figsize=(5.5,3.5))
+        #plt.figure(figsize=(5,3.5))
+
         quad = get_quad_field(kLlist / Lquad)
         plt.errorbar(quad, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
 
@@ -247,13 +251,13 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err,
 
         plt.xlabel('Quadrupole Strength (kG)')
         plt.ylabel(r'Beam Size ($\mu$m)')
-        plt.legend()
+        plt.legend(fontsize=14)
 
         if save_plot:
             import datetime
             plt.tight_layout()
             timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-            plt.savefig(f"emit_fit_{timestamp}.png", dpi=100)
+            plt.savefig(f"emit_fit_{timestamp}.png", dpi=300)
         plt.show()
         plt.close()
 

@@ -38,6 +38,8 @@ class EmitCalc:
                          'nemity': None,
                          'nemitx_err': None,
                          'nemity_err': None,
+                         'nemit': None,
+                         'nemit_err': None,
                          'bmagx': None,
                          'bmagy': None,
                          'bmagx_err': None,
@@ -85,11 +87,12 @@ class EmitCalc:
             bs = self.beam_vals[dim]
             bs_err = self.beam_vals_err[dim]
 
-            # Storing quadvals and beamsizes in self.out_dict for plotting purposes
-            self.out_dict[f'quadvals{dim}'] = q
-            self.out_dict[f'beamsizes{dim}'] = bs
-
             weights = self.weighting_func(bs, bs_err) # 1/sigma
+            
+            # Storing quadvals and beamsizes in self.out_dict for plotting purposes
+            self.out_dict[f'quadvals{dim}'] = list(q)
+            self.out_dict[f'beamsizes{dim}'] = list(bs)
+            self.out_dict[f'beamsizeserr{dim}'] =  list(bs_err)
 
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
                                                 calc_bmag=self.calc_bmag,
@@ -171,14 +174,9 @@ class EmitCalc:
             self.out_dict['nemit_err'] = None
 
     def save_run(self):
-        data = {"quad_vals": self.quad_vals,
-                "beam_vals": self.beam_vals,
-                "beam_vals_err": self.beam_vals_err,
-                "output": self.out_dict}
-
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         with open(f"pyemittance_data_{timestamp}.json", "w") as outfile:
-            json.dump(data, outfile)
+            json.dump(self.out_dict, outfile)
 
 
 
