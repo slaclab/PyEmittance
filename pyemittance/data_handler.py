@@ -171,7 +171,7 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     return new_x_list, new_y_list, new_y_err_list
 
 
-def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
+def find_inflection_pnt(x, y, show_plots=True, save_plots=True):
     """Find inflection points in curve and remove
     points outside of convex region around min"""
 
@@ -250,41 +250,43 @@ def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
         y_new, x_new = y[left:right], x[left:right]
 
         import matplotlib.pyplot as plt
+        #plt.figure(figsize=(8,6))
+        #plt.figure(figsize=(5, 4))
         from numpy.polynomial import polynomial as P
 
         x_fit = np.linspace(np.min(x), np.max(x), 50)
 
         # original polynomial for visuals
         c, stats = P.polyfit(x, y, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='gray', linestyle="--")
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-6, color='gray', linestyle="--")
 
-        plt.scatter(x, np.asarray(y) / 1e-12, color='gray', label='Data')
+        plt.scatter(x, np.asarray(y) / 1e-6, color='gray', label='Data')
 
         # remove nones from infls
         infls = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
             if i == 1:
-                plt.axvline(x=x[infl], color='black', label=f'Inflection Point', linestyle="--")
+                plt.axvline(x=x[infl], color='black', label=f'Inflection Point', linestyle="--", alpha=0.5)
             else:
-                plt.axvline(x=x[infl], color='black', linestyle="--")
+                plt.axvline(x=x[infl], color='black', linestyle="--", alpha=0.5)
 
         # updated polynomial for visuals
         c, stats = P.polyfit(x_new, y_new, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-12, color='C0', linestyle="--")
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-6, color='C0', linestyle="--")
 
-        plt.scatter(x_new, y_new / 1e-12, color="C0", label="Use")
+        plt.scatter(x_new, y_new / 1e-6, color="C0", label="Use")
 
-        plt.ylim(None, np.max(y) * 1.3 / 1e-12)
+        plt.ylim(None, np.max(y) * 1.3 / 1e-6)
         plt.xlabel('Quadrupole Strength (kG)')
-        plt.ylabel(r'Beam Size Squared ($\mu$m$^2$)')
-        plt.legend()
+        plt.ylabel(r'Beam Size Squared ($10^6 \ \mu$m$^2$)')
+        plt.legend(framealpha=0.3, loc='upper right', fontsize=14)
 
         if save_plots:
             plt.tight_layout()
             import datetime
             timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-            plt.savefig(f"infl_fit_{timestamp}.png", dpi=100)
+            plt.savefig(f"infl_fit_{timestamp}.png", dpi=300)
         plt.show()
         plt.close()
 
