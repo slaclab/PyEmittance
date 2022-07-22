@@ -109,14 +109,19 @@ class Observer:
     def get_beamsizes(self, val):
         """Define where the beamsizes are acquired from"""
         if self.use_model:
-
             if self.add_noise:
+                # this is outdated/not used right now
                 beamsizes = self.get_beamsizes_model(self.config, val)
                 xrms = beamsizes[0] + np.random.rand(1) / self.noise_red
                 yrms = beamsizes[1] + np.random.rand(1) / self.noise_red
                 xrms_err = beamsizes[2] + np.random.rand(1) / self.noise_red / 10
                 yrms_err = beamsizes[3] + np.random.rand(1) / self.noise_red / 10
                 return xrms[0], yrms[0], xrms_err[0], yrms_err[0]
+
+            if len(np.asarray(self.config).shape) == 2:
+                # temp workaround for testing
+                out = self.get_beamsizes_model(self.config[0]+[val])
+                return np.array([out["sigma_x"][0], out["sigma_y"][0], 0., 0.])
 
             return self.get_beamsizes_model(self.config, val)
 
