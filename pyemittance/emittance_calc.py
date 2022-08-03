@@ -11,10 +11,9 @@ class EmitCalc:
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
 
-        # Define some error on beamsizes in each dimension
-        self.bs_error = (0.015, 0.015)
         # Make sure error is added to beamsizes if none is provided
         if beam_vals_err is None or sum(beam_vals_err['x'])==0 or sum(beam_vals_err['y'])==0:
+            self.bs_error = (0.015, 0.015) # Define some error on beamsizes in each dimension
             self.beam_vals_err = {'x': np.asarray(self.beam_vals['x'])*self.bs_error[0],
                                   'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
         else:
@@ -44,7 +43,9 @@ class EmitCalc:
                          'bmagx_err': None,
                          'bmagy_err': None,
                          'opt_q_x': None,
-                         'opt_q_y': None}
+                         'opt_q_y': None,
+                         'total_points_measured': None
+                         }
 
     def weighting_func(self, beamsizes, beamsizes_err):
         """

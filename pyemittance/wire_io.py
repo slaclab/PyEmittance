@@ -9,7 +9,7 @@ from pyemittance.saving_io import numpy_save, save_config
 
 
 this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs")
+CONFIG_PATH = path.join(this_dir, "configs/LCLS_WS02")
 
 # Measurement PVs
 meas_pv_info = json.load(open(CONFIG_PATH + '/meas_pv_info.json'))

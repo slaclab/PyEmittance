@@ -20,7 +20,13 @@ class MachineIO():
 
         # load info about PVs used in measurements (e.g. quad scan PV, image PV)
         self.dir, self.filename = path.split(__file__)
-        self.CONFIG_PATH = path.join(self.dir, "configs")
+        if self.meas_type == 'WIRE':
+            add_path = 'LCLS_WS02'
+        elif self.meas_type == 'OTRS':
+            add_path = 'LCLS_OTR3'
+        else:
+            add_path = ''
+        self.CONFIG_PATH = path.join(self.dir, 'configs' + add_path)
         self.meas_pv_info = json.load(open(self.CONFIG_PATH + '/meas_pv_info.json'))
 
         self.meas_read_pv = PV(self.meas_pv_info['meas_device']['pv']['read'])
@@ -42,21 +48,17 @@ class MachineIO():
             self.setquad(quad_val)
             self.setinjector(config)
             time.sleep(self.settle_time)
-            
         else:
             print("Not setting online values.")
 
-        if self.meas_type == 'OTRS':
+        if self.meas_type == 'OTRS' and self.online:
             from pyemittance.otrs_io import get_beamsizes_otrs
             return get_beamsizes_otrs(self.use_profmon)
-
-        elif self.meas_type == 'WIRE':
+        elif self.meas_type == 'WIRE' and self.online:
             from pyemittance.wire_io import get_beamsizes_wire
-            if self.online:
-                return get_beamsizes_wire(self.online)
-            else:
-                print("Not running wire scans.")
-
+            return get_beamsizes_wire(self.online)
+        elif not self.online:
+            print("Not running wire/OTR scans.")
         else:
             raise NotImplementedError('No valid measurement type defined.')
 
@@ -68,7 +70,7 @@ class MachineIO():
         elif not set_list:
             pass
         else:
-            print("Not setting inj online values.")
+            print("Not setting injector online values.")
             pass
 
     def setquad(self, value):
