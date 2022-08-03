@@ -21,9 +21,9 @@ class MachineIO():
         # load info about PVs used in measurements (e.g. quad scan PV, image PV)
         self.dir, self.filename = path.split(__file__)
         if self.meas_type == 'WIRE':
-            add_path = 'LCLS_WS02'
+            add_path = '/LCLS_WS02'
         elif self.meas_type == 'OTRS':
-            add_path = 'LCLS_OTR3'
+            add_path = '/LCLS_OTR3'
         else:
             add_path = ''
         self.CONFIG_PATH = path.join(self.dir, 'configs' + add_path)
@@ -49,7 +49,7 @@ class MachineIO():
             self.setinjector(config)
             time.sleep(self.settle_time)
         else:
-            print("Not setting online values.")
+            print("Running offline.")
 
         if self.meas_type == 'OTRS' and self.online:
             from pyemittance.otrs_io import get_beamsizes_otrs
@@ -58,7 +58,7 @@ class MachineIO():
             from pyemittance.wire_io import get_beamsizes_wire
             return get_beamsizes_wire(self.online)
         elif not self.online:
-            print("Not running wire/OTR scans.")
+            return np.random.uniform(2e-4,8e-4), np.random.uniform(3e-4,8e-4), 0, 0
         else:
             raise NotImplementedError('No valid measurement type defined.')
 

@@ -119,18 +119,3 @@ def save_config(xrms, yrms, xrms_err, yrms_err, timestamp,
 
     if im:
         np.save((str(impath) + f'img_config_{timestamp}.npy', im.proc_image))
-
-
-# def savesummary(beamsizes, timestamp=(datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")):
-#     """Saves summary info for beamsize fits"""
-#
-#     # todo add others as inputs
-#     f = open(savepaths['summaries'] + "image_acq_quad_info.csv", "a+")
-#     bact = quad_read_pv.get()
-#     x_size = x_size_pv.get()
-#     y_size = y_size_pv.get()
-#     f.write(
-#         f"{timestamp},{ncol},{nrow},{roi_xmin},{roi_xmax},"
-#         f"{roi_ymin},{roi_ymax},{resolution},{bact},{x_size},{y_size},"
-#         f"{beamsizes[0]},{beamsizes[1]},{beamsizes[2]},{beamsizes[3]}\n")
-#     f.close()

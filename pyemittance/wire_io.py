@@ -46,7 +46,7 @@ def get_beamsize(online):
         time.sleep(1)  
         
         status = scan_pv.get()
-        if  status == 2:
+        if status == 2:
             while scan_pv.get()!= 0:
                 time.sleep(5) 
             time.sleep(3) # to not break the wire scanner
