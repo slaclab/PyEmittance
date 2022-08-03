@@ -7,7 +7,6 @@ class EmitCalc:
     """
     Uses info recorded in Observer to do an emittance fit
     """
-
     def __init__(self, quad_vals=None, beam_vals=None, beam_vals_err=None):
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
@@ -97,7 +96,6 @@ class EmitCalc:
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
                                                 calc_bmag=self.calc_bmag,
                                                 plot=self.plot, verbose=self.verbose)
-
             if np.isnan(res[0]):
                 self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
                 self.out_dict['nemitx_err'], self.out_dict['nemity_err'] = np.nan, np.nan
@@ -125,8 +123,10 @@ class EmitCalc:
                 # Get best value for scanning quad
                 self.out_dict[f'opt_q_{dim}'] = q[bmag_calc_res[2]]
 
+        # get geometric mean (set to None when x and y are not calculated)
+        self.get_gmean_emit()
+
         if self.save_runs:
-            self.get_gmean_emit()
             self.save_run()
 
         return self.out_dict
@@ -166,7 +166,6 @@ class EmitCalc:
                     (self.out_dict['nemity_err']/self.out_dict['nemity'])**2 +
                     (self.out_dict['bmagx_err']/self.out_dict['bmagx'])**2 +
                     (self.out_dict['bmagy_err']/self.out_dict['bmagy'])**2)**0.5
-
                 self.out_dict['bmag_emit'] = nemit * nbmag
                 self.out_dict['bmag_emit_err'] = bmag_emit_err
 
@@ -178,6 +177,3 @@ class EmitCalc:
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         with open(f"pyemittance_data_{timestamp}.json", "w") as outfile:
             json.dump(self.out_dict, outfile)
-
-
-
