@@ -1,7 +1,7 @@
 import numpy as np
-import json, datetime
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
 from pyemittance.machine_settings import get_twiss0
+from pyemittance.saving_io import save_emit_run
 
 class EmitCalc:
     """
@@ -175,6 +175,4 @@ class EmitCalc:
             self.out_dict['nemit_err'] = None
 
     def save_run(self):
-        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-        with open(f"pyemittance_data_{timestamp}.json", "w") as outfile:
-            json.dump(self.out_dict, outfile)
+        save_emit_run(self.out_dict)

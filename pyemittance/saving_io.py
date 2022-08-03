@@ -4,11 +4,21 @@ from os.path import exists
 import errno, os
 import json
 import datetime
-
 from epics import caget, caget_many
 
+### '''''CHANGE HERE ''' #TODO: update config settings
+meas_type = 'OTRS'
+#################
+
+if meas_type == 'WIRE':
+    add_path = '/LCLS_WS02'
+elif meas_type == 'OTRS':
+    add_path = '/LCLS_OTR3'
+else:
+    add_path = ''
+
 this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs")
+CONFIG_PATH = path.join(this_dir, 'configs' + add_path)
 pv_savelist = json.load(open(CONFIG_PATH+'/save_scalar_pvs.json'))
 savepaths = json.load(open(CONFIG_PATH+'/savepaths.json'))
 opt_pv_info = json.load(open(CONFIG_PATH+'/opt_pv_info.json'))
@@ -119,3 +129,8 @@ def save_config(xrms, yrms, xrms_err, yrms_err, timestamp,
 
     if im:
         np.save((str(impath) + f'img_config_{timestamp}.npy', im.proc_image))
+
+def save_emit_run(out_dict, path=savepaths['fits']):
+    timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+    with open(path + f"pyemittance_data_{timestamp}.json", "w") as outfile:
+        json.dump(out_dict, outfile)
