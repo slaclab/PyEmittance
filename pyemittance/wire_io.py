@@ -19,7 +19,7 @@ scan_pv = PV(meas_pv_info['diagnostic']['pv']['scan'])
 x_size_pv = PV(meas_pv_info['diagnostic']['pv']['xsize'])
 y_size_pv = PV(meas_pv_info['diagnostic']['pv']['ysize'])
 
-def get_beamsizes_wire(online=False, save_summary=True):
+def get_beamsizes_wire(online=False, save_summary=False):
     """Main function imported by beam_io
     Returns xrms, yrms, xrms_err, yrms_err
     """

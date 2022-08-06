@@ -13,7 +13,7 @@ meas_type = 'OTRS'
 if meas_type == 'WIRE':
     add_path = '/LCLS_WS02'
 elif meas_type == 'OTRS':
-    add_path = '/LCLS_OTR3'
+    add_path = '/LCLS2_OTR3'
 else:
     add_path = ''
 
