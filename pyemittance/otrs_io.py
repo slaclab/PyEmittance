@@ -84,8 +84,17 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
                 or xamp < amp_threshold_x or yamp < amp_threshold_y \
                 or xamp*amp_threshold_x<1500 or yamp*amp_threshold_y<1500 \
                 or np.isnan(np.array(beamsizes[0:6])).any():
-
-            if count > 1:
+                
+            if count == max_samples:
+                # resample beamsize only max_samples times
+                print(f"Resampled {count-1} times, beam still out of bounds \n")
+                print(f"xrms {xrms/1e-6:.2f} um, yrms {yrms/1e-6:.2f} um (threshold: min_rms {min_sigma_meters/1e-6:.2f} um, max_rms {max_sigma_meters/1e-6:.2f} um)")
+                print(f"xamp {xamp:.2f}, yamp {yamp:.2f} (amp_thresh: {amp_threshold_x}, in json)")
+                print(f"area_x {xamp*amp_threshold_x:.1f}, area_y {yamp*amp_threshold_y:.1f} (threshold: 1500, hardcoded)\n")
+                print("Returning NaNs")
+                return np.nan, np.nan, np.nan, np.nan
+            
+            if count > 0:
                 print("Low beam intensity/noisy or beam too small/large.")
                 print("Waiting 1 sec and repeating measurement...")
                 time.sleep(1)
@@ -123,12 +132,6 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
                 yrms = yrms * resolution
                 xrms_err = xrms_err * resolution
                 yrms_err = yrms_err * resolution
-
-            if count == max_samples:
-                # resample beamsize only 3 times
-                print(f"Resampled {count} times, beam still out of bounds")
-                print("Returning NaNs")
-                return np.nan, np.nan, np.nan, np.nan
 
             count = count + 1
 
@@ -209,11 +212,10 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
                 # if conditions are met, stop resampling this image
                 repeat = False
             elif count == max_samples:
-                # if still bad after retries, return nan
-                print(f"Resampled {count} times, beam still out of bounds")
-                print("Returning NaNs")
-                xrms[i], yrms[i], xrms_err[i], yrms_err[i], xamp[i], yamp[
-                    i] = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+                # if still bad after retries, return as is (reject in outer function)
+                print(f"Beam params out of bounds in image {i} out of {num_images} samples")
+                # xrms[i], yrms[i], xrms_err[i], yrms_err[i], xamp[i], yamp[
+                #     i] = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
                 repeat = False
 
     # average images before taking fits
@@ -221,7 +223,7 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
                       
         idx = ~np.isnan(xrms)
         if True not in idx:
-            print("All points are NaNs, trying to average images now.")
+            print(f"All {num_images} image NaNs are NaNs, trying to average images now.")
             all_nan = True
         else:
             all_nan = False
@@ -246,11 +248,10 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
         or mean_xrms < min_sigma and mean_yrms < min_sigma \
         or mean_xrms > max_sigma and mean_yrms > max_sigma:
             if not all_nan:
-                print("Conditions met for each image, but NOT met for mean of the images.")
-                print("Not setting it to NaN [see otrs_io.py ln 237]")
+                print(f"Beam params out of bounds in averaged image")
             else:
-                print("Beam still out of bounds, setting avg image stats to NaNs")
-                return [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                print(f"Beam params out of bounds in averaged image, initial {num_images} all NaNs")
+                #return [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
 
         # save_beam = list(np.array(beamsizes[0:4])*resolution/1e-6)
 
