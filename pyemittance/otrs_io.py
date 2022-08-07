@@ -64,8 +64,6 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
     Additional option to reject bad beams
     Returns xrms, yrms, xrms_err, yrms_err
     """
-    #use_profMon = True
-
     xrms = np.nan
     yrms = np.nan
     xrms_err = np.nan
@@ -96,11 +94,12 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
             
             if count > 0:
                 print("Low beam intensity/noisy or beam too small/large.")
-                print("Waiting 1 sec and repeating measurement...")
-                time.sleep(1)
+                #print("Waiting 1 sec and repeating measurement...")
+                #time.sleep(1)
 
             # if this fails, make sure stats is checked on profmon gui
             if use_profMon:
+                print("using profmon")
                 beamsizes = []
                 xrms = x_size_pv.get() * 1e-6  # in meters
                 yrms = y_size_pv.get() * 1e-6  # in meters
@@ -320,5 +319,6 @@ def get_beam_image(subtract_bg=subtract_bg, post=None):
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
     save_image(im, ncol, nrow, timestamp, avg_img=False)
+    print(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]

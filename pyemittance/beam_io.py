@@ -15,7 +15,7 @@ class MachineIO():
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
         self.online = False
-        self.use_profmon = True
+        self.use_profmon = False
         self.settle_time = 3 # sleep time in seconds
 
         # load info about PVs used in measurements (e.g. quad scan PV, image PV)
@@ -53,7 +53,7 @@ class MachineIO():
 
         if self.meas_type == 'OTRS' and self.online:
             from pyemittance.otrs_io import get_beamsizes_otrs
-            return get_beamsizes_otrs(True)
+            return get_beamsizes_otrs(self.use_profmon)
         elif self.meas_type == 'WIRE' and self.online:
             from pyemittance.wire_io import get_beamsizes_wire
             print("Running wire scanner")

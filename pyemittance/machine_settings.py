@@ -44,23 +44,23 @@ def get_rmat(filepath=CONFIG_PATH+'/beamline_info.json'):
     # if only separated by a drift:
     # rMat will be [1, L, 0, 1]
 
-    try:
-        rmatx = beamline_info['rMatx']
-        rmaty = beamline_info['rMaty']
-        # m11, m12, m21, m22
-        rmatx_array = np.array([[rmatx[0], rmatx[1]],
-                                [rmatx[2], rmatx[3]]
-                               ])
-        rmaty_array = np.array([[rmaty[0], rmaty[1]],
-                            [rmaty[2], rmaty[3]]
+    # try:
+    rmatx = beamline_info['rMatx']
+    rmaty = beamline_info['rMaty']
+    # m11, m12, m21, m22
+    rmatx_array = np.array([[rmatx[0], rmatx[1]],
+                            [rmatx[2], rmatx[3]]
                            ])
+    rmaty_array = np.array([[rmaty[0], rmaty[1]],
+                        [rmaty[2], rmaty[3]]
+                       ])
 
-        return rmatx_array, rmaty_array
-    except KeyError:
-        # TODO: dumb hack for old json 
-        rmat = beamline_info['rMat']
-        rmat = [np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]]), np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]])]
-        return rmat
+    return rmatx_array, rmaty_array
+    # except KeyError:
+    #     # TODO: dumb hack for old json 
+    #     rmat = beamline_info['rMat']
+    #     rmat = [np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]]), np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]])]
+    #     return rmat
 
 def get_energy(filepath=CONFIG_PATH+'/beamline_info.json'):
     """Import beam energy from config file [GeV]"""

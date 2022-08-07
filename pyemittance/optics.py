@@ -286,6 +286,8 @@ def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
     # Taking relative error as measured at quad
     bmag_err = bmag * np.sqrt( (beta_err)**2 + (alpha_err)**2 )
 
+    # TODO: make this take bmag at the nominal Q5 value and not the min to match Matlab
+    # what to do if nominal isn't within scanned range?
     bmag_min = min(bmag)
     bmag_min_err = bmag_err[np.argmin(bmag)]
 
