@@ -39,10 +39,26 @@ def mkdir_p(path):
             raise
 
 # Make directories if needed
-mkdir_p(savepaths['images'])
-mkdir_p(savepaths['summaries'])
-mkdir_p(savepaths['fits'])
-mkdir_p(savepaths['raw_saves'])
+try:
+    mkdir_p(savepaths['images'])
+    mkdir_p(savepaths['summaries'])
+    mkdir_p(savepaths['fits'])
+    mkdir_p(savepaths['raw_saves'])
+except OSError:
+    print("Savepaths not set. Please set them in 'configs/savepaths.json'")
+    from pathlib import Path
+    parent = Path(__file__).resolve().parent
+    examples_dir = str(parent)[:-11] + "examples"
+    print("Using examples directory: ", examples_dir)
+    savepaths['images'] = examples_dir + "/saved_images"
+    savepaths['summaries'] = examples_dir + "/summaries"
+    savepaths['fits'] = examples_dir + "/saved_fits"
+    savepaths['raw_saves'] = examples_dir + "/raw_saves"
+    mkdir_p(savepaths['images'])
+    mkdir_p(savepaths['summaries'])
+    mkdir_p(savepaths['fits'])
+    mkdir_p(savepaths['raw_saves'])
+
 
 # Start headings
 file_exists = path.exists(savepaths['summaries'] + "image_acq_quad_info.csv")
