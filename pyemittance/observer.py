@@ -104,8 +104,7 @@ class Observer:
                     yrms_err.append(self.beam_meas_err['y'][use_loc])
 
         return xrms, yrms, xrms_err, yrms_err
-                                    
-        
+
     def get_beamsizes(self, val):
         """Define where the beamsizes are acquired from"""
         if self.use_model:

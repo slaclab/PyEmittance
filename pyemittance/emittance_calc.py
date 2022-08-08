@@ -1,21 +1,19 @@
 import numpy as np
-import json, datetime
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
 from pyemittance.machine_settings import get_twiss0
+from pyemittance.saving_io import save_emit_run
 
 class EmitCalc:
     """
     Uses info recorded in Observer to do an emittance fit
     """
-
     def __init__(self, quad_vals=None, beam_vals=None, beam_vals_err=None):
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
 
-        # Define some error on beamsizes in each dimension
-        self.bs_error = (0.015, 0.015)
         # Make sure error is added to beamsizes if none is provided
         if beam_vals_err is None or sum(beam_vals_err['x'])==0 or sum(beam_vals_err['y'])==0:
+            self.bs_error = (0.015, 0.015) # Define some error on beamsizes in each dimension
             self.beam_vals_err = {'x': np.asarray(self.beam_vals['x'])*self.bs_error[0],
                                   'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
         else:
@@ -45,7 +43,9 @@ class EmitCalc:
                          'bmagx_err': None,
                          'bmagy_err': None,
                          'opt_q_x': None,
-                         'opt_q_y': None}
+                         'opt_q_y': None,
+                         'total_points_measured': None
+                         }
 
     def weighting_func(self, beamsizes, beamsizes_err):
         """
@@ -88,7 +88,7 @@ class EmitCalc:
             bs_err = self.beam_vals_err[dim]
 
             weights = self.weighting_func(bs, bs_err) # 1/sigma
-            
+
             # Storing quadvals and beamsizes in self.out_dict for plotting purposes
             self.out_dict[f'quadvals{dim}'] = list(q)
             self.out_dict[f'beamsizes{dim}'] = list(bs)
@@ -97,7 +97,6 @@ class EmitCalc:
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
                                                 calc_bmag=self.calc_bmag,
                                                 plot=self.plot, verbose=self.verbose)
-
             if np.isnan(res[0]):
                 self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
                 self.out_dict['nemitx_err'], self.out_dict['nemity_err'] = np.nan, np.nan
@@ -124,6 +123,9 @@ class EmitCalc:
                 self.out_dict[f'bmag{dim}_err'] = bmag_calc_res[1]
                 # Get best value for scanning quad
                 self.out_dict[f'opt_q_{dim}'] = q[bmag_calc_res[2]]
+
+        # get geometric mean (set to None when x and y are not calculated)
+        self.get_gmean_emit()
 
         if self.save_runs:
             self.save_run()
@@ -157,16 +159,15 @@ class EmitCalc:
 
             self.out_dict['nemit'] = nemit
             self.out_dict['nemit_err'] = nemit_err
-            
+
             if self.out_dict['bmagx'] is not None and self.out_dict['bmagy'] is not None:
                 nbmag = np.sqrt( self.out_dict['bmagx'] * self.out_dict['bmagy'] )
-                bmag_emit_err = nemit*nbmag * ( 
+                bmag_emit_err = nemit*nbmag * (
                     (self.out_dict['nemitx_err']/self.out_dict['nemitx'])**2 +
                     (self.out_dict['nemity_err']/self.out_dict['nemity'])**2 +
                     (self.out_dict['bmagx_err']/self.out_dict['bmagx'])**2 +
                     (self.out_dict['bmagy_err']/self.out_dict['bmagy'])**2)**0.5
-
-                self.out_dict['bmag_emit'] = nemit * nbmag 
+                self.out_dict['bmag_emit'] = nemit * nbmag
                 self.out_dict['bmag_emit_err'] = bmag_emit_err
 
         except TypeError:
@@ -174,9 +175,4 @@ class EmitCalc:
             self.out_dict['nemit_err'] = None
 
     def save_run(self):
-        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-        with open(f"pyemittance_data_{timestamp}.json", "w") as outfile:
-            json.dump(self.out_dict, outfile)
-
-
-
+        save_emit_run(self.out_dict)

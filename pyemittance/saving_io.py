@@ -4,11 +4,21 @@ from os.path import exists
 import errno, os
 import json
 import datetime
-
 from epics import caget, caget_many
 
+### '''''CHANGE HERE ''' #TODO: update config settings
+meas_type = 'OTRS'
+#################
+
+if meas_type == 'WIRE':
+    add_path = '/LCLS_WS02'
+elif meas_type == 'OTRS':
+    add_path = '/LCLS_OTR3'
+else:
+    add_path = ''
+
 this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs")
+CONFIG_PATH = path.join(this_dir, 'configs' + add_path)
 pv_savelist = json.load(open(CONFIG_PATH+'/save_scalar_pvs.json'))
 savepaths = json.load(open(CONFIG_PATH+'/savepaths.json'))
 opt_pv_info = json.load(open(CONFIG_PATH+'/opt_pv_info.json'))
@@ -29,10 +39,26 @@ def mkdir_p(path):
             raise
 
 # Make directories if needed
-mkdir_p(savepaths['images'])
-mkdir_p(savepaths['summaries'])
-mkdir_p(savepaths['fits'])
-mkdir_p(savepaths['raw_saves'])
+try:
+    mkdir_p(savepaths['images'])
+    mkdir_p(savepaths['summaries'])
+    mkdir_p(savepaths['fits'])
+    mkdir_p(savepaths['raw_saves'])
+except OSError:
+    print("Savepaths not set. Please set them in 'configs/savepaths.json'")
+    from pathlib import Path
+    parent = Path(__file__).resolve().parent
+    examples_dir = str(parent)[:-11] + "examples"
+    print("Using examples directory: ", examples_dir)
+    savepaths['images'] = examples_dir + "/saved_images/"
+    savepaths['summaries'] = examples_dir + "/summaries/"
+    savepaths['fits'] = examples_dir + "/saved_fits/"
+    savepaths['raw_saves'] = examples_dir + "/raw_saves/"
+    mkdir_p(savepaths['images'])
+    mkdir_p(savepaths['summaries'])
+    mkdir_p(savepaths['fits'])
+    mkdir_p(savepaths['raw_saves'])
+
 
 # Start headings
 file_exists = path.exists(savepaths['summaries'] + "image_acq_quad_info.csv")
@@ -44,8 +70,8 @@ if not file_exists:
     f.write(
         f"{'timestamp'},{'ncol'},{'nrow'},{'roi_xmin'},{'roi_xmax'}"
         f",{'roi_ymin'},{'roi_ymax'},{'resolution'},{'bact'},"
-        f"{'x_size'},{'y_size'},{'beamsizes[0]'},{'beamsizes[1]'},"
-        f"{'beamsizes[2]'},{'beamsizes[3]'}\n")
+        f"{'x_size'},{'y_size'},{'xrms'},{'yrms'},"
+        f"{'xrms_err'},{'yrms_err]'}\n")
     f.close()
 
 file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
@@ -120,17 +146,7 @@ def save_config(xrms, yrms, xrms_err, yrms_err, timestamp,
     if im:
         np.save((str(impath) + f'img_config_{timestamp}.npy', im.proc_image))
 
-
-# def savesummary(beamsizes, timestamp=(datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")):
-#     """Saves summary info for beamsize fits"""
-#
-#     # todo add others as inputs
-#     f = open(savepaths['summaries'] + "image_acq_quad_info.csv", "a+")
-#     bact = quad_read_pv.get()
-#     x_size = x_size_pv.get()
-#     y_size = y_size_pv.get()
-#     f.write(
-#         f"{timestamp},{ncol},{nrow},{roi_xmin},{roi_xmax},"
-#         f"{roi_ymin},{roi_ymax},{resolution},{bact},{x_size},{y_size},"
-#         f"{beamsizes[0]},{beamsizes[1]},{beamsizes[2]},{beamsizes[3]}\n")
-#     f.close()
+def save_emit_run(out_dict, path=savepaths['fits']):
+    timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+    with open(path + f"pyemittance_data_{timestamp}.json", "w") as outfile:
+        json.dump(out_dict, outfile)

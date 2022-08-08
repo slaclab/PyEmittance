@@ -94,12 +94,11 @@ def eval_emit_machine(config,
 
     # get normalized transverse emittance
     ef.get_emit()
-    # get geom mean of normalized emittances
-    ef.get_gmean_emit()
 
-    total_points_measured = len(o.quad_meas)
+    # save total number of points queried
+    ef.out_dict["total_points_measured"] = len(o.quad_meas)
 
-    return ef.out_dict, total_points_measured
+    return ef.out_dict
 
 def eval_emit_surrogate(get_bs_model,
                         config,
@@ -111,6 +110,8 @@ def eval_emit_surrogate(get_bs_model,
                         add_pnts = True,
                         show_plots = False,
                         add_noise = False,
+                        use_prev_meas = False,
+                        quad_tol = 0.05,
                         save_runs= False,
                         calc_bmag = False):
 
@@ -122,6 +123,8 @@ def eval_emit_surrogate(get_bs_model,
     o.get_beamsizes_model = get_bs_model
     o.config = config
     o.add_noise = add_noise
+    o.use_prev_meas = use_prev_meas
+    o.tolerance = quad_tol
 
     # get initial beamsizes (rough scan)
     bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(quad_init)
@@ -185,9 +188,8 @@ def eval_emit_surrogate(get_bs_model,
 
     # get normalized transverse emittance
     ef.get_emit()
-    # get geom mean of normalized emittances
-    ef.get_gmean_emit()
 
-    total_points_measured = len(o.quad_meas)
+    # save total number of points queried
+    ef.out_dict["total_points_measured"] = len(o.quad_meas)
 
-    return ef.out_dict, total_points_measured
+    return ef.out_dict

@@ -5,8 +5,19 @@ import os
 import numpy as np
 import json
 
+### '''''CHANGE HERE ''' #TODO: update config settings
+meas_type = 'OTRS'
+#################
+
+if meas_type == 'WIRE':
+    add_path = '/LCLS_WS02'
+elif meas_type == 'OTRS':
+    add_path = '/LCLS_OTR3'
+else:
+    add_path = ''
+
 this_dir, this_filename = os.path.split(__file__)
-CONFIG_PATH = os.path.join(this_dir, "configs")
+CONFIG_PATH = os.path.join(this_dir, 'configs' + add_path)
 
 def which_machine(filepath=CONFIG_PATH+'/beamline_info.json'):
     """Print which machine settings are being used"""

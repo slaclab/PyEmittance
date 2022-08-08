@@ -10,7 +10,7 @@ from pyemittance.saving_io import save_image, numpy_save, save_config
 
 
 this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs")
+CONFIG_PATH = path.join(this_dir, "configs/LCLS_OTR3")
 
 # Load image processing setting info
 im_proc = json.load(open(CONFIG_PATH+'/img_proc.json'))
