@@ -7,7 +7,7 @@ def gaussian_linear_background(x, amp, mu, sigma, slope=0, offset=0):
     """Gaussian plus linear background fn"""
     return amp * np.exp( -(x-mu)**2 / 2 / sigma**2 ) + slope * x + offset
 
-def fit_gaussian_linear_background(y, para0 = None, show_plots=True, cut_area = None):
+def fit_gaussian_linear_background(y, para0 = None, show_plots = True, cut_area = None):
     """
     Takes a function y and inputs and fits and Gaussian with
     linear bg to it. Returns the best fit estimates of the parameters 
