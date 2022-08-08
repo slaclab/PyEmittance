@@ -50,10 +50,10 @@ except OSError:
     parent = Path(__file__).resolve().parent
     examples_dir = str(parent)[:-11] + "examples"
     print("Using examples directory: ", examples_dir)
-    savepaths['images'] = examples_dir + "/saved_images"
-    savepaths['summaries'] = examples_dir + "/summaries"
-    savepaths['fits'] = examples_dir + "/saved_fits"
-    savepaths['raw_saves'] = examples_dir + "/raw_saves"
+    savepaths['images'] = examples_dir + "/saved_images/"
+    savepaths['summaries'] = examples_dir + "/summaries/"
+    savepaths['fits'] = examples_dir + "/saved_fits/"
+    savepaths['raw_saves'] = examples_dir + "/raw_saves/"
     mkdir_p(savepaths['images'])
     mkdir_p(savepaths['summaries'])
     mkdir_p(savepaths['fits'])
@@ -70,8 +70,8 @@ if not file_exists:
     f.write(
         f"{'timestamp'},{'ncol'},{'nrow'},{'roi_xmin'},{'roi_xmax'}"
         f",{'roi_ymin'},{'roi_ymax'},{'resolution'},{'bact'},"
-        f"{'x_size'},{'y_size'},{'beamsizes[0]'},{'beamsizes[1]'},"
-        f"{'beamsizes[2]'},{'beamsizes[3]'}\n")
+        f"{'x_size'},{'y_size'},{'xrms'},{'yrms'},"
+        f"{'xrms_err'},{'yrms_err]'}\n")
     f.close()
 
 file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
