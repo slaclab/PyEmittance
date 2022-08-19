@@ -1,0 +1,1 @@
+{"subtract_bg": false, "use_roi": false, "avg_ims": true, "n_to_acquire": 2, "background_im": null, "amp_threshold": 1500, "min_sigma": 1.0, "max_sigma": 60, "max_samples": 3, "roi": {"xmin": 0, "xmax": 100, "ymin": 0, "ymax": 100}}

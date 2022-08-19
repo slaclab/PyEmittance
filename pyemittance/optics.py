@@ -1,13 +1,16 @@
 # Module containing functions for beam optics calculations
 import numpy as np
+import os, json
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
 # TODO update fns
 from scipy.constants import c as c_light, m_e as m0
 import matplotlib.pyplot as plt
-from pyemittance.beam_io import get_rmat
 
-def get_gradient(b_field, l_eff=0.108):
+from pyemittance.machine_settings import get_rmat, which_machine, get_energy, get_quad_len
+
+
+def get_gradient(b_field, l_eff=get_quad_len()):
     """
     Calculates quadrupole gradient from B field.
 
@@ -25,7 +28,7 @@ def get_gradient(b_field, l_eff=0.108):
     """
     return np.array(b_field) * 0.1 / l_eff
 
-def get_k1(g, energy=0.135, m_0=0.000511):
+def get_k1(g, energy=get_energy(), m_0=0.000511):
     """
     Calculates quadrupole strength from gradient.
 
@@ -51,16 +54,16 @@ def get_k1(g, energy=0.135, m_0=0.000511):
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return 0.2998 * g / energy / beta
 
-def normalize_emit(emit, err, energy=0.135, m_0=0.000511):
+def normalize_emit(emit, err, energy=get_energy(), m_0=0.000511):
     gamma = energy / m_0
     beta = np.sqrt(1 - 1 / gamma ** 2)
     return emit*gamma*beta, err*gamma*beta
 
-def get_kL(quad_vals, l=0.108, energy=0.135, m_0=0.000511):
-    kL = get_k1(get_gradient(quad_vals), energy=energy, m_0=m_0) * l
+def get_kL(quad_vals, l=get_quad_len(), energy=get_energy(), m_0=0.000511):
+    kL = get_k1(get_gradient(quad_vals), energy, m_0=m_0) * l
     return kL
 
-def get_quad_field(k, energy=0.135, l=0.108, m_0=0.000511):
+def get_quad_field(k, energy=get_energy(), l=get_quad_len(), m_0=0.000511):
     """Get quad field [kG] from k1 [1/m^2]"""
 
     gamma = energy / m_0
@@ -75,16 +78,21 @@ def thin_quad_mat2(kL):
     """
     return np.array([[1, 0], [-kL, 1]])
 
-def r_mat2():
+def r_mat2(dim, d=None):
     """
     Transport matrix after quad to screen, 2x2
     """
-    return get_rmat()
+    if d is not None:
+        # return drift mat
+        return np.array([[1, d],[0, 1]])
+    # if other elements are there
+    return get_rmat()[0] if dim=='x' else get_rmat()[1]
 
-def quad_mat2(kL, L=0):
+def quad_mat2(kL, L=0, d=None):
     """
     Quadrupole transfer matrix, 2x2, assuming some quad thickness
     L = 0 returns thin quad matrix
+    d not None get drift mat 
     :param kL: quad strength * quad length (1/m)
     :param L: quad length (m)
     :return: thick quad transport matrix
@@ -96,7 +104,8 @@ def quad_mat2(kL, L=0):
     k = kL / L
 
     if k == 0:
-        mat2 = r_mat2()
+        # Take drift or custom mat
+        mat2 = r_mat2(dim, d=d)
     elif k > 0:
         # Focusing
         rk = sqrt(k)
@@ -110,7 +119,7 @@ def quad_mat2(kL, L=0):
 
     return mat2
 
-def quad_rmat_mat2(kL, Lquad=0):
+def quad_rmat_mat2(kL, dim, d=None, Lquad=0):
     """
     Composite [quad, drift] 2x2 transfer matrix
     :param kL: quad strength * quad length (1/m)
@@ -118,7 +127,11 @@ def quad_rmat_mat2(kL, Lquad=0):
     :return:
     """
 
-    return r_mat2() @ quad_mat2(kL, Lquad)
+    if kL == 0:
+        # Return matrix after quad to screen
+        return r_mat2(dim, d)
+
+    return r_mat2(dim, d) @ quad_mat2(kL, Lquad, d=d)
 
 def propagate_sigma(mat2_init, mat2_ele):
     """
@@ -129,7 +142,8 @@ def propagate_sigma(mat2_init, mat2_ele):
     """
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
-def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, Lquad=0.108, calc_bmag=False, plot=True):
+def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, dim='x', Lquad=get_quad_len(),
+                                  calc_bmag=False, plot=True, verbose=False):
     """
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
@@ -140,8 +154,11 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     :param plot: bool to plot ot not
     :return: emittance, sig11, sig12 and sig22 at measurement screen
     """
+    if verbose:
+        # Print which machine settings it is using
+        which_machine()
 
-    # measurement vector
+    # Measurement vector
     sizes = np.array(sizes)
     if np.isnan(sizes).any():
         idx_not_nan = ~np.isnan(sizes)
@@ -153,7 +170,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
             weights = weights[idx_not_nan]
         
     if len(sizes) < 3:
-        print("Less than 3 data points were passed. Returning NaN.")
+        if verbose:
+            print("Less than 3 data points were passed. Returning NaN.")
         return [np.nan,np.nan,np.nan,np.nan]
         
     b = sizes ** 2
@@ -172,7 +190,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
     # Collect mat2 for later
     mat2s = []
     for kL, weight in zip(kLlist, weights):
-        mat2 = quad_rmat_mat2(kL, Lquad=Lquad)
+        mat2 = quad_rmat_mat2(kL, dim, Lquad=Lquad)
         mat2s.append(mat2)
         r11, r12, r21, r22 = mat2.flatten()
         r_mat_factor = np.array([r11 ** 2, 2 * r11 * r12, r12 ** 2])
@@ -188,7 +206,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
 
     #return NaN if emit can't be calculated
     if emit2 < 0:
-        print("Emittance can't be computed. Returning NaN.")
+        if verbose:
+            print("Emittance can't be computed. Returning NaN.")
         #plt.plot(kLlist, sizes**2)
         return [np.nan,np.nan,np.nan,np.nan]
 
@@ -206,7 +225,8 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, L
 
     return [emit, emit_err, beta_err/beta, alpha_err/alpha]
 
-def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, emit, plot):
+def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err,
+                        emit, plot, save_plot=False):
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
 
@@ -225,15 +245,24 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, sizes, sizes_err, e
 
     if plot:
         # Plot the data
+        #plt.figure(figsize=(5.5,3.5))
+        #plt.figure(figsize=(5,3.5))
+
         quad = get_quad_field(kLlist / Lquad)
-        plt.errorbar(quad, sizes, yerr=sizes_err, fmt='o', label=f'Measurements')
+        plt.errorbar(quad, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
 
         # Model prediction
-        plt.errorbar(quad, np.sqrt(s11_screen), marker='.', label=f'Model')
+        plt.errorbar(quad, np.sqrt(s11_screen)/1e-6, marker='.', label=f'Model')
 
-        plt.xlabel('B (kG)')
-        plt.ylabel(f'sizes (m)')
-        plt.legend()
+        plt.xlabel('Quadrupole Strength (kG)')
+        plt.ylabel(r'Beam Size ($\mu$m)')
+        plt.legend(fontsize=14)
+
+        if save_plot:
+            import datetime
+            plt.tight_layout()
+            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+            plt.savefig(f"emit_fit_{timestamp}.png", dpi=300)
         plt.show()
         plt.close()
 
@@ -257,12 +286,18 @@ def twiss_and_bmag(sig11, sig12, sig22, beta_err, alpha_err, beta0=1, alpha0=0):
     # Taking relative error as measured at quad
     bmag_err = bmag * np.sqrt( (beta_err)**2 + (alpha_err)**2 )
 
+    # TODO: make this take bmag at the nominal Q5 value and not the min to match Matlab
+    # what to do if nominal isn't within scanned range?
+    bmag_min = min(bmag)
+    bmag_min_err = bmag_err[np.argmin(bmag)]
+
     d = {}
     d['emit'] = emit
     d['beta'] = beta
     d['alpha'] = alpha
-    d['bmag'] = bmag
-    d['bmag_err'] = bmag_err
+    d['bmag'] = bmag_min
+    d['bmag_err'] = bmag_min_err
+    d['min_idx'] = np.argmin(bmag) # best scanning quad val
 
     return d
 

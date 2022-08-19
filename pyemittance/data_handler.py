@@ -2,21 +2,31 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from pyemittance.optics import get_k1, get_gradient, get_quad_field
-# on sim
-# from beam_io_sim import get_beamsizes
-# on lcls
-# from beam_io import get_beamsizes, setquad, quad_control
+from pyemittance.machine_settings import get_energy
+
 # TODO: import m_0
 m_0  = 0.000511
 
-def adapt_range(x, y, axis, w=None, energy=0.135,
-                cutoff_percent=0.3, num_points=5,
-                save_plot=False, show_plots=True):
+def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
+                num_points=5, verbose=False):
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
     y = np.array(y)
     if w is not None:
         w = np.array(w)
+        
+#     print("x ", x)
+#     print("y ", y)
+    
+    idx = ~np.isnan(y)
+
+    if True not in idx:
+        print("no valid pnts")
+        return x
+    x = x[idx]
+    y = y[idx]
+    if w is not None:
+        w = w[idx]
 
     # Remove points that are too large
     # Do this only if bs more than double from min
@@ -48,10 +58,13 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
     min_x, max_x = x.min(), x.max()
 
     # we need a poly fit here to find roots, poly_ylim, etc
-    fit_coefs, fit_cov = curve_fit(func, x, y ** 2, sigma=w, absolute_sigma=True, method='trf')
+    y_squared = y*y
+
+    
+    fit_coefs, fit_cov = curve_fit(func, x, y_squared)
 
     # space over which to fit
-    x_fit = np.linspace(min_x, max_x, 100)
+    x_fit = np.linspace(min_x, max_x, 25)
 
     # no more restrictions on quad vals, just staying within
     # the region already scanned (can increase this if need be)
@@ -60,7 +73,8 @@ def adapt_range(x, y, axis, w=None, energy=0.135,
     c2, c1, c0 = fit_coefs
 
     if c2 < 0: # same if s11q is negative
-        print("Adjusting concave poly.")
+        if verbose:
+            print("Adjusting concave poly.")
         # go to lower side of concave polynomials
         # (assuming it is closer to the local minimum)
         x_min_concave = x[np.argmin(y)]
@@ -150,20 +164,17 @@ def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
         return add_to_side, x_add
 
 
-def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
+def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     """Add beamsize measurements on left or right side based on
     symmetry of scan curve.
     x_add are the quad scan values k in units of 1/m^2"""
-
-    if not bs_fn:
-        return None
     
     # get new data points
     idx_size = 1 if axis == "y" else 0
     idx_err = 3 if axis == "y" else 2
     new_data = bs_fn(x_add)
     y_add, y_err_add = new_data[idx_size], new_data[idx_err]
-        
+
     # then append to existing dataset
     if add_to_side == "left":
         new_x_list = list(x_add) + list(x)
@@ -173,15 +184,16 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn=None):
         new_x_list = list(x) + list(x_add)
         new_y_list = list(y) + list(y_add)
         new_y_err_list = list(y_err) + list(y_err_add)
-            
+
     return new_x_list, new_y_list, new_y_err_list
 
 
-def find_inflection_pnt(x, y, show_plots=True):
+def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
     """Find inflection points in curve and remove
     points outside of convex region around min"""
 
-    y = np.array(y)**2 # since we are fitting sizes**2
+    y = np.array(y)
+    y = y*y # since we are fitting sizes**2
 
     # compute second derivative
     y_d2 = np.gradient(np.gradient(y))
@@ -207,9 +219,10 @@ def find_inflection_pnt(x, y, show_plots=True):
             right = infls
         infls = np.array([infls])
 
+
     elif len(infls)>1:
         # cut it down to 2 closest to min
-        if ( np.argmin(y) in infls and len(infls > 2) ) or ( np.argmin(y) not in infls ):
+        if ( np.argmin(y) in infls and len(infls) > 2 ) or ( np.argmin(y) not in infls ):
             if np.argmin(y) in infls:
                 infls = list(infls)
                 infls.remove(np.argmin(y))
@@ -254,28 +267,105 @@ def find_inflection_pnt(x, y, show_plots=True):
         y_new, x_new = y[left:right], x[left:right]
 
         import matplotlib.pyplot as plt
+        #plt.figure(figsize=(8,6))
+        #plt.figure(figsize=(5, 4))
         from numpy.polynomial import polynomial as P
 
         x_fit = np.linspace(np.min(x), np.max(x), 50)
+
         # original polynomial for visuals
         c, stats = P.polyfit(x, y, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit,c))
-        # updated polynomial for visuals
-        c, stats = P.polyfit(x_new, y_new, 2, full=True)
-        plt.plot(x_fit, P.polyval(x_fit, c), color="blue", linestyle="--")
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-6, color='gray', linestyle="--")
+
+        plt.scatter(x, np.asarray(y) / 1e-6, color='gray', label='Data')
+
         # remove nones from infls
-        infls  = filter(None, infls)
+        infls = filter(None, infls)
         # plot the location of each inflection point
         for i, infl in enumerate(infls, 1):
-            plt.axvline(x=x[infl], color='gray', label=f'Inflection Point {i}', linestyle="--" )
-        plt.scatter(x, y)
-        plt.scatter(x_new, y_new, color="blue", label="Use")
-        plt.ylim(None, np.max(y)*1.3)
-        plt.legend()
+            if i == 1:
+                plt.axvline(x=x[infl], color='black', label=f'Inflection Point', linestyle="--", alpha=0.5)
+            else:
+                plt.axvline(x=x[infl], color='black', linestyle="--", alpha=0.5)
+
+        # updated polynomial for visuals
+        c, stats = P.polyfit(x_new, y_new, 2, full=True)
+        plt.plot(x_fit, P.polyval(x_fit, c) / 1e-6, color='C0', linestyle="--")
+
+        plt.scatter(x_new, y_new / 1e-6, color="C0", label="Use")
+
+        plt.ylim(None, np.max(y) * 1.3 / 1e-6)
+        plt.xlabel('Quadrupole Strength (kG)')
+        plt.ylabel(r'Beam Size Squared ($10^6 \ \mu$m$^2$)')
+        plt.legend(framealpha=0.3, loc='upper right', fontsize=14)
+
+        if save_plots:
+            plt.tight_layout()
+            import datetime
+            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+            plt.savefig(f"infl_fit_{timestamp}.png", dpi=300)
         plt.show()
         plt.close()
 
     return left, right
+
+def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
+    """ This function adds measurements to a dataset to reach
+    a certain number of specified measurements within some range
+    """
+
+    # Define # of points to add
+    num_meas = num_points - len(y)
+
+    if num_meas <= 0:
+        # do nothing
+        return x, y, y_err
+
+    # We want to add points primarily around min
+    # Find min location
+    argmin = np.argmin(y)
+    if argmin<(len(y)-1):
+        # if min is not at edge
+        # get first step size
+        step = (x[argmin+1]-x[argmin])/2
+        # add points to the right of min
+        mult_fac = 1
+    elif argmin==len(y)-1:
+        # if min is the last data point
+        step = (x[argmin] - x[argmin-1]) / 2
+        # add points to the left of the min
+        mult_fac = -1
+
+    x_add = []
+    # We want to add points between already measured points
+    step_mult = np.arange(1, num_meas*2, 2)
+    for i in range(0, num_meas):
+        # get quad values for points to add
+        x_add.append(x[argmin] + mult_fac*step*step_mult[i])
+
+    # Take new measurements
+    idx_size = 1 if axis == "y" else 0
+    idx_err = 3 if axis == "y" else 2
+    new_data = bs_fn(x_add)
+    y_add, y_err_add = new_data[idx_size], new_data[idx_err]
+
+    # Insert new data into original dataset
+    for i in range(0, num_meas):
+        if mult_fac == -1:
+            # add points to the left
+            new_idx = abs(argmin-i)
+            x.insert(new_idx, x_add[i])
+            y.insert(new_idx, y_add[i])
+            y_err.insert(new_idx, y_err_add[i])
+        elif mult_fac == 1:
+            # add points to the right
+            # TODO add points to both sides when min is in the middle
+            new_idx = argmin+step_mult[i]
+            x.insert(new_idx, x_add[i])
+            y.insert(new_idx, y_add[i])
+            y_err.insert(new_idx, y_err_add[i])
+
+    return x, y, y_err
 
 def func(x, a, b, c):
     """
@@ -287,7 +377,7 @@ def func(x, a, b, c):
     :param c: zeroth deg coeff
     :return: f(x)
     """
-    return a*x**2 + b*x + c
+    return a*x*x + b*x + c
 
 class ComplexRootError(Exception):
     """
