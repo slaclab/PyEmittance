@@ -12,7 +12,7 @@ meas_type = 'OTRS'
 if meas_type == 'WIRE':
     add_path = '/LCLS_WS02'
 elif meas_type == 'OTRS':
-    add_path = '/LCLS_OTR3'
+    add_path = '/LCLS2_OTR3'
 else:
     add_path = ''
 
@@ -43,13 +43,24 @@ def get_rmat(filepath=CONFIG_PATH+'/beamline_info.json'):
     beamline_info = json.load(open(filepath))
     # if only separated by a drift:
     # rMat will be [1, L, 0, 1]
-    rmat = beamline_info['rMat']
-    # m11, m12, m21, m22
-    rmat_array = np.array([[rmat[0], rmat[1]],
-                            [rmat[2], rmat[3]]
-                           ])
 
-    return rmat_array
+    # try:
+    rmatx = beamline_info['rMatx']
+    rmaty = beamline_info['rMaty']
+    # m11, m12, m21, m22
+    rmatx_array = np.array([[rmatx[0], rmatx[1]],
+                            [rmatx[2], rmatx[3]]
+                           ])
+    rmaty_array = np.array([[rmaty[0], rmaty[1]],
+                        [rmaty[2], rmaty[3]]
+                       ])
+
+    return rmatx_array, rmaty_array
+    # except KeyError:
+    #     # TODO: dumb hack for old json 
+    #     rmat = beamline_info['rMat']
+    #     rmat = [np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]]), np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]])]
+    #     return rmat
 
 def get_energy(filepath=CONFIG_PATH+'/beamline_info.json'):
     """Import beam energy from config file [GeV]"""
@@ -57,3 +68,10 @@ def get_energy(filepath=CONFIG_PATH+'/beamline_info.json'):
     beamline_info = json.load(open(filepath))
     energy = beamline_info['energy']
     return energy
+
+def get_quad_len(filepath=CONFIG_PATH+'/beamline_info.json'):
+    """Import quad len from config file [m]"""
+
+    beamline_info = json.load(open(filepath))
+    l = beamline_info['l']
+    return l
