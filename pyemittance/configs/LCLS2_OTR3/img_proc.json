@@ -1,0 +1,1 @@
+{"subtract_bg": true, "use_roi": false, "avg_ims": true, "n_to_acquire": 1, "background_im": "/home/physics3/ml_tuning/20220805_LCLS2_inj/example_images/bg_8_6_22.npy", "amp_threshold": 150, "min_sigma": 3, "max_sigma": 700, "max_samples": 1, "roi": {"xmin": 0, "xmax": 100, "ymin": 0, "ymax": 100}}

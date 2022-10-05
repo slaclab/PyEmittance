@@ -1,0 +1,1 @@
+{"subtract_bg": true, "use_roi": false, "avg_ims": true, "n_to_acquire": 4, "background_im":"/home/fphysics/edelen/sw/lcls_emit/background_571.npy", "amp_threshold": 1000, "min_sigma": 1.0, "max_sigma": 1000, "max_samples": 1, "roi": {"xmin": 0, "xmax": 100, "ymin": 0, "ymax": 100}}

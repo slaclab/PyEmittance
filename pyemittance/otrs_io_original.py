@@ -10,7 +10,7 @@ from pyemittance.saving_io import save_image, numpy_save, save_config
 
 
 this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs/LCLS2_OTR3")
+CONFIG_PATH = path.join(this_dir, "configs/LCLS_OTR3")
 
 # Load image processing setting info
 im_proc = json.load(open(CONFIG_PATH+'/img_proc.json'))
@@ -26,7 +26,7 @@ avg_ims = im_proc['avg_ims']
 n_acquire = im_proc['n_to_acquire']
 amp_threshold_x = im_proc['amp_threshold']
 amp_threshold_y = im_proc['amp_threshold']
-min_sigma = im_proc['min_sigma'] # in raw units (pixels)
+min_sigma = im_proc['min_sigma']
 max_sigma = im_proc['max_sigma']
 max_samples = im_proc['max_samples']
 
@@ -41,10 +41,6 @@ n_row_pv = PV(meas_pv_info['diagnostic']['pv']['nrow'])
 x_size_pv = PV(meas_pv_info['diagnostic']['pv']['profmonxsize'])
 y_size_pv = PV(meas_pv_info['diagnostic']['pv']['profmonysize'])
 
-# thresholds in meters
-min_sigma_meters = im_proc['min_sigma']*resolution
-max_sigma_meters = im_proc['max_sigma']*resolution
-
 def get_beamsizes_otrs(use_profmon):
     """Main function imported by beam_io
     Option to use ProfMon PVs to get beamsizes
@@ -57,13 +53,15 @@ def get_beamsizes_otrs(use_profmon):
     yrms_err = beamsize[3]
     return xrms, yrms, xrms_err, yrms_err
 
-def get_beamsizes(use_profMon=False, reject_bad_beam=True,
+def get_beamsizes(use_profMon=False, reject_bad_beam=False,
                   save_summary=False, post=None):
     """ Data acquisition from OTRS
     Option to use either ProfMon or image processing
     Additional option to reject bad beams
     Returns xrms, yrms, xrms_err, yrms_err
     """
+    use_profMon = True
+
     xrms = np.nan
     yrms = np.nan
     xrms_err = np.nan
@@ -77,37 +75,23 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
 
         count = 0
 
-        while xrms <= min_sigma_meters or yrms <= min_sigma_meters \
-                or xrms > max_sigma_meters or yrms > max_sigma_meters \
-                or xamp < amp_threshold_x or yamp < amp_threshold_y \
-                or xamp*amp_threshold_x<1500 or yamp*amp_threshold_y<1500 \
+        while xrms <= min_sigma or yrms <= min_sigma \
+                or xrms > max_sigma or yrms > max_sigma \
                 or np.isnan(np.array(beamsizes[0:6])).any():
-                
-            if count == max_samples:
-                # resample beamsize only max_samples times
-                print(f"Resampled {count-1} times, beam still out of bounds \n")
-                print(f"xrms {xrms/1e-6:.2f} um, yrms {yrms/1e-6:.2f} um (threshold: min_rms {min_sigma_meters/1e-6:.2f} um, max_rms {max_sigma_meters/1e-6:.2f} um)")
-                print(f"xamp {xamp:.2f}, yamp {yamp:.2f} (amp_thresh: {amp_threshold_x}, in json)")
-                print(f"area_x {xamp*amp_threshold_x:.1f}, area_y {yamp*amp_threshold_y:.1f} (threshold: 1500, hardcoded)\n")
-                print("Returning NaNs")
-                return np.nan, np.nan, np.nan, np.nan
-            
-            if count > 0:
+
+            if count > 1:
                 print("Low beam intensity/noisy or beam too small/large.")
-                #print("Waiting 1 sec and repeating measurement...")
-                #time.sleep(1)
+                print("Waiting 1 sec and repeating measurement...")
+                time.sleep(1)
 
             # if this fails, make sure stats is checked on profmon gui
             if use_profMon:
-                print("using profmon")
                 beamsizes = []
                 xrms = x_size_pv.get() * 1e-6  # in meters
                 yrms = y_size_pv.get() * 1e-6  # in meters
                 # add 2% error on ProfMon measurement
                 xrms_err = xrms*0.02
                 yrms_err = yrms*0.02
-                
-                xamp, yamp = amp_threshold_x, amp_threshold_y # DOES NOT UPDATE W/PROFMON
 
                 count = count + 1
 
@@ -132,6 +116,10 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
                 xrms_err = xrms_err * resolution
                 yrms_err = yrms_err * resolution
 
+            if count == 1:
+                # resample beamsize only 3 times
+                return np.nan, np.nan, np.nan, np.nan
+
             count = count + 1
 
 
@@ -141,7 +129,6 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
         if use_profMon:
             xrms, xrms_err = x_size_pv.get() * 1e-6, 0  # in meters
             yrms, yrms_err = y_size_pv.get() * 1e-6, 0  # in meters
-            xamp, yamp = amp_threshold_x, amp_threshold_y # DOES NOT UPDATE W/PROFMON
             #print("Using ProfMon beamsizes.")
 
         else:
@@ -189,7 +176,7 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
         ncol, nrow = n_col_pv.get(), n_row_pv.get()
 
     for i in range(0, num_images):
-        
+
         repeat = True
         count = 0
 
@@ -205,27 +192,19 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
 
             count = count + 1
 
-            if xamp[i] >= amp_threshold_x and yamp[i] >= amp_threshold_y \
+            if xamp[i] > amp_threshold_x and yamp[i] > amp_threshold_y \
                     and xrms[i] > min_sigma and yrms[i] > min_sigma \
                     and xrms[i] < max_sigma and yrms[i] < max_sigma:
                 # if conditions are met, stop resampling this image
                 repeat = False
-            elif count == max_samples:
-                # if still bad after retries, return as is (reject in outer function)
-                print(f"Beam params out of bounds in image {i} out of {num_images} samples")
-                # xrms[i], yrms[i], xrms_err[i], yrms_err[i], xamp[i], yamp[
-                #     i] = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+            elif count == 3:
+                # if still bad after 3 tries, return nan
+                xrms[i], yrms[i], xrms_err[i], yrms_err[i], xamp[i], yamp[
+                    i] = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
                 repeat = False
 
     # average images before taking fits
     if avg == True:
-                      
-        idx = ~np.isnan(xrms)
-        if True not in idx:
-            print(f"All {num_images} image NaNs are NaNs, trying to average images now.")
-            all_nan = True
-        else:
-            all_nan = False
 
         im = np.mean(im, axis=0)
 
@@ -243,14 +222,8 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
         mean_xrms_err, mean_yrms_err = meas[2:4]
         mean_xamp, mean_yamp = meas[4:]
 
-        if mean_xamp < amp_threshold_x or mean_yamp < amp_threshold_y \
-        or mean_xrms < min_sigma and mean_yrms < min_sigma \
-        or mean_xrms > max_sigma and mean_yrms > max_sigma:
-            if not all_nan:
-                print(f"Beam params out of bounds in averaged image")
-            else:
-                print(f"Beam params out of bounds in averaged image, initial {num_images} all NaNs")
-                #return [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+        if mean_xamp < amp_threshold_x or mean_yamp < amp_threshold_y:
+            return [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
 
         # save_beam = list(np.array(beamsizes[0:4])*resolution/1e-6)
 
@@ -268,7 +241,6 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
         idx = ~np.isnan(xrms)
 
         if True not in idx:
-            print("All points are NaNs")
             return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
         mean_xrms = np.mean(np.array(xrms)[idx])
@@ -319,6 +291,5 @@ def get_beam_image(subtract_bg=subtract_bg, post=None):
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
     save_image(im, ncol, nrow, timestamp, avg_img=False)
-    print(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]

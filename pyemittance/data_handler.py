@@ -14,6 +14,19 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
     y = np.array(y)
     if w is not None:
         w = np.array(w)
+        
+#     print("x ", x)
+#     print("y ", y)
+    
+    idx = ~np.isnan(y)
+
+    if True not in idx:
+        print("no valid pnts")
+        return x
+    x = x[idx]
+    y = y[idx]
+    if w is not None:
+        w = w[idx]
 
     # Remove points that are too large
     # Do this only if bs more than double from min
@@ -46,6 +59,8 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
 
     # we need a poly fit here to find roots, poly_ylim, etc
     y_squared = y*y
+
+    
     fit_coefs, fit_cov = curve_fit(func, x, y_squared)
 
     # space over which to fit

@@ -90,7 +90,7 @@ def find_rms_cut_area(y, para0 = None, show_plots=False, cut_area = 0.05):
 
     return para, para_errors
 
-def plot_fit(x, y, para_x,  savepath='', show_plots=False, save_plots=False):
+def plot_fit(x, y, para_x,  savepath='', show_plots=True, save_plots=False):
     """
     Plot  beamsize fit in x or y direction
     """

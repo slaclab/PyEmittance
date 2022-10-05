@@ -23,7 +23,7 @@ class MachineIO():
         if self.meas_type == 'WIRE':
             add_path = '/LCLS_WS02'
         elif self.meas_type == 'OTRS':
-            add_path = '/LCLS_OTR3'
+            add_path = '/LCLS2_OTR3'
         else:
             add_path = ''
         self.CONFIG_PATH = path.join(self.dir, 'configs' + add_path)
@@ -56,14 +56,15 @@ class MachineIO():
             return get_beamsizes_otrs(self.use_profmon)
         elif self.meas_type == 'WIRE' and self.online:
             from pyemittance.wire_io import get_beamsizes_wire
+            print("Running wire scanner")
             return get_beamsizes_wire(self.online)
         elif not self.online:
-            return np.random.uniform(2e-4,8e-4), np.random.uniform(3e-4,8e-4), 0, 0
+            return np.random.uniform(0.5e-4,5e-4), np.random.uniform(1e-4,6e-4), 0, 0
         else:
             raise NotImplementedError('No valid measurement type defined.')
 
     def setinjector(self, set_list):
-        if self.online:
+        if self.online and set_list is not None:
             self.sol_cntrl_pv.put(set_list[0])
             self.cq_cntrl_pv.put(set_list[1])
             self.sq_cntrl_pv.put(set_list[2])

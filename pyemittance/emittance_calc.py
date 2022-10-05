@@ -44,7 +44,9 @@ class EmitCalc:
                          'bmagy_err': None,
                          'opt_q_x': None,
                          'opt_q_y': None,
-                         'total_points_measured': None
+                         'total_points_measured': None,
+                         'bmag_emit': None,
+                         'bmag_emit_err': None
                          }
 
     def weighting_func(self, beamsizes, beamsizes_err):
@@ -94,7 +96,7 @@ class EmitCalc:
             self.out_dict[f'beamsizes{dim}'] = list(bs)
             self.out_dict[f'beamsizeserr{dim}'] =  list(bs_err)
 
-            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights,
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, dim=dim,
                                                 calc_bmag=self.calc_bmag,
                                                 plot=self.plot, verbose=self.verbose)
             if np.isnan(res[0]):
@@ -171,8 +173,10 @@ class EmitCalc:
                 self.out_dict['bmag_emit_err'] = bmag_emit_err
 
         except TypeError:
-            self.out_dict['nemit'] = None
-            self.out_dict['nemit_err'] = None
+            self.out_dict['nemit'] = np.nan
+            self.out_dict['nemit_err'] = np.nan
+            self.out_dict['bmag_emit'] = np.nan
+            self.out_dict['bmag_emit_err'] = np.nan
 
     def save_run(self):
         save_emit_run(self.out_dict)
