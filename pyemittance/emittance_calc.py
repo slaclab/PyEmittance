@@ -7,7 +7,14 @@ class EmitCalc:
     """
     Uses info recorded in Observer to do an emittance fit
     """
-    def __init__(self, quad_vals=None, beam_vals=None, beam_vals_err=None):
+    def __init__(self,
+                 quad_vals: list = None,
+                 beam_vals: list = None,
+                 beam_vals_err: list = None,
+                 config: dict = None,
+                 config_path: str = None
+                 ):
+
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
 
@@ -18,6 +25,15 @@ class EmitCalc:
                                   'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
         else:
             self.beam_vals_err = beam_vals_err
+
+        # if config is not provided, use LCLS OTR2 as default
+        if config is None and config_path is None:
+            print("No configuration specified. Taking default LCLS-OTR2 configs.")
+            self.config_path = "/LCLS_OTR2"
+            self.config = load_config() # TODO: load large dict config
+        else:
+            self.config_path = config_path
+            self.config = config if config else load_config(self.config_path) # TODO: here as well
 
         self.dims = ['x', 'y'] # TODO: make code use provided in self.dims instead of hardcoding 'x' and 'y'
         self.sig_mat_screen = {'x': [], 'y': []}
@@ -42,12 +58,16 @@ class EmitCalc:
                          'bmagy': None,
                          'bmagx_err': None,
                          'bmagy_err': None,
+                         'bmag_emit': None,
+                         'bmag_emit_err': None,
                          'opt_q_x': None,
                          'opt_q_y': None,
-                         'total_points_measured': None,
-                         'bmag_emit': None,
-                         'bmag_emit_err': None
+                         'total_points_measured': None
                          }
+
+    def load_config(self):
+        self.config_path # TODO here
+
 
     def weighting_func(self, beamsizes, beamsizes_err):
         """

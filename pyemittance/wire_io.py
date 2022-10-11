@@ -7,12 +7,12 @@ import datetime
 from epics import PV
 from pyemittance.saving_io import numpy_save, save_config
 
-
-this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs/LCLS_WS02")
-
-# Measurement PVs
-meas_pv_info = json.load(open(CONFIG_PATH + '/meas_pv_info.json'))
+# TODO: remove commented lines below and import from main
+# this_dir, this_filename = path.split(__file__)
+# CONFIG_PATH = path.join(this_dir, "configs/LCLS_WS02")
+#
+# # Measurement PVs
+# meas_pv_info = json.load(open(CONFIG_PATH + '/meas_pv_info.json'))
 
 # in meters for emittance calc
 scan_pv = PV(meas_pv_info['diagnostic']['pv']['scan'])
