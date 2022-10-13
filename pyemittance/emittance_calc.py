@@ -2,6 +2,8 @@ import numpy as np
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
 from pyemittance.machine_settings import get_twiss0
 from pyemittance.saving_io import save_emit_run
+from pyemittance.load_json_configs import load_configs
+
 
 class EmitCalc:
     """
@@ -30,10 +32,10 @@ class EmitCalc:
         if config is None and config_path is None:
             print("No configuration specified. Taking default LCLS-OTR2 configs.")
             self.config_path = "/LCLS_OTR2"
-            self.config = load_config() # TODO: load large dict config
+            self.config = self.load_config()
         else:
             self.config_path = config_path
-            self.config = config if config else load_config(self.config_path) # TODO: here as well
+            self.config = config if config else self.load_config()
 
         self.dims = ['x', 'y'] # TODO: make code use provided in self.dims instead of hardcoding 'x' and 'y'
         self.sig_mat_screen = {'x': [], 'y': []}
@@ -66,8 +68,10 @@ class EmitCalc:
                          }
 
     def load_config(self):
-        self.config_path # TODO here
-
+        # if path exists, load from path
+        if self.config_path is not None:
+            self.config = load_configs(self.config_path)
+        return self.config
 
     def weighting_func(self, beamsizes, beamsizes_err):
         """

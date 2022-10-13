@@ -4,10 +4,12 @@ from pyemittance.emittance_calc import EmitCalc
 
 # Sample emittance scan function for machine and injector surrogate
 
-def eval_emit_machine(config,
+
+def eval_emit_machine(inj_config,
                       quad_init = [-6, -4, -2, 0],
                       online = False,
-                      name = 'LCLS',
+                      config_name = 'LCLS2_OTR3',
+                      config_dict = None,
                       meas_type = 'OTRS',
                       adapt_ranges = True,
                       num_points = 7,
@@ -18,14 +20,16 @@ def eval_emit_machine(config,
                       use_prev_meas = True,
                       quad_tol = 0.05,
                       save_runs = False,
-                      calc_bmag = False):
+                      calc_bmag = False
+                      ):
 
     # get initial points from the observer
     o = Observer([], {'x': [], 'y': []}, {'x': [], 'y': []})
     o.use_model = False
-    o.config = config
+    o.config = inj_config
     o.online = online
-    o.name = name
+    o.config_name = config_name
+    o.config_dict = config_dict
     o.meas_type = meas_type
     o.use_prev_meas = use_prev_meas
     o.tolerance = quad_tol

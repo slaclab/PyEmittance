@@ -1,7 +1,4 @@
 import numpy as np
-from os import path
-import json
-import time
 import datetime
 
 from epics import caget, PV
@@ -9,61 +6,43 @@ from pyemittance.image import Image
 from pyemittance.saving_io import save_image, numpy_save, save_config
 
 
-this_dir, this_filename = path.split(__file__)
-CONFIG_PATH = path.join(this_dir, "configs/LCLS2_OTR3")
-
-# Load image processing setting info
-im_proc = json.load(open(CONFIG_PATH+'/img_proc.json'))
-
-subtract_bg = im_proc['subtract_bg']
-bg_image = im_proc['background_im']  # specify path to bg im in json file
-use_roi = im_proc['use_roi']
-roi_xmin = im_proc['roi']['xmin']
-roi_ymin = im_proc['roi']['ymin']
-roi_xmax = im_proc['roi']['xmax']
-roi_ymax = im_proc['roi']['ymax']
-avg_ims = im_proc['avg_ims']
-n_acquire = im_proc['n_to_acquire']
-amp_threshold_x = im_proc['amp_threshold']
-amp_threshold_y = im_proc['amp_threshold']
-min_sigma = im_proc['min_sigma'] # in raw units (pixels)
-max_sigma = im_proc['max_sigma']
-max_samples = im_proc['max_samples']
-
-# Measurement PVs
-meas_pv_info = json.load(open(CONFIG_PATH + '/meas_pv_info.json'))
-
-# in meters for emittance calc
-resolution = caget(meas_pv_info['diagnostic']['pv']['resolution']) *1e-6
-im_pv = PV(meas_pv_info['diagnostic']['pv']['image'])
-n_col_pv = PV(meas_pv_info['diagnostic']['pv']['ncol'])
-n_row_pv = PV(meas_pv_info['diagnostic']['pv']['nrow'])
-x_size_pv = PV(meas_pv_info['diagnostic']['pv']['profmonxsize'])
-y_size_pv = PV(meas_pv_info['diagnostic']['pv']['profmonysize'])
-
-# thresholds in meters
-min_sigma_meters = im_proc['min_sigma']*resolution
-max_sigma_meters = im_proc['max_sigma']*resolution
-
-def get_beamsizes_otrs(use_profmon):
+def get_beamsizes_otrs(config_dict, use_profmon=False):
     """Main function imported by beam_io
     Option to use ProfMon PVs to get beamsizes
     Returns xrms, yrms, xrms_err, yrms_err
     """
-    beamsize = get_beamsizes(use_profMon=use_profmon)
+    beamsize = get_beamsizes(config_dict=config_dict, use_profMon=use_profmon)
     xrms = beamsize[0]
     yrms = beamsize[1]
     xrms_err = beamsize[2]
     yrms_err = beamsize[3]
     return xrms, yrms, xrms_err, yrms_err
 
-def get_beamsizes(use_profMon=False, reject_bad_beam=True,
+def get_beamsizes(config_dict, use_profMon=False, reject_bad_beam=True,
                   save_summary=False, post=None):
     """ Data acquisition from OTRS
     Option to use either ProfMon or image processing
     Additional option to reject bad beams
     Returns xrms, yrms, xrms_err, yrms_err
     """
+    # Load image processing setting info
+    im_proc = config_dict['img_proc']
+    amp_threshold_x = im_proc['amp_threshold']
+    amp_threshold_y = im_proc['amp_threshold']
+    max_samples = im_proc['max_samples']
+
+    # Measurement PVs
+    meas_pv_info = config_dict['meas_pv_info']
+    # in meters for emittance calc
+    resolution = caget(meas_pv_info['diagnostic']['pv']['resolution']) * 1e-6
+    x_size_pv = PV(meas_pv_info['diagnostic']['pv']['profmonxsize'])
+    y_size_pv = PV(meas_pv_info['diagnostic']['pv']['profmonysize'])
+
+    # Thresholds in meters
+    min_sigma_meters = im_proc['min_sigma'] * resolution
+    max_sigma_meters = im_proc['max_sigma'] * resolution
+
+
     xrms = np.nan
     yrms = np.nan
     xrms_err = np.nan
@@ -71,7 +50,6 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
     xamp = np.nan
     yamp = np.nan
     beamsizes = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-    im = None
 
     if reject_bad_beam:
 
@@ -116,7 +94,7 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
                 # if post:
                 #    beamsizes = getbeamsizes_from_img(post = post)
                 #:
-                beamsizes = getbeamsizes_from_img()
+                beamsizes = getbeamsizes_from_img(config_dict)
 
                 xrms = beamsizes[0]
                 yrms = beamsizes[1]
@@ -134,21 +112,20 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
 
             count = count + 1
 
-
     else:
 
         # make sure stats is checked on profmon gui
         if use_profMon:
             xrms, xrms_err = x_size_pv.get() * 1e-6, 0  # in meters
             yrms, yrms_err = y_size_pv.get() * 1e-6, 0  # in meters
-            xamp, yamp = amp_threshold_x, amp_threshold_y # DOES NOT UPDATE W/PROFMON
-            #print("Using ProfMon beamsizes.")
+            xamp, yamp = amp_threshold_x, amp_threshold_y  # DOES NOT UPDATE W/PROFMON
+            # print("Using ProfMon beamsizes.")
 
         else:
             if post:
-                beamsizes = getbeamsizes_from_img(post=post)
+                beamsizes = getbeamsizes_from_img(config_dict, post=post)
             else:
-                beamsizes = getbeamsizes_from_img()
+                beamsizes = getbeamsizes_from_img(config_dict)
 
             xrms = beamsizes[0]
             yrms = beamsizes[1]
@@ -171,12 +148,29 @@ def get_beamsizes(use_profMon=False, reject_bad_beam=True,
 
     return xrms, yrms, xrms_err, yrms_err
 
-def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
-                          subtract_bg=subtract_bg, post=None):
+
+def getbeamsizes_from_img(config_dict, post=None):
     """Returns xrms, yrms, xrms_err, yrms_err for multiple sampled images;
     can optionally average multiple images
     RETURNS IN RAW PIXEL UNITS-- NEED TO MULTIPLY BY RESOLUTION FOR METERS
     """
+    # Load image processing setting info
+    im_proc = config_dict['img_proc']
+    subtract_bg = im_proc['subtract_bg']
+    bg_image = im_proc['background_im']  # specify path to bg im in json file
+    amp_threshold_x = im_proc['amp_threshold']
+    amp_threshold_y = im_proc['amp_threshold']
+    min_sigma = im_proc['min_sigma']  # in raw units (pixels)
+    max_sigma = im_proc['max_sigma']
+    max_samples = im_proc['max_samples']
+    avg_ims = im_proc['avg_ims']
+    num_images = im_proc['n_to_acquire']
+
+    # Measurement PVs
+    meas_pv_info = config_dict['meas_pv_info']
+    # in meters for emittance calc
+    n_col_pv = PV(meas_pv_info['diagnostic']['pv']['ncol'])
+    n_row_pv = PV(meas_pv_info['diagnostic']['pv']['nrow'])
 
     xrms, yrms = [0] * num_images, [0] * num_images
     xrms_err, yrms_err = [0] * num_images, [0] * num_images
@@ -195,7 +189,7 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
 
         # retake bad images
         while repeat:
-            meas = get_beam_image(subtract_bg, post)
+            meas = get_beam_image(config_dict, post)
             xrms[i], yrms[i] = meas[0:2]
             xrms_err[i], yrms_err[i] = meas[2:4]
             xamp[i], yamp[i], im[i] = meas[4:]
@@ -218,7 +212,7 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
                 repeat = False
 
     # average images before taking fits
-    if avg == True:
+    if avg_ims == True:
                       
         idx = ~np.isnan(xrms)
         if True not in idx:
@@ -287,10 +281,27 @@ def getbeamsizes_from_img(num_images=n_acquire, avg=avg_ims,
                 mean_xrms_err, mean_yrms_err,
                 mean_xamp, mean_yamp, im.proc_image]
 
-def get_beam_image(subtract_bg=subtract_bg, post=None):
+def get_beam_image(config_dict, post=None):
     """Get beam image from screen
     Return beamsize info and processed image
     """
+    # Load image processing setting info
+    im_proc = config_dict['img_proc']
+    subtract_bg = im_proc['subtract_bg']
+    bg_image = im_proc['background_im']  # specify path to bg im in json file
+    use_roi = im_proc['use_roi']
+    roi_xmin = im_proc['roi']['xmin']
+    roi_ymin = im_proc['roi']['ymin']
+    roi_xmax = im_proc['roi']['xmax']
+    roi_ymax = im_proc['roi']['ymax']
+
+    # Measurement PVs
+    meas_pv_info = config_dict['meas_pv_info']
+    # in meters for emittance calc
+    im_pv = PV(meas_pv_info['diagnostic']['pv']['image'])
+    n_col_pv = PV(meas_pv_info['diagnostic']['pv']['ncol'])
+    n_row_pv = PV(meas_pv_info['diagnostic']['pv']['nrow'])
+
 
     if post:
         im = post[0]

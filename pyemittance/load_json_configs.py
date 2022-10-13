@@ -12,16 +12,16 @@ json_namelist = ["beamline_info.json",
                  "savepaths.json"]
 
 
-def load_configs(path="/LCLS2_OTR3"):
+def load_configs(path="LCLS2_OTR3"):
     all_data = {}
     for i in range(len(json_namelist)):
         # load all jsons and save into one dict
         # skip jsons that don't exit and print that it is not found
         # TODO: validate that all jsons/needed keywords configs do exist
         # TODO: validate that all configs are consistent across directories/locations
-        # TODO: eg all have rmatx and rmaty 
+        # TODO: eg all have rmatx and rmaty
         try:
-            f = open(os.path.join(CONFIG_PATH + path, json_namelist[i]), encoding='utf-8')
+            f = open(os.path.join(CONFIG_PATH + "/" + path, json_namelist[i]), encoding='utf-8')
         except FileNotFoundError:
             print(f"*** File '{json_namelist[i]}' does not exist,"
                   f" please create appropriate json file for configuration. *** \n"
@@ -29,7 +29,8 @@ def load_configs(path="/LCLS2_OTR3"):
             raise
         file = f.read()
         f.close()
-        data = json.loads(file)
+        # make dict keys json file names for reference
+        data = {json_namelist[i][:-5]: json.loads(file)}
         all_data = {**all_data, **data}
 
     # dict of all configs

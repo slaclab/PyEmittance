@@ -14,7 +14,7 @@ class Observer:
         self.use_prev_meas = False
         self.tolerance = 0.1
 
-        self.config = None
+        self.inj_config = None # injector configuration settings for SOL, CQ, SQ
         self.use_model = True
         # if using the surrogate model
         self.get_beamsizes_model = None
@@ -24,7 +24,8 @@ class Observer:
         # if using machine
         self.use_profmon = False
         self.online = False
-        self.name = 'sim'
+        self.config_name = 'sim'
+        self.config_dict = None
         self.meas_type = 'OTRS'
 
     def measure_beam(self, quad_list):
@@ -110,25 +111,25 @@ class Observer:
         if self.use_model:
             if self.add_noise:
                 # this is outdated/not used right now
-                beamsizes = self.get_beamsizes_model(self.config, val)
+                beamsizes = self.get_beamsizes_model(self.inj_config, val)
                 xrms = beamsizes[0] + np.random.rand(1) / self.noise_red
                 yrms = beamsizes[1] + np.random.rand(1) / self.noise_red
                 xrms_err = beamsizes[2] + np.random.rand(1) / self.noise_red / 10
                 yrms_err = beamsizes[3] + np.random.rand(1) / self.noise_red / 10
                 return xrms[0], yrms[0], xrms_err[0], yrms_err[0]
 
-            if len(np.asarray(self.config).shape) == 2:
+            if len(np.asarray(self.inj_config).shape) == 2:
                 # temp workaround for testing
-                out = self.get_beamsizes_model(self.config[0]+[val])
+                out = self.get_beamsizes_model(self.inj_config[0]+[val])
                 return np.array([out["sigma_x"][0], out["sigma_y"][0], 0., 0.])
 
-            return self.get_beamsizes_model(self.config, val)
+            return self.get_beamsizes_model(self.inj_config, val)
 
         else:
             from pyemittance.beam_io import MachineIO
-            io = MachineIO(self.name, self.meas_type)
+            io = MachineIO(self.config_name, self.config_dict, self.meas_type)
             io.online = self.online
             io.use_profmon = self.use_profmon
             # note we are not setting the injector on the machine here
-            return io.get_beamsizes_machine(self.config, val)
+            return io.get_beamsizes_machine(self.inj_config, val)
         
