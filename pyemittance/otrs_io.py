@@ -1,6 +1,5 @@
 import numpy as np
 import datetime
-
 from epics import caget, PV
 from pyemittance.image import Image
 from pyemittance.saving_io import save_image, numpy_save, save_config

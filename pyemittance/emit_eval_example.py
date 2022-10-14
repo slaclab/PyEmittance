@@ -1,6 +1,7 @@
 from pyemittance.observer import Observer
 from pyemittance.data_handler import adapt_range, check_symmetry, find_inflection_pnt, add_measurements_btwn_pnts
 from pyemittance.emittance_calc import EmitCalc
+from pyemittance.load_json_configs import load_configs
 
 # Sample emittance scan function for machine and injector surrogate
 
@@ -28,11 +29,20 @@ def eval_emit_machine(inj_config,
     o.use_model = False
     o.config = inj_config
     o.online = online
-    o.config_name = config_name
-    o.config_dict = config_dict
     o.meas_type = meas_type
     o.use_prev_meas = use_prev_meas
     o.tolerance = quad_tol
+
+    # if config is not provided, use LCLS OTR2 as default
+    if config_dict is None and config_name is None:
+        print("No configuration specified. Taking default LCLS-OTR2 configs.")
+        o.config_name = "LCLS_OTR2"
+        o.config_dict = load_configs(o.config_name)
+    else:
+        o.config_name = config_name
+        o.config_dict = config_dict if config_dict else load_configs(o.config_name)
+
+    energy = o.config_dict['beamline_info']['energy']
 
     # get initial beamsizes (rough scan)
     bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(quad_init)
@@ -41,8 +51,8 @@ def eval_emit_machine(inj_config,
     quad_range_y = quad_init
 
     if adapt_ranges:
-        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, num_points=num_points)
-        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, num_points=num_points)
+        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, energy=energy, num_points=num_points)
+        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, energy=energy, num_points=num_points)
 
         new_beamsize_x = o.measure_beam(quad_range_x)
         bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
@@ -90,7 +100,9 @@ def eval_emit_machine(inj_config,
     # finally get emittance
     ef = EmitCalc({'x': quad_range_x, 'y': quad_range_y},
                   {'x': bs_x_list, 'y': bs_y_list},
-                  {'x': bs_x_list_err, 'y': bs_y_list_err}
+                  {'x': bs_x_list_err, 'y': bs_y_list_err},
+                  config_dict=o.config_dict,
+                  config_name=o.config_name
                   )
     ef.plot = show_plots
     ef.save_runs = save_runs

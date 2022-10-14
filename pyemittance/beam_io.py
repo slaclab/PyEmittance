@@ -13,13 +13,13 @@ class MachineIO():
         self.meas_type = meas_type
         self.online = False
         self.use_profmon = False
-        self.settle_time = 3 # sleep time in seconds
+        self.settle_time = 3  # sleep time in seconds
 
         # Set configs for measurement
         # if config is not provided, use LCLS OTR2 as default
         if config_dict is None and config_name is None:
             print("No configuration specified. Taking default LCLS-OTR2 configs.")
-            self.config_name = "/LCLS_OTR2"
+            self.config_name = "LCLS_OTR2"
             self.config_dict = self.load_config()
         else:
             self.config_name = config_name

@@ -1,6 +1,6 @@
 import numpy as np
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
-from pyemittance.machine_settings import get_twiss0
+from pyemittance.machine_settings import get_twiss0, get_rmat, get_energy, get_quad_len
 from pyemittance.saving_io import save_emit_run
 from pyemittance.load_json_configs import load_configs
 
@@ -13,8 +13,8 @@ class EmitCalc:
                  quad_vals: list = None,
                  beam_vals: list = None,
                  beam_vals_err: list = None,
-                 config: dict = None,
-                 config_path: str = None
+                 config_dict: dict = None,
+                 config_name: str = None
                  ):
 
         self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
@@ -29,20 +29,23 @@ class EmitCalc:
             self.beam_vals_err = beam_vals_err
 
         # if config is not provided, use LCLS OTR2 as default
-        if config is None and config_path is None:
+        if config_dict is None and config_name is None:
             print("No configuration specified. Taking default LCLS-OTR2 configs.")
-            self.config_path = "/LCLS_OTR2"
-            self.config = self.load_config()
+            self.config_name = "LCLS_OTR2"
+            self.config_dict = self.load_config()
         else:
-            self.config_path = config_path
-            self.config = config if config else self.load_config()
+            self.config_name = config_name
+            self.config_dict = config_dict if config_dict else self.load_config()
 
         self.dims = ['x', 'y'] # TODO: make code use provided in self.dims instead of hardcoding 'x' and 'y'
         self.sig_mat_screen = {'x': [], 'y': []}
-        self.twiss0 = get_twiss0() # emit, beta, alpha
+        self.twiss0 = get_twiss0(self.config_dict['beamline_info'])  # emit, beta, alpha
         self.twiss_screen = {'x': [], 'y': []} # emit, beta, alpha
         self.beta_err = None
         self.alpha_err = None
+        self.energy = get_energy(self.config_dict['beamline_info'])
+        self.rmat = get_rmat(self.config_dict['beamline_info'])
+        self.quad_len = get_quad_len(self.config_dict['beamline_info'])
 
         self.calc_bmag = False
         self.plot = False
@@ -69,15 +72,15 @@ class EmitCalc:
 
     def load_config(self):
         # if path exists, load from path
-        if self.config_path is not None:
-            self.config = load_configs(self.config_path)
-        return self.config
+        if self.config_name is not None:
+            self.config_dict = load_configs(self.config_name)
+        return self.config_dict
 
     def weighting_func(self, beamsizes, beamsizes_err):
         """
         Weigh the fit with Var(sizes) and the sizes themselves
         :param beamsizes: RMS beamsizes measured on screen
-        :param err_beamsizes: error on RMS estimate
+        :param beamsizes_err: error on RMS estimate
         :return: weights for fitting
         """
         beamsizes = np.array(beamsizes)
@@ -99,7 +102,6 @@ class EmitCalc:
     def get_emit(self):
         """
         Get emittance at quad from beamsizes and quad scan
-        :param dim: 'x' or 'y'
         :return: normalized emittance and error
         """
 
@@ -108,7 +110,7 @@ class EmitCalc:
 
             q = self.quad_vals[dim]
             # quad vals are passed in machine units
-            kL = get_kL(q)
+            kL = get_kL(q, self.quad_len, self.energy)
 
             bs = self.beam_vals[dim]
             bs_err = self.beam_vals_err[dim]
@@ -120,8 +122,8 @@ class EmitCalc:
             self.out_dict[f'beamsizes{dim}'] = list(bs)
             self.out_dict[f'beamsizeserr{dim}'] =  list(bs_err)
 
-            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, dim=dim,
-                                                calc_bmag=self.calc_bmag,
+            res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, dim=dim, Lquad=self.quad_len,
+                                                energy=self.energy, rmat=self.rmat, calc_bmag=self.calc_bmag,
                                                 plot=self.plot, verbose=self.verbose)
             if np.isnan(res[0]):
                 self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
@@ -134,9 +136,9 @@ class EmitCalc:
                 if self.calc_bmag:
                     sig_11, sig_12, sig_22 = res[4:]
 
-            norm_emit_res = normalize_emit(emit, emit_err)
-            self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err)[0]
-            self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err)[1]
+            norm_emit_res = normalize_emit(emit, emit_err, self.energy)
+            self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err, self.energy)[0]
+            self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err, self.energy)[1]
 
             if self.calc_bmag:
                 self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]

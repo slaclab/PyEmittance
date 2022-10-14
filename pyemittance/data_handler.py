@@ -2,12 +2,11 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from pyemittance.optics import get_k1, get_gradient, get_quad_field
-from pyemittance.machine_settings import get_energy
 
 # TODO: import m_0
 m_0  = 0.000511
 
-def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
+def adapt_range(x, y, axis, w=None, energy=0.135, cutoff_percent=0.3,
                 num_points=5, verbose=False):
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
