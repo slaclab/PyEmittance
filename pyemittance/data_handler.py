@@ -324,8 +324,6 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
     # We want to add points primarily around min
     # Find min location
     argmin = np.argmin(y)
-    mult_fac = 1
-    step = (x[argmin + 1] - x[argmin]) / 2
 
     if argmin < (len(y)-1):
         # if min is not at edge
