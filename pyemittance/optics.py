@@ -129,13 +129,16 @@ def quad_rmat_mat2(kL, d=None, Lquad=0, rmat=None):
     Composite [quad, drift] 2x2 transfer matrix
     :param kL: quad strength * quad length (1/m)
     :param Lquad: quad length (m)
-    :return:
+    :param d: drift length from quad to screen (m); 
+    pass only if there is no other components
+    :return: full rmatrix from quad to screen
     """
 
     if kL == 0:
         # Return matrix after quad to screen
         return r_mat2(rmat, d)
 
+    # if quad is on, multiply by quad matrix
     return r_mat2(rmat, d) @ quad_mat2(rmat, kL, Lquad, d=d)
 
 
