@@ -28,6 +28,8 @@ class Observer:
         self.config_dict = None
         self.meas_type = 'OTRS'
 
+        self.verbose = True
+
     def measure_beam(self, quad_list):
         xrms = []
         yrms = []

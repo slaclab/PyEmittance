@@ -51,8 +51,8 @@ class MachineIO():
             self.setquad(quad_val)
             self.setinjector(config)
             time.sleep(self.settle_time)
-        else:
-            print("Running offline.")
+        # else:
+        #     print("Running offline.")
 
         if self.meas_type == 'OTRS' and self.online:
             from pyemittance.otrs_io import get_beamsizes_otrs

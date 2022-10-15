@@ -21,7 +21,7 @@ def adapt_range(x, y, axis, w=None, energy=0.135, l_eff=0.1, cutoff_percent=0.3,
     idx = ~np.isnan(y)
 
     if True not in idx:
-        print("no valid pnts")
+        print("no valid points")
         return x
     x = x[idx]
     y = y[idx]
