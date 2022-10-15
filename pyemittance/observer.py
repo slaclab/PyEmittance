@@ -56,7 +56,7 @@ class Observer:
                 # find loc within sorted list
                 loc = bisect.bisect_left(self.quad_meas, val)
 
-                if (loc != 0 and loc != len(self.quad_meas)-1 and loc < len(self.quad_meas)):
+                if loc != 0 and loc != len(self.quad_meas)-1 and loc < len(self.quad_meas):
                     # compare to values before and after
                     diff_prev = abs(val - self.quad_meas[loc-1])
                     diff_next = abs(self.quad_meas[loc] - val)

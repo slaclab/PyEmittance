@@ -312,7 +312,7 @@ def gradient_mat3(emit, a1, a2, a3):
     """
     Gradient of f = { emittance, beta, alpha }
     where f is obtained at the scanning location (quad)
-    :param eps: emittance parameter estimate
+    :param emit: emittance parameter estimate
     :param a1: matrix element s11
     :param a2: matrix element s12
     :param a3: matrix element s22

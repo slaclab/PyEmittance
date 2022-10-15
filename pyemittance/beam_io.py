@@ -91,5 +91,12 @@ class MachineIO():
         """            
         beamsize = self.get_beamsizes_machine(set_list, quad)
         # save BAX beam size data
-        save_config(beamsize[0], beamsize[1], beamsize[2], beamsize[3], None)
+        save_config(beamsize[0],
+                    beamsize[1],
+                    beamsize[2],
+                    beamsize[3],
+                    None,
+                    meas_read_pv=self.meas_read_pv,
+                    opt_pvs=self.opt_pvs,
+                    impath=self.config_dict['savepaths']['images'])
         return np.array([beamsize[0], beamsize[1]])

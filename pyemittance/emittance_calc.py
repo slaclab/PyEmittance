@@ -1,4 +1,6 @@
 import numpy as np
+from os import path, makedirs
+import errno, os
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
 from pyemittance.machine_settings import get_twiss0, get_rmat, get_energy, get_quad_len
 from pyemittance.saving_io import save_emit_run
@@ -10,9 +12,9 @@ class EmitCalc:
     Uses info recorded in Observer to do an emittance fit
     """
     def __init__(self,
-                 quad_vals: list = None,
-                 beam_vals: list = None,
-                 beam_vals_err: list = None,
+                 quad_vals: dict = None,
+                 beam_vals: dict = None,
+                 beam_vals_err: dict = None,
                  config_dict: dict = None,
                  config_name: str = None
                  ):
@@ -21,8 +23,8 @@ class EmitCalc:
         self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
 
         # Make sure error is added to beamsizes if none is provided
-        if beam_vals_err is None or sum(beam_vals_err['x'])==0 or sum(beam_vals_err['y'])==0:
-            self.bs_error = (0.015, 0.015) # Define some error on beamsizes in each dimension
+        if beam_vals_err is None or sum(beam_vals_err['x']) == 0 or sum(beam_vals_err['y']) == 0:
+            self.bs_error = (0.015, 0.015)  # Define some error on beamsizes in each dimension
             self.beam_vals_err = {'x': np.asarray(self.beam_vals['x'])*self.bs_error[0],
                                   'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
         else:
@@ -37,7 +39,7 @@ class EmitCalc:
             self.config_name = config_name
             self.config_dict = config_dict if config_dict else self.load_config()
 
-        self.dims = ['x', 'y'] # TODO: make code use provided in self.dims instead of hardcoding 'x' and 'y'
+        self.dims = ['x', 'y'] # TODO: make code use provided in self.dims, and make it extensible
         self.sig_mat_screen = {'x': [], 'y': []}
         self.twiss0 = get_twiss0(self.config_dict['beamline_info'])  # emit, beta, alpha
         self.twiss_screen = {'x': [], 'y': []} # emit, beta, alpha
@@ -51,6 +53,8 @@ class EmitCalc:
         self.plot = False
         self.verbose = False
         self.save_runs = False
+        # Initialize paths and dirs for saving
+        self.init_saving()
 
         # Main output of emittance calc
         self.out_dict = {'nemitx': None,
@@ -174,7 +178,7 @@ class EmitCalc:
                                self.beta_err, self.alpha_err,
                                beta0=beta0, alpha0=alpha0)
         # Save twiss at screen
-        self.twiss_screen[dim] = twiss['emit'], twiss['beta'], twiss['alpha']
+        self.twiss_screen[dim] = [twiss['emit'], twiss['beta'], twiss['alpha']]
 
         return twiss['bmag'], twiss['bmag_err'], twiss['min_idx']
 
@@ -205,4 +209,64 @@ class EmitCalc:
             self.out_dict['bmag_emit_err'] = np.nan
 
     def save_run(self):
-        save_emit_run(self.out_dict)
+        save_emit_run(self.out_dict, path=self.config_dict['savepaths']['fits'])
+
+    def init_saving(self):
+        """Initialize dirs and files for saving"""
+
+        savepaths = self.config_dict['savepaths']
+
+        def mkdir_p(path_):
+            """Set up dirs for results in working dir"""
+            try:
+                makedirs(path_)
+            except OSError as exc:
+                if exc.errno == errno.EEXIST and os.path.isdir(path_):
+                    pass
+                else:
+                    raise
+
+        # Make directories if needed
+        try:
+            mkdir_p(savepaths['images'])
+            mkdir_p(savepaths['summaries'])
+            mkdir_p(savepaths['fits'])
+            mkdir_p(savepaths['raw_saves'])
+        except OSError:
+            print("Savepaths not set. Please set them in 'configs/savepaths.json'")
+            from pathlib import Path
+            parent = Path(__file__).resolve().parent
+            examples_dir = str(parent)[:-11] + "examples"
+            print("Using examples directory: ", examples_dir)
+            savepaths['images'] = examples_dir + "/saved_images/"
+            savepaths['summaries'] = examples_dir + "/summaries/"
+            savepaths['fits'] = examples_dir + "/saved_fits/"
+            savepaths['raw_saves'] = examples_dir + "/raw_saves/"
+            mkdir_p(savepaths['images'])
+            mkdir_p(savepaths['summaries'])
+            mkdir_p(savepaths['fits'])
+            mkdir_p(savepaths['raw_saves'])
+
+        # Start headings
+        file_exists = path.exists(savepaths['summaries'] + "image_acq_quad_info.csv")
+
+        if not file_exists:
+
+            # TODO: add others as inputs
+            f = open(savepaths['summaries'] + "image_acq_quad_info.csv", "a+")
+            f.write(
+                f"{'timestamp'},{'ncol'},{'nrow'},{'roi_xmin'},{'roi_xmax'}"
+                f",{'roi_ymin'},{'roi_ymax'},{'resolution'},{'bact'},"
+                f"{'x_size'},{'y_size'},{'xrms'},{'yrms'},"
+                f"{'xrms_err'},{'yrms_err]'}\n")
+            f.close()
+
+        file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
+
+        if not file_exists:
+            # todo add others as inputs
+            f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
+            f.write(
+                f"{'timestamp'},{'varx_cur'},{'vary_cur'},{'varz_cur'},"
+                f"{'bact_cur'},{'xrms'},{'yrms'},{'xrms_err'},{'yrms_err'}\n")
+            f.close()

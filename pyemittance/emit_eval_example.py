@@ -7,21 +7,21 @@ from pyemittance.load_json_configs import load_configs
 
 
 def eval_emit_machine(inj_config,
-                      quad_init = [-6, -4, -2, 0],
-                      online = False,
-                      config_name = 'LCLS2_OTR3',
-                      config_dict = None,
-                      meas_type = 'OTRS',
-                      adapt_ranges = True,
-                      num_points = 7,
-                      check_sym = True,
-                      infl_check = True,
-                      add_pnts = True,
-                      show_plots = True,
-                      use_prev_meas = True,
-                      quad_tol = 0.05,
-                      save_runs = False,
-                      calc_bmag = False
+                      quad_init=[-6, -4, -2, 0],
+                      online=False,
+                      config_name='LCLS2_OTR3',
+                      config_dict=None,
+                      meas_type='OTRS',
+                      adapt_ranges=True,
+                      num_points=7,
+                      check_sym=True,
+                      infl_check=True,
+                      add_pnts=True,
+                      show_plots=True,
+                      use_prev_meas=True,
+                      quad_tol=0.05,
+                      save_runs=False,
+                      calc_bmag=False
                       ):
 
     # get initial points from the observer
@@ -43,6 +43,7 @@ def eval_emit_machine(inj_config,
         o.config_dict = config_dict if config_dict else load_configs(o.config_name)
 
     energy = o.config_dict['beamline_info']['energy']
+    l_quad = o.config_dict['beamline_info']['l']
 
     # get initial beamsizes (rough scan)
     bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(quad_init)
@@ -51,8 +52,8 @@ def eval_emit_machine(inj_config,
     quad_range_y = quad_init
 
     if adapt_ranges:
-        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, energy=energy, num_points=num_points)
-        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, energy=energy, num_points=num_points)
+        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, energy=energy, l_eff=l_quad, num_points=num_points)
+        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, energy=energy, l_eff=l_quad, num_points=num_points)
 
         new_beamsize_x = o.measure_beam(quad_range_x)
         bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
@@ -116,20 +117,23 @@ def eval_emit_machine(inj_config,
 
     return ef.out_dict
 
+
 def eval_emit_surrogate(get_bs_model,
-                        config,
-                        quad_init = [-6, -4, -2, 0],
-                        adapt_ranges = True,
-                        num_points = 7,
-                        check_sym = True,
-                        infl_check = True,
-                        add_pnts = True,
-                        show_plots = False,
-                        add_noise = False,
-                        use_prev_meas = False,
-                        quad_tol = 0.05,
-                        save_runs= False,
-                        calc_bmag = False):
+                        init_config,
+                        quad_init=[-6, -4, -2, 0],
+                        config_name='LCLS2_OTR3',
+                        config_dict=None,
+                        adapt_ranges=True,
+                        num_points=7,
+                        check_sym=True,
+                        infl_check=True,
+                        add_pnts=True,
+                        show_plots=False,
+                        add_noise=False,
+                        use_prev_meas=False,
+                        quad_tol=0.05,
+                        save_runs=False,
+                        calc_bmag=False):
 
     # get initial points from the observer
     o = Observer([], {'x': [], 'y': []}, {'x': [], 'y': []})
@@ -137,7 +141,7 @@ def eval_emit_surrogate(get_bs_model,
 
     # set beamsize fn for MODEL
     o.get_beamsizes_model = get_bs_model
-    o.config = config
+    o.config = init_config
     o.add_noise = add_noise
     o.use_prev_meas = use_prev_meas
     o.tolerance = quad_tol
@@ -148,9 +152,21 @@ def eval_emit_surrogate(get_bs_model,
     quad_range_x = quad_init
     quad_range_y = quad_init
 
+    # if config is not provided, use LCLS OTR2 as default
+    if config_dict is None and config_name is None:
+        print("No configuration specified. Taking default LCLS-OTR2 configs.")
+        o.config_name = "LCLS_OTR2"
+        o.config_dict = load_configs(o.config_name)
+    else:
+        o.config_name = config_name
+        o.config_dict = config_dict if config_dict else load_configs(o.config_name)
+
+    energy = o.config_dict['beamline_info']['energy']
+    l_quad = o.config_dict['beamline_info']['l']
+
     if adapt_ranges:
-        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, num_points=num_points)
-        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, num_points=num_points)
+        quad_range_x = adapt_range(quad_range_x, bs_x_list, 'x', w=bs_x_list_err, energy=energy, l_eff=l_quad, num_points=num_points)
+        quad_range_y = adapt_range(quad_range_y, bs_y_list, 'y', w=bs_y_list_err, energy=energy, l_eff=l_quad, num_points=num_points)
 
         new_beamsize_x = o.measure_beam(quad_range_x)
         bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]

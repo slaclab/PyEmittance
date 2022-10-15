@@ -24,6 +24,13 @@ def get_beamsizes(config_dict, use_profMon=False, reject_bad_beam=True,
     Additional option to reject bad beams
     Returns xrms, yrms, xrms_err, yrms_err
     """
+    # Saving configs
+    opt_pv_info = config_dict['opt_pv_info']
+    meas_pv_info = config_dict['meas_pv_info']
+    meas_read_pv = meas_pv_info['meas_device']['pv']['read']
+    opt_pvs = opt_pv_info['opt_vars']
+    savepaths = config_dict['savepaths']
+    pv_savelist = config_dict['save_scalar_pvs']
     # Load image processing setting info
     im_proc = config_dict['img_proc']
     amp_threshold_x = im_proc['amp_threshold']
@@ -40,7 +47,6 @@ def get_beamsizes(config_dict, use_profMon=False, reject_bad_beam=True,
     # Thresholds in meters
     min_sigma_meters = im_proc['min_sigma'] * resolution
     max_sigma_meters = im_proc['max_sigma'] * resolution
-
 
     xrms = np.nan
     yrms = np.nan
@@ -142,8 +148,24 @@ def get_beamsizes(config_dict, use_profMon=False, reject_bad_beam=True,
 
     if save_summary:
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-        save_config(xrms, yrms, xrms_err, yrms_err, timestamp)
-        numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp)
+        save_config(xrms,
+                    yrms,
+                    xrms_err,
+                    yrms_err,
+                    timestamp,
+                    meas_read_pv,
+                    opt_pvs,
+                    configpath=savepaths['summaries'],
+                    impath=savepaths['images']
+                    )
+        numpy_save(xrms,
+                   yrms,
+                   xrms_err,
+                   yrms_err,
+                   timestamp,
+                   savelist=pv_savelist['scalars'],
+                   path=savepaths['raw_saves']
+                   )
 
     return xrms, yrms, xrms_err, yrms_err
 
@@ -154,6 +176,7 @@ def getbeamsizes_from_img(config_dict, post=None):
     RETURNS IN RAW PIXEL UNITS-- NEED TO MULTIPLY BY RESOLUTION FOR METERS
     """
     # Load image processing setting info
+    save_im_path = config_dict['savepaths']['images']
     im_proc = config_dict['img_proc']
     subtract_bg = im_proc['subtract_bg']
     bg_image = im_proc['background_im']  # specify path to bg im in json file
@@ -249,7 +272,7 @@ def getbeamsizes_from_img(config_dict, post=None):
 
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         # pass beamsizes in um
-        save_image(im.proc_image, ncol, nrow, timestamp, avg_img=True)
+        save_image(im.proc_image, ncol, nrow, timestamp, impath=save_im_path, avg_img=True)
 
         return [mean_xrms, mean_yrms,
                 mean_xrms_err, mean_yrms_err,
@@ -285,6 +308,7 @@ def get_beam_image(config_dict, post=None):
     Return beamsize info and processed image
     """
     # Load image processing setting info
+    save_im_path = config_dict['savepaths']['images']
     im_proc = config_dict['img_proc']
     subtract_bg = im_proc['subtract_bg']
     bg_image = im_proc['background_im']  # specify path to bg im in json file
@@ -328,7 +352,7 @@ def get_beam_image(config_dict, post=None):
 
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
-    save_image(im, ncol, nrow, timestamp, avg_img=False)
+    save_image(im, ncol, nrow, timestamp, impath=save_im_path, avg_img=False)
     print(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]
