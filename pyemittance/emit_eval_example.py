@@ -114,7 +114,7 @@ def eval_emit_machine(inj_config=None,
 
 
 def eval_emit_surrogate(get_bs_model,
-                        init_config=None,
+                        inj_config=None,
                         quad_init=[-6, -4, -2, 0],
                         config_name='LCLS_OTR2',
                         config_dict=None,

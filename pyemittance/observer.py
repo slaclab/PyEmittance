@@ -14,7 +14,7 @@ class Observer:
         self.use_prev_meas = False
         self.tolerance = 0.1
 
-        self.inj_config = None # injector configuration settings for SOL, CQ, SQ
+        self.inj_config = None  # injector configuration settings for SOL, CQ, SQ
         self.use_model = True
         # if using the surrogate model
         self.get_beamsizes_model = None
