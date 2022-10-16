@@ -15,4 +15,4 @@ Or install by running:
     
 ## Setting the correct configuration parameters for the machine/simulation
 
-For examples on how to set the correct configuration and how to use the new API, please see `examples/tutorial.ipynb`.
+For examples on how to set the correct configuration and how to use the new API, please see [`examples/tutorial.ipynb`](https://github.com/pluflou/PyEmittance/blob/main/examples/tutorial.ipynb).
