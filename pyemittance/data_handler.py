@@ -2,12 +2,12 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from pyemittance.optics import get_k1, get_gradient, get_quad_field
-from pyemittance.machine_settings import get_energy
 
 # TODO: import m_0
-m_0  = 0.000511
+m_0 = 0.000511
 
-def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
+
+def adapt_range(x, y, axis, w=None, energy=0.135, l_eff=0.1, cutoff_percent=0.3,
                 num_points=5, verbose=False):
     """Returns new scan quad values AS LIST"""
     x = np.array(x)
@@ -21,7 +21,7 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
     idx = ~np.isnan(y)
 
     if True not in idx:
-        print("no valid pnts")
+        print("no valid points")
         return x
     x = x[idx]
     y = y[idx]
@@ -50,12 +50,12 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
         w = y
 
     # quad vals are passed in machine units
-    x = get_k1(get_gradient(x), energy=energy, m_0=m_0)
+    x = get_k1(get_gradient(x, l_eff=l_eff), energy=energy, m_0=m_0)
 
     # y-dimensions has opposite polarity
     sign = -1 if axis == "y" else 1
     x = sign * x
-    min_x, max_x = x.min(), x.max()
+    min_x, max_x = np.min(x), np.max(x)
 
     # we need a poly fit here to find roots, poly_ylim, etc
     y_squared = y*y
@@ -68,7 +68,7 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
 
     # no more restrictions on quad vals, just staying within
     # the region already scanned (can increase this if need be)
-    min_x_range, max_x_range = min([min_x, x[np.argmin(y)] - 2.5]), max([max_x, x[np.argmin(y)] + 2.5])
+    min_x_range, max_x_range = np.min([min_x, x[np.argmin(y)] - 2.5]), np.max([max_x, x[np.argmin(y)] + 2.5])
 
     c2, c1, c0 = fit_coefs
 
@@ -85,14 +85,14 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
             x_max_concave = max_x_range
 
         x_fine_fit = np.linspace(x_min_concave, x_max_concave, num_points)
-        return [sign * get_quad_field(ele) for ele in x_fine_fit]
+        return [sign * get_quad_field(ele, energy=energy, l=l_eff) for ele in x_fine_fit]
 
     # find range within 2-3x the focus size
     # cutoff = 1.2-1.3 for lcls, 2 last MD
     # cutoff = 4 for facet and surrogate
     cutoff = 2
     # from data
-    y_lim = y.min()** 2 * cutoff
+    y_lim = y.min() ** 2 * cutoff
 
     # from polyfit
     y_min_poly = np.polyval(fit_coefs, x_fit).min()
@@ -123,7 +123,7 @@ def adapt_range(x, y, axis, w=None, energy=get_energy(), cutoff_percent=0.3,
         x_fine_fit = np.linspace(roots.max(), roots.min(), num_points)
 
     # return the new quad measurement range for this axis (in kG!!)
-    return [sign * get_quad_field(ele) for ele in x_fine_fit]
+    return [sign * get_quad_field(ele, energy=energy, l=l_eff) for ele in x_fine_fit]
 
 
 def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
@@ -324,13 +324,14 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
     # We want to add points primarily around min
     # Find min location
     argmin = np.argmin(y)
-    if argmin<(len(y)-1):
+
+    if argmin < (len(y)-1):
         # if min is not at edge
         # get first step size
         step = (x[argmin+1]-x[argmin])/2
         # add points to the right of min
         mult_fac = 1
-    elif argmin==len(y)-1:
+    elif argmin == len(y)-1:
         # if min is the last data point
         step = (x[argmin] - x[argmin-1]) / 2
         # add points to the left of the min
@@ -366,6 +367,7 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
             y_err.insert(new_idx, y_err_add[i])
 
     return x, y, y_err
+
 
 def func(x, a, b, c):
     """

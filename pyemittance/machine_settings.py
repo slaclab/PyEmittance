@@ -1,34 +1,19 @@
 # This file contains functions to retrieve  settings for the machine
 # (r-matrices, Twiss params, etc)
 # These should be specified here or in json config files
-import os
 import numpy as np
-import json
 
-### '''''CHANGE HERE ''' #TODO: update config settings
-meas_type = 'OTRS'
-#################
 
-if meas_type == 'WIRE':
-    add_path = '/LCLS_WS02'
-elif meas_type == 'OTRS':
-    add_path = '/LCLS2_OTR3'
-else:
-    add_path = ''
-
-this_dir, this_filename = os.path.split(__file__)
-CONFIG_PATH = os.path.join(this_dir, 'configs' + add_path)
-
-def which_machine(filepath=CONFIG_PATH+'/beamline_info.json'):
+def which_machine(beamline_info_config_dict):
     """Print which machine settings are being used"""
-    beamline_info = json.load(open(filepath))
+    beamline_info = beamline_info_config_dict
     name = beamline_info['name']
     print(f"Using {name} beamline info.")
 
-def get_twiss0(filepath= CONFIG_PATH+'/beamline_info.json'):
+def get_twiss0(beamline_info_config_dict):
     """Import Twiss0 from config file"""
 
-    beamline_info = json.load(open(filepath))
+    beamline_info = beamline_info_config_dict
     twiss0 = beamline_info['Twiss0']
     # emit, beta, alpha
     twiss0_by_dim = {'x': [twiss0[0], twiss0[2], twiss0[4]],
@@ -37,10 +22,10 @@ def get_twiss0(filepath= CONFIG_PATH+'/beamline_info.json'):
 
     return twiss0_by_dim
 
-def get_rmat(filepath=CONFIG_PATH+'/beamline_info.json'):
+def get_rmat(beamline_info_config_dict):
     """Import r-matrix from config file"""
 
-    beamline_info = json.load(open(filepath))
+    beamline_info = beamline_info_config_dict
     # if only separated by a drift:
     # rMat will be [1, L, 0, 1]
 
@@ -56,22 +41,18 @@ def get_rmat(filepath=CONFIG_PATH+'/beamline_info.json'):
                        ])
 
     return rmatx_array, rmaty_array
-    # except KeyError:
-    #     # TODO: dumb hack for old json 
-    #     rmat = beamline_info['rMat']
-    #     rmat = [np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]]), np.array([[rmat[0], rmat[1]],[rmat[2], rmat[3]]])]
-    #     return rmat
 
-def get_energy(filepath=CONFIG_PATH+'/beamline_info.json'):
+
+def get_energy(beamline_info_config_dict):
     """Import beam energy from config file [GeV]"""
 
-    beamline_info = json.load(open(filepath))
+    beamline_info = beamline_info_config_dict
     energy = beamline_info['energy']
     return energy
 
-def get_quad_len(filepath=CONFIG_PATH+'/beamline_info.json'):
+def get_quad_len(beamline_info_config_dict):
     """Import quad len from config file [m]"""
 
-    beamline_info = json.load(open(filepath))
+    beamline_info = beamline_info_config_dict
     l = beamline_info['l']
     return l

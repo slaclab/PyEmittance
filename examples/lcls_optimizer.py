@@ -4,7 +4,7 @@ import datetime
 from bayes_opt import BayesianOptimization, UtilityFunction
 from scipy import optimize
 
-from pyemittance.emit_eval_example import eval_emit_machine
+from pyemittance.pyemittance import eval_emit_machine
 
 class Opt:
     def __init__(self, init_scan=[-6, -4, -2, 0]):
