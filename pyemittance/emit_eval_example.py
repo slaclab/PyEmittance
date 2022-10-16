@@ -27,7 +27,7 @@ def eval_emit_machine(inj_config=None,
     # get initial points from the observer
     o = Observer([], {'x': [], 'y': []}, {'x': [], 'y': []})
     o.use_model = False
-    o.config = inj_config
+    o.inj_config = inj_config
     o.online = online
     o.meas_type = meas_type
     o.use_prev_meas = use_prev_meas
@@ -136,7 +136,7 @@ def eval_emit_surrogate(get_bs_model,
 
     # set beamsize fn for MODEL
     o.get_beamsizes_model = get_bs_model
-    o.config = init_config
+    o.inj_config = inj_config
     o.add_noise = add_noise
     o.use_prev_meas = use_prev_meas
     o.tolerance = quad_tol
