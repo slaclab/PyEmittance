@@ -54,7 +54,7 @@ class PyEmittance:
         # get initial points from the observer
         o = Observer([], {'x': [], 'y': []}, {'x': [], 'y': []})
         o.use_model = self.use_model
-        o.config = self.inj_config
+        o.inj_config = self.inj_config
         o.online = self.online
         o.meas_type = self.meas_type
         o.use_prev_meas = self.use_prev_meas
