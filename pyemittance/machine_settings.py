@@ -11,7 +11,10 @@ def which_machine(beamline_info_config_dict):
     print(f"Using {name} beamline info.")
 
 def get_twiss0(beamline_info_config_dict):
-    """Import Twiss0 from config file"""
+    """
+    Import Twiss0 from config file
+    If running multiwire scan: Twiss0 is assumed to be at Wire1!!
+    """
 
     beamline_info = beamline_info_config_dict
     twiss0 = beamline_info['Twiss0']
@@ -23,7 +26,10 @@ def get_twiss0(beamline_info_config_dict):
     return twiss0_by_dim
 
 def get_rmat(beamline_info_config_dict):
-    """Import r-matrix from config file"""
+    """
+    Import r-matrix from config file
+    This function is used in the quad scan meas.
+    """
 
     beamline_info = beamline_info_config_dict
     # if only separated by a drift:
@@ -50,9 +56,64 @@ def get_energy(beamline_info_config_dict):
     energy = beamline_info['energy']
     return energy
 
+
 def get_quad_len(beamline_info_config_dict):
     """Import quad len from config file [m]"""
 
     beamline_info = beamline_info_config_dict
     l = beamline_info['l']
     return l
+
+
+def get_rmat_wires(beamline_info_config_dict):
+    """
+    Import r-matrix from config file
+    This function is used in the multiwire meas.
+    """
+    beamline_info = beamline_info_config_dict
+
+    # setup for 3 or 4 wires
+    # if there is only 3, fourth is ignored in calculations
+    # set it to None in json file if possible
+    rmat_wires = {'Wire1': None,
+                  'Wire2': None,
+                  'Wire3': None,
+                  'Wire4': None
+                  }
+    for w in rmat_wires.keys():
+        rmat_wires[w]['rMatx'] = beamline_info[w]['rMatx']
+        rmat_wires[w]['rMaty'] = beamline_info[w]['rMaty']
+        # m11, m12, m21, m22
+        # in the form below in the Matlab model:
+        # R{n} = Rab(1:4, 1: 4);
+        # Rx(n,:)=[Rab(1, 1), Rab(1, 2)];
+        # Ry(n,:)=[Rab(3, 3), Rab(3, 4)];
+        rmat_wires[w]['rMatx'] = np.array([[rmat_wires[w]['rMatx'][0], rmat_wires[w]['rMatx'][1]],
+                                           [rmat_wires[w]['rMatx'][2], rmat_wires[w]['rMatx'][3]]
+                                           ])
+        rmat_wires[w]['rMaty'] = np.array([[rmat_wires[w]['rMaty'][0], rmat_wires[w]['rMaty'][1]],
+                                           [rmat_wires[w]['rMaty'][2], rmat_wires[w]['rMaty'][3]]
+                                           ])
+    return rmat_wires
+
+
+def get_loc_wires(beamline_info_config_dict):
+    """
+    Import wire locations from config file
+    This function is used in the multiwire meas.
+    """
+    beamline_info = beamline_info_config_dict
+
+    # setup for 3 or 4 wires
+    # if there is only 3, fourth is ignored in calculations
+    # set it to None in json file if possible
+    loc_wires = {'Wire1': None,
+                 'Wire2': None,
+                 'Wire3': None,
+                 'Wire4': None
+                 }
+    for w in loc_wires.keys():
+        loc_wires[w] = beamline_info[w]['location']
+
+    return loc_wires
+

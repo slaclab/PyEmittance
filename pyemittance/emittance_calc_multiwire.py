@@ -3,23 +3,24 @@ from os import path, makedirs
 import errno, os
 from pyemittance.emittance_calc_base import EmitCalcBase
 from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
-from pyemittance.machine_settings import get_quad_len
+from pyemittance.machine_settings import get_rmat_wires, get_loc_wires
 from pyemittance.saving_io import save_emit_run
 
 
-class EmitCalc(EmitCalcBase):
-    """ Quad scan emittance measurement type
-    Uses info recorded in Observer to do an emittance fit
+class MultiWireCalc(EmitCalcBase):
+    """
+    Multiwire emittance measurement type
     """
     def init_class_attr(self):
-        self.quad_vals = self.meas_vals
-        self.quad_len = get_quad_len(self.config_dict['beamline_info'])
+        # here self.meas_vals are constants
+        self.wire_rmat = get_rmat_wires(self.config_dict['beamline_info'])
+        self.wire_loc = get_loc_wires(self.config_dict['beamline_info'])
         # Initialize paths and dirs for saving
         self.init_saving()
 
     def define_default_config(self):
-        print("No configuration specified. Taking default LCLS-OTR2 configs.")
-        self.config_name = "LCLS_OTR2"
+        print("No configuration specified. Taking default LCLS-WS02 configs.")
+        self.config_name = "LCLS_WS02"
         self.config_dict = self.load_config()
 
     def get_emit(self):
@@ -103,7 +104,6 @@ class EmitCalc(EmitCalcBase):
 
         # Make directories if needed
         try:
-            mkdir_p(savepaths['images'])
             mkdir_p(savepaths['summaries'])
             mkdir_p(savepaths['fits'])
             mkdir_p(savepaths['raw_saves'])
@@ -113,35 +113,25 @@ class EmitCalc(EmitCalcBase):
             parent = Path(__file__).resolve().parent
             examples_dir = str(parent)[:-11] + "examples"
             print("Using examples directory: ", examples_dir)
-            savepaths['images'] = examples_dir + "/saved_images/"
             savepaths['summaries'] = examples_dir + "/summaries/"
             savepaths['fits'] = examples_dir + "/saved_fits/"
             savepaths['raw_saves'] = examples_dir + "/raw_saves/"
-            mkdir_p(savepaths['images'])
             mkdir_p(savepaths['summaries'])
             mkdir_p(savepaths['fits'])
             mkdir_p(savepaths['raw_saves'])
 
-        # Start headings
-        file_exists = path.exists(savepaths['summaries'] + "image_acq_quad_info.csv")
-
-        if not file_exists:
-
-            # TODO: add others as inputs
-            f = open(savepaths['summaries'] + "image_acq_quad_info.csv", "a+")
-            f.write(
-                f"{'timestamp'},{'ncol'},{'nrow'},{'roi_xmin'},{'roi_xmax'}"
-                f",{'roi_ymin'},{'roi_ymax'},{'resolution'},{'bact'},"
-                f"{'x_size'},{'y_size'},{'xrms'},{'yrms'},"
-                f"{'xrms_err'},{'yrms_err]'}\n")
-            f.close()
-
         file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
 
         if not file_exists:
-            # todo add others as inputs
+            # TODO: check how many wires are saving and save appr. num of meas.
             f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
             f.write(
                 f"{'timestamp'},{'varx_cur'},{'vary_cur'},{'varz_cur'},"
-                f"{'bact_cur'},{'xrms'},{'yrms'},{'xrms_err'},{'yrms_err'}\n")
+                f"{'xrms'},{'yrms'},{'xrms_err'},{'yrms_err'},"
+                f"{'xrms'},{'yrms'},{'xrms_err'},{'yrms_err'},"
+                f"{'xrms'},{'yrms'},{'xrms_err'},{'yrms_err'},"
+                f"{'xrms'},{'yrms'},{'xrms_err'},{'yrms_err'}\n"
+            )
             f.close()
+
+
