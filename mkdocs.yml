@@ -1,4 +1,4 @@
-site_name: Xopt
+site_name: PyEmittance
 repo_url: https://github.com/slaclab/pyemittance
 repo_name: slaclab/pyemittance
 
@@ -45,7 +45,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/slaclab/pyemittance
-      name: Xopt
+      name: PyEmittance
 
 extra_css:
   - stylesheets/extra.css      
