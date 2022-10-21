@@ -1,7 +1,7 @@
 import numpy as np
 from pyemittance.machine_settings import get_twiss0, get_rmat, get_energy
 from pyemittance.load_json_configs import load_configs
-from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
+from pyemittance.optics import twiss_and_bmag
 
 
 class EmitCalcBase:
@@ -36,8 +36,9 @@ class EmitCalcBase:
             self.config_dict = config_dict if config_dict else self.load_config()
 
         self.dims = ['x', 'y'] # TODO: make code use provided in self.dims, and make it extensible
-        self.sig_mat_screen = {'x': [], 'y': []}
-        self.twiss0 = get_twiss0(self.config_dict['beamline_info'])  # emit, beta, alpha
+        self.sig_mat_meas = {'x': [], 'y': []}
+        # Twiss0 should be for the first wire of multiwire measurements
+        self.twiss0 = get_twiss0(self.config_dict['beamline_info'])  # emit0, beta0, alpha0
         self.twiss_screen = {'x': [], 'y': []} # emit, beta, alpha
         self.beta_err = None
         self.alpha_err = None
@@ -62,9 +63,6 @@ class EmitCalcBase:
                          'bmagy_err': None,
                          'bmag_emit': None,
                          'bmag_emit_err': None,
-                         'opt_q_x': None,
-                         'opt_q_y': None,
-                         'total_points_measured': None
                          }
 
         # Define class specific attributes
@@ -106,18 +104,18 @@ class EmitCalcBase:
 
     def get_twiss_bmag(self, dim='x'):
 
-        sig_11 = self.sig_mat_screen[dim][0]
-        sig_12 = self.sig_mat_screen[dim][1]
-        sig_22 = self.sig_mat_screen[dim][2]
+        sig_11 = self.sig_mat_meas[dim][0]
+        sig_12 = self.sig_mat_meas[dim][1]
+        sig_22 = self.sig_mat_meas[dim][2]
 
-        # twiss0 in x or y AT THE SCREEN
+        # twiss0 in x or y at the screen/wire
         beta0, alpha0 = self.twiss0[dim][1], self.twiss0[dim][2]
 
         # return dict of emit, beta, alpha, bmag
         twiss = twiss_and_bmag(sig_11, sig_12, sig_22,
                                self.beta_err, self.alpha_err,
                                beta0=beta0, alpha0=alpha0)
-        # Save twiss at screen
+        # Save twiss at screen/wire
         self.twiss_screen[dim] = [twiss['emit'], twiss['beta'], twiss['alpha']]
 
         return twiss['bmag'], twiss['bmag_err'], twiss['min_idx']

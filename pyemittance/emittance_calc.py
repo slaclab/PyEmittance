@@ -1,8 +1,9 @@
 import numpy as np
 from os import path, makedirs
-import errno, os
+import errno
+import os
 from pyemittance.emittance_calc_base import EmitCalcBase
-from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
+from pyemittance.optics import estimate_sigma_mat_thick_quad, get_kL, normalize_emit
 from pyemittance.machine_settings import get_quad_len
 from pyemittance.saving_io import save_emit_run
 
@@ -60,11 +61,11 @@ class EmitCalc(EmitCalcBase):
                     sig_11, sig_12, sig_22 = res[4:]
 
             norm_emit_res = normalize_emit(emit, emit_err, self.energy)
-            self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err, self.energy)[0]
-            self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err, self.energy)[1]
+            self.out_dict[f'nemit{dim}'] = norm_emit_res[0]
+            self.out_dict[f'nemit{dim}_err'] = norm_emit_res[1]
 
             if self.calc_bmag:
-                self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
+                self.sig_mat_meas[dim] = [sig_11, sig_12, sig_22]
                 self.beta_err = beta_rel_err
                 self.alpha_err = alpha_rel_err
 
