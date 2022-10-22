@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 from os import path, environ
+import versioneer
 
 cur_dir = path.abspath(path.dirname(__file__))
 
@@ -9,7 +10,8 @@ with open(path.join(cur_dir, 'requirements.txt'), 'r') as f:
 
 setup(
     name='pyemittance',
-    version='v0.3.3',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author='Sara Miskovich',
     author_email='smiskov@slac.stanford.edu',
     packages=find_packages(),
