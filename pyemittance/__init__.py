@@ -1,3 +1,6 @@
+from . import _version
+__version__ = _version.get_versions()['version']
+
 from pyemittance.observer import Observer
 from pyemittance.data_handler import adapt_range, check_symmetry, find_inflection_pnt, add_measurements_btwn_pnts
 from pyemittance.emittance_calc import EmitCalc
@@ -176,3 +179,4 @@ class PyEmittance:
             ef.out_dict["total_points_measured"] = len(o.quad_meas)
 
         return ef.out_dict
+
