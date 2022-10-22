@@ -13,7 +13,6 @@ def which_machine(beamline_info_config_dict):
 def get_twiss0(beamline_info_config_dict):
     """
     Import Twiss0 from config file
-    If running multiwire scan: Twiss0 is assumed to be at Wire1!!
     """
 
     beamline_info = beamline_info_config_dict
@@ -74,15 +73,19 @@ def get_rmat_wires(beamline_info_config_dict):
 
     # setup for 3 or 4 wires
     # if there is only 3, fourth is ignored in calculations
-    # set it to None in json file if possible
-    rmat_wires = {'Wire1': None,
-                  'Wire2': None,
-                  'Wire3': None,
-                  'Wire4': None
+    rmat_wires = {'wire1': None,
+                  'wire2': None,
+                  'wire3': None,
+                  'wire4': None
                   }
     for w in rmat_wires.keys():
-        rmat_wires[w]['rMatx'] = beamline_info[w]['rMatx']
-        rmat_wires[w]['rMaty'] = beamline_info[w]['rMaty']
+        if w in beamline_info.keys():
+            rmat_wires[w]['rMatx'] = beamline_info[w]['rMatx']
+            rmat_wires[w]['rMaty'] = beamline_info[w]['rMaty']
+        else:
+            if w == "wire1":
+                raise Exception("Wire configuration in beamline_info.json is set incorrectly.")
+            del rmat_wires[w]
         # m11, m12, m21, m22
         # in the form below in the Matlab model:
         # R{n} = Rab(1:4, 1: 4);
@@ -107,13 +110,18 @@ def get_loc_wires(beamline_info_config_dict):
     # setup for 3 or 4 wires
     # if there is only 3, fourth is ignored in calculations
     # set it to None in json file if possible
-    loc_wires = {'Wire1': None,
-                 'Wire2': None,
-                 'Wire3': None,
-                 'Wire4': None
+    loc_wires = {'wire1': None,
+                 'wire2': None,
+                 'wire3': None,
+                 'wire4': None
                  }
     for w in loc_wires.keys():
-        loc_wires[w] = beamline_info[w]['location']
+        if w in beamline_info.keys():
+            loc_wires[w] = beamline_info[w]['location']
+        else:
+            if w == "wire1":
+                raise Exception("Wire configuration in beamline_info.json is set incorrectly.")
+            del loc_wires[w]
 
     return loc_wires
 

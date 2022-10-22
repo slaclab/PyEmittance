@@ -134,4 +134,13 @@ class Observer:
             io.use_profmon = self.use_profmon
             # note we are not setting the injector on the machine here
             return io.get_beamsizes_machine(self.inj_config, val)
+
+    def multiwire_measure_beam(self):
+        """Get multiwire beamsize measurements"""
+        from pyemittance.beam_io import MachineIO
+        io = MachineIO(self.config_name, self.config_dict, self.meas_type)
+        io.online = self.online
+        # note we are not setting the injector on the machine here
+        return io.get_multiwire_beamsizes()
+
         

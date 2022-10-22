@@ -100,3 +100,18 @@ class MachineIO():
                     opt_pvs=self.opt_pvs,
                     impath=self.config_dict['savepaths']['images'])
         return np.array([beamsize[0], beamsize[1]])
+
+    def get_multiwire_beamsizes(self):
+        # iterate over wires and get beamsizes, while waiting for each to end
+        if self.meas_type == 'WIRE' and self.online:
+            # from pyemittance.wire_io import get_beamsizes_wire
+            # print("Running wire scanner")
+            # return get_beamsizes_wire(self.online, self.config_dict)
+
+
+        elif not self.online:
+            #return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
+
+        # return two lists: [bs1, bs2, bs3, bs4?], [err1, err2, err3, err4?]
+
+
