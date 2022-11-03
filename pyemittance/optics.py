@@ -233,7 +233,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist,
         if verbose:
             print("Emittance can't be computed. Returning error")
         #plt.plot(kLlist, sizes**2)
-        return {'error': True}
+        return {f'error_{dim}': True}
 
     emit = np.sqrt(emit2)
     beta = s11 / emit
@@ -251,7 +251,7 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist,
                                                           Lquad, energy, sizes, sizes_err, plot)
     
     out = {}
-    out['error'] = False
+    out[f'error_{dim}'] = False
     out[f'emit_{dim}'] = emit
     out[f'norm_emit_{dim}'] = norm_emit
     out[f'beta_{dim}'] = beta
@@ -263,19 +263,19 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist,
     
     # Sigma matrix info
     if dim == 'x':
-        out['s11'] = s11
-        out['s12'] = s12
-        out['s22'] = s22   
-        out['s11_screen'] = s11_screen
-        out['s12_screen'] = s12_screen
-        out['s22_screen'] = s22_screen
+        out['sigma_11'] = s11
+        out['sigma_12'] = s12
+        out['sigma_22'] = s22   
+        out['screen_sigma_11'] = s11_screen
+        out['screen_sigma_12'] = s12_screen
+        out['screen_sigma_22'] = s22_screen
     elif dim == 'y': 
-        out['s33'] = s11
-        out['s34'] = s12
-        out['s44'] = s22   
-        out['s33_screen'] = s11_screen
-        out['s34_screen'] = s12_screen
-        out['s44_screen'] = s22_screen
+        out['sigma_33'] = s11
+        out['sigma_34'] = s12
+        out['sigma_44'] = s22   
+        out['screen_sigma_33'] = s11_screen
+        out['screen_sigma_34'] = s12_screen
+        out['screen_sigma_44'] = s22_screen
     else:
         raise ValueError(f'Bad dim: {dim}')
     

@@ -57,22 +57,7 @@ class EmitCalc:
         self.init_saving()
 
         # Main output of emittance calc
-        self.out_dict = {'norm_emit_x': None,
-                         'norm_emit_y': None,
-                         'norm_emit_x_err': None,
-                         'norm_emit_y_err': None,
-                         'nemit': None,
-                         'nemit_err': None,
-                         'bmagx': None,
-                         'bmagy': None,
-                         'bmagx_err': None,
-                         'bmagy_err': None,
-                         'bmag_emit': None,
-                         'bmag_emit_err': None,
-                         'opt_q_x': None,
-                         'opt_q_y': None,
-                         'total_points_measured': None
-                         }
+        self.output = {}
 
     def load_config(self):
         # if path exists, load from path
@@ -121,55 +106,55 @@ class EmitCalc:
 
             weights = self.weighting_func(bs, bs_err) # 1/sigma
 
-            # Storing quadvals and beamsizes in self.out_dict for plotting purposes
-            self.out_dict[f'quadvals{dim}'] = list(q)
-            self.out_dict[f'beamsizes{dim}'] = list(bs)
-            self.out_dict[f'beamsizeserr{dim}'] =  list(bs_err)
+            # Storing quadvals and beamsizes in self.output for plotting purposes
+            self.output[f'quadvals{dim}'] = list(q)
+            self.output[f'beamsizes{dim}'] = list(bs)
+            self.output[f'beamsizeserr{dim}'] =  list(bs_err)
 
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, dim=dim, Lquad=self.quad_len,
                                                 energy=self.energy, rmat=self.rmat,
                                                 plot=self.plot, verbose=self.verbose)
-            
-            
-            if res['error']:
-                self.out_dict['error'] = True
-                return self.out_dict
-
             # Add all results
-            self.out_dict.update(res)
+            self.output.update(res)            
             
+            # Skip further calcs if there was an error
+            if res[f'error_{dim}']:        
+                continue
+
             if self.calc_bmag:
                 if dim =='x':
-                    sig_11 = res['s11_screen']
-                    sig_12 = res['s12_screen']
-                    sig_22 = res['s22_screen']
+                    sig_11 = res['screen_sigma_11']
+                    sig_12 = res['screen_sigma_12']
+                    sig_22 = res['screen_sigma_22']
                     
                 else:
-                    sig_11 = res['s33_screen']
-                    sig_12 = res['s34_screen']
-                    sig_22 = res['s44_screen']
+                    sig_11 = res['screen_sigma_33']
+                    sig_12 = res['screen_sigma_34']
+                    sig_22 = res['screen_sigma_44']
+                self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22] 
                     
                 beta_rel_err  = res[f'beta_{dim}_rel_err']   
                 alpha_rel_err = res[f'alpha_{dim}_rel_err']   
                 
-                self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
+                
                 self.beta_err = beta_rel_err
                 self.alpha_err = alpha_rel_err
 
                 bmag_calc_res = self.get_twiss_bmag(dim=dim)
                 # Get bmag and bmag_err
-                self.out_dict[f'bmag{dim}'] = bmag_calc_res[0]
-                self.out_dict[f'bmag{dim}_err'] = bmag_calc_res[1]
+                self.output[f'screen_bmag{dim}'] = bmag_calc_res[0]
+                self.output[f'screen_bmag{dim}_err'] = bmag_calc_res[1]
                 # Get best value for scanning quad
-                self.out_dict[f'opt_q_{dim}'] = q[bmag_calc_res[2]]
+                self.output[f'optimal_quadval_{dim}'] = q[bmag_calc_res[2]]
 
-        # get geometric mean (set to None when x and y are not calculated)
-        self.get_gmean_emit()
+        # get geometric mean if possible
+        if (not self.output['error_x']) and  (not self.output['error_y']) :
+            self.get_gmean_emit()
 
         if self.save_runs:
             self.save_run()
 
-        return self.out_dict
+        return self.output
 
     def get_twiss_bmag(self, dim='x'):
 
@@ -192,31 +177,31 @@ class EmitCalc:
     def get_gmean_emit(self):
 
         try:
-            nemit = np.sqrt( self.out_dict['norm_emit_x'] * self.out_dict['norm_emit_y'] )
-            nemit_err = nemit * ( (self.out_dict['norm_emit_x_err']/self.out_dict['norm_emit_x'])**2 +
-                                  (self.out_dict['norm_emit_y_err']/self.out_dict['norm_emit_y'])**2 )**0.5
+            nemit = np.sqrt( self.output['norm_emit_x'] * self.output['norm_emit_y'] )
+            nemit_err = nemit * ( (self.output['norm_emit_x_err']/self.output['norm_emit_x'])**2 +
+                                  (self.output['norm_emit_y_err']/self.output['norm_emit_y'])**2 )**0.5
 
-            self.out_dict['nemit'] = nemit
-            self.out_dict['nemit_err'] = nemit_err
+            self.output['sqrt_norm_emit_4d'] = nemit
+            self.output['sqrt_norm_emit_4d_err'] = nemit_err
 
-            if self.out_dict['bmagx'] is not None and self.out_dict['bmagy'] is not None:
-                nbmag = np.sqrt( self.out_dict['bmagx'] * self.out_dict['bmagy'] )
+            if 'bmag_x' in self.output and 'bmag_y' in self.output:
+                nbmag = np.sqrt( self.output['bmag_x'] * self.output['bmag_y'] )
                 bmag_emit_err = nemit*nbmag * (
-                    (self.out_dict['norm_emit_x_err']/self.out_dict['norm_emit_x'])**2 +
-                    (self.out_dict['norm_emit_y_err']/self.out_dict['norm_emit_y'])**2 +
-                    (self.out_dict['bmagx_err']/self.out_dict['bmagx'])**2 +
-                    (self.out_dict['bmagy_err']/self.out_dict['bmagy'])**2)**0.5
-                self.out_dict['bmag_emit'] = nemit * nbmag
-                self.out_dict['bmag_emit_err'] = bmag_emit_err
+                    (self.output['norm_emit_x_err']/self.output['norm_emit_x'])**2 +
+                    (self.output['norm_emit_y_err']/self.output['norm_emit_y'])**2 +
+                    (self.output['bmag_x_err']/self.output['bmag_x'])**2 +
+                    (self.output['bmag_y_err']/self.output['bmag_y'])**2)**0.5
+                self.output['bmag_emit'] = nemit * nbmag
+                self.output['bmag_emit_err'] = bmag_emit_err
 
         except TypeError:
-            self.out_dict['nemit'] = np.nan
-            self.out_dict['nemit_err'] = np.nan
-            self.out_dict['bmag_emit'] = np.nan
-            self.out_dict['bmag_emit_err'] = np.nan
+            self.output['sqrt_norm_emit_4d'] = np.nan
+            self.output['sqrt_norm_emit_4d_err'] = np.nan
+            self.output['bmag_emit'] = np.nan
+            self.output['bmag_emit_err'] = np.nan
 
     def save_run(self):
-        save_emit_run(self.out_dict, path=self.config_dict['savepaths']['fits'])
+        save_emit_run(self.output, path=self.config_dict['savepaths']['fits'])
 
     def init_saving(self):
         """Initialize dirs and files for saving"""

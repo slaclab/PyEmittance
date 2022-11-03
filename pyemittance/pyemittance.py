@@ -173,6 +173,6 @@ class PyEmittance:
 
         # save total number of points queried
         if self.return_num_points:
-            ef.out_dict["total_points_measured"] = len(o.quad_meas)
+            ef.output["total_points_measured"] = len(o.quad_meas)
 
-        return ef.out_dict
+        return ef.output
