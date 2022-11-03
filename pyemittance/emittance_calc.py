@@ -57,10 +57,10 @@ class EmitCalc:
         self.init_saving()
 
         # Main output of emittance calc
-        self.out_dict = {'nemitx': None,
-                         'nemity': None,
-                         'nemitx_err': None,
-                         'nemity_err': None,
+        self.out_dict = {'norm_emit_x': None,
+                         'norm_emit_y': None,
+                         'norm_emit_x_err': None,
+                         'norm_emit_y_err': None,
                          'nemit': None,
                          'nemit_err': None,
                          'bmagx': None,
@@ -127,24 +127,31 @@ class EmitCalc:
             self.out_dict[f'beamsizeserr{dim}'] =  list(bs_err)
 
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, dim=dim, Lquad=self.quad_len,
-                                                energy=self.energy, rmat=self.rmat, calc_bmag=self.calc_bmag,
+                                                energy=self.energy, rmat=self.rmat,
                                                 plot=self.plot, verbose=self.verbose)
-            if np.isnan(res[0]):
-                self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
-                self.out_dict['nemitx_err'], self.out_dict['nemity_err'] = np.nan, np.nan
-                self.out_dict['bmagx'], self.out_dict['bmagy'] = np.nan, np.nan
-                self.out_dict['bmagx_err'], self.out_dict['bmagy_err'] = np.nan, np.nan
+            
+            
+            if res['error']:
+                self.out_dict['error'] = True
                 return self.out_dict
-            else:
-                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
-                if self.calc_bmag:
-                    sig_11, sig_12, sig_22 = res[4:]
 
-            norm_emit_res = normalize_emit(emit, emit_err, self.energy)
-            self.out_dict[f'nemit{dim}'] = normalize_emit(emit, emit_err, self.energy)[0]
-            self.out_dict[f'nemit{dim}_err'] = normalize_emit(emit, emit_err, self.energy)[1]
-
+            # Add all results
+            self.out_dict.update(res)
+            
             if self.calc_bmag:
+                if dim =='x':
+                    sig_11 = res['s11_screen']
+                    sig_12 = res['s12_screen']
+                    sig_22 = res['s22_screen']
+                    
+                else:
+                    sig_11 = res['s33_screen']
+                    sig_12 = res['s34_screen']
+                    sig_22 = res['s44_screen']
+                    
+                beta_rel_err  = res[f'beta_{dim}_rel_err']   
+                alpha_rel_err = res[f'alpha_{dim}_rel_err']   
+                
                 self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
                 self.beta_err = beta_rel_err
                 self.alpha_err = alpha_rel_err
@@ -185,9 +192,9 @@ class EmitCalc:
     def get_gmean_emit(self):
 
         try:
-            nemit = np.sqrt( self.out_dict['nemitx'] * self.out_dict['nemity'] )
-            nemit_err = nemit * ( (self.out_dict['nemitx_err']/self.out_dict['nemitx'])**2 +
-                                  (self.out_dict['nemity_err']/self.out_dict['nemity'])**2 )**0.5
+            nemit = np.sqrt( self.out_dict['norm_emit_x'] * self.out_dict['norm_emit_y'] )
+            nemit_err = nemit * ( (self.out_dict['norm_emit_x_err']/self.out_dict['norm_emit_x'])**2 +
+                                  (self.out_dict['norm_emit_y_err']/self.out_dict['norm_emit_y'])**2 )**0.5
 
             self.out_dict['nemit'] = nemit
             self.out_dict['nemit_err'] = nemit_err
@@ -195,8 +202,8 @@ class EmitCalc:
             if self.out_dict['bmagx'] is not None and self.out_dict['bmagy'] is not None:
                 nbmag = np.sqrt( self.out_dict['bmagx'] * self.out_dict['bmagy'] )
                 bmag_emit_err = nemit*nbmag * (
-                    (self.out_dict['nemitx_err']/self.out_dict['nemitx'])**2 +
-                    (self.out_dict['nemity_err']/self.out_dict['nemity'])**2 +
+                    (self.out_dict['norm_emit_x_err']/self.out_dict['norm_emit_x'])**2 +
+                    (self.out_dict['norm_emit_y_err']/self.out_dict['norm_emit_y'])**2 +
                     (self.out_dict['bmagx_err']/self.out_dict['bmagx'])**2 +
                     (self.out_dict['bmagy_err']/self.out_dict['bmagy'])**2)**0.5
                 self.out_dict['bmag_emit'] = nemit * nbmag

@@ -3,7 +3,11 @@ import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
 # TODO update fns
-from scipy.constants import c as c_light, m_e as m0
+from scipy.constants import c as c_light #, m_e as m0
+# TODO: use this:
+# mec2 = scipy.constants.value('electron mass energy equivalent in MeV')*1e6
+
+
 import matplotlib.pyplot as plt
 
 
@@ -53,10 +57,10 @@ def get_k1(g, energy, m_0=0.000511):
     return 0.2998 * g / energy / beta
 
 
-def normalize_emit(emit, err, energy, m_0=0.000511):
+def normalize_emit(emit, energy, m_0=0.000511):
     gamma = energy / m_0
     beta = np.sqrt(1 - 1 / gamma ** 2)
-    return emit*gamma*beta, err*gamma*beta
+    return emit*gamma*beta
 
 
 def get_kL(quad_vals, l, energy, m_0=0.000511):
@@ -150,8 +154,16 @@ def propagate_sigma(mat2_init, mat2_ele):
     return (mat2_ele @ mat2_init) @ mat2_ele.T
 
 
-def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, dim='x', Lquad=None,
-                                  energy=None, rmat=None, calc_bmag=False, plot=True, verbose=False):
+def estimate_sigma_mat_thick_quad(sizes, kLlist,
+                                  sizes_err=None,
+                                  weights=None,
+                                  dim='x',
+                                  Lquad=None,
+                                  energy=None,
+                                  rmat=None,
+                                  calc_bmag=False,
+                                  plot=True,
+                                  verbose=False):
     """
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
     This models the system as a thick quad.
@@ -162,6 +174,11 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, d
     :param plot: bool to plot ot not
     :return: emittance, sig11, sig12 and sig22 at measurement screen
     """
+    
+    if dim not in ('x', 'y'):
+        raise ValueError(f'Bad dim: {dim}')
+        
+    
     # Measurement vector
     sizes = np.array(sizes)
     if np.isnan(sizes).any():
@@ -214,23 +231,56 @@ def estimate_sigma_mat_thick_quad(sizes, kLlist, sizes_err=None, weights=None, d
     #return NaN if emit can't be calculated
     if emit2 < 0:
         if verbose:
-            print("Emittance can't be computed. Returning NaN.")
+            print("Emittance can't be computed. Returning error")
         #plt.plot(kLlist, sizes**2)
-        return [np.nan,np.nan,np.nan,np.nan]
+        return {'error': True}
 
     emit = np.sqrt(emit2)
     beta = s11 / emit
     alpha = -s12 / emit
-
+    
     # Get error on emittance from fitted params
     emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
 
-    if plot or calc_bmag:
-        s11_screen, s12_screen, s22_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, 
-                                                                 Lquad, energy, sizes, sizes_err, plot)
-        return [emit, emit_err, beta_err / beta, alpha_err / alpha, s11_screen, s12_screen, s22_screen]
-
-    return [emit, emit_err, beta_err/beta, alpha_err/alpha]
+    # Normalized emittance
+    norm_emit = normalize_emit(emit, energy)
+    norm_emit_err = normalize_emit(emit_err, energy)
+    
+    # Propagate to screen
+    s11_screen, s12_screen, s22_screen = propagate_to_screen(s11, s12, s22, kLlist, mat2s, 
+                                                          Lquad, energy, sizes, sizes_err, plot)
+    
+    out = {}
+    out['error'] = False
+    out[f'emit_{dim}'] = emit
+    out[f'norm_emit_{dim}'] = norm_emit
+    out[f'beta_{dim}'] = beta
+    out[f'alpha_{dim}'] = alpha
+    out[f'emit_{dim}_err'] = emit_err
+    out[f'norm_emit_{dim}_err'] = norm_emit_err
+    out[f'beta_{dim}_rel_err'] = beta_err / beta
+    out[f'alpha_{dim}_rel_err'] = alpha_err / alpha # Note: alpha can be zero!    
+    
+    # Sigma matrix info
+    if dim == 'x':
+        out['s11'] = s11
+        out['s12'] = s12
+        out['s22'] = s22   
+        out['s11_screen'] = s11_screen
+        out['s12_screen'] = s12_screen
+        out['s22_screen'] = s22_screen
+    elif dim == 'y': 
+        out['s33'] = s11
+        out['s34'] = s12
+        out['s44'] = s22   
+        out['s33_screen'] = s11_screen
+        out['s34_screen'] = s12_screen
+        out['s44_screen'] = s22_screen
+    else:
+        raise ValueError(f'Bad dim: {dim}')
+    
+    return out
+    
 
 
 def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, energy,
