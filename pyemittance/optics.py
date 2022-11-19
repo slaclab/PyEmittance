@@ -2,8 +2,8 @@
 import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
-# TODO update fns
-from scipy.constants import c as c_light, m_e as m0
+# TODO: update fns:
+# 'from scipy.constants import c as c_light, m_e as m0'
 import matplotlib.pyplot as plt
 
 

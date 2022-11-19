@@ -11,6 +11,8 @@ class MachineIO():
     def __init__(self, config_name='LCLS_OTR2', config_dict=None, meas_type='OTRS'):
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
+        # emittance measurement type
+        self.emit_calc_type = "quadscan" # quadscan is default
         self.online = False
         self.use_profmon = False
         self.settle_time = 3  # sleep time in seconds
@@ -102,11 +104,11 @@ class MachineIO():
         return np.array([beamsize[0], beamsize[1]])
 
     def get_multiwire_beamsizes(self):
-        # iterate over wires and get beamsizes, while waiting for each to end
         if self.meas_type == 'WIRE' and self.online:
-            # from pyemittance.wire_io import get_beamsizes_wire
-            # print("Running wire scanner")
-            # return get_beamsizes_wire(self.online, self.config_dict)
+            from pyemittance.wire_io import get_beamsizes_wire
+            print("Running wire scanner(s).")
+            multiwire = True if self.emit_calc_type=="multiwire" else False
+            return get_beamsizes_wire(self.online, self.config_dict, multiwire=multiwire)
 
 
         elif not self.online:

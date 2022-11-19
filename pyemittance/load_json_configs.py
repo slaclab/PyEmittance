@@ -17,9 +17,9 @@ def load_configs(dir_name="LCLS2_OTR3"):
     for i in range(len(json_namelist)):
         # load all jsons and save into one dict
         # skip jsons that don't exit and print that it is not found
-        # TODO: validate that all jsons/needed keywords configs do exist
-        # TODO: validate that all configs are consistent across directories/locations
-        # TODO: eg all have rmatx and rmaty
+        # TODO: Validate that all jsons/needed keywords configs do exist.
+        # Validate that all configs are consistent across directories/locations
+        # eg all have rmatx and rmaty set up correctly
         try:
             f = open(os.path.join(CONFIG_PATH + "/" + dir_name, json_namelist[i] + ".json"), encoding='utf-8')
         except FileNotFoundError:

@@ -27,6 +27,8 @@ class Observer:
         self.config_name = 'sim'
         self.config_dict = None
         self.meas_type = 'OTRS'
+        # emittance measurement type: quadscan or multiwire
+        self.emit_calc_type = "quadscan" # quadscan is default
 
         self.verbose = True
 
@@ -140,6 +142,7 @@ class Observer:
         from pyemittance.beam_io import MachineIO
         io = MachineIO(self.config_name, self.config_dict, self.meas_type)
         io.online = self.online
+        io.emit_calc_type = self.emit_calc_type
         # note we are not setting the injector on the machine here
         return io.get_multiwire_beamsizes()
 

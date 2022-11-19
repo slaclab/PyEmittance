@@ -33,6 +33,7 @@ class PyEmittance:
         self.verbose = True
 
         # injector settings (SOL, CQ, SQ) if optimizing
+        # TODO: remove injector settings options from all modules (optimizer needs to be separate)
         self.inj_config = None
         if self.emit_calc_type == 'quadscan':
             # initial rough quad scan
@@ -199,6 +200,7 @@ class PyEmittance:
         o.inj_config = self.inj_config
         o.online = self.online
         o.meas_type = 'WIRE'
+        o.emit_calc_type = self.emit_calc_type
         o.config_name = self.config_name
         o.config_dict = self.config_dict
 

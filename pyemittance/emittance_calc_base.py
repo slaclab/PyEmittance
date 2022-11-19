@@ -35,7 +35,7 @@ class EmitCalcBase:
             self.config_name = config_name
             self.config_dict = config_dict if config_dict else self.load_config()
 
-        self.dims = ['x', 'y'] # TODO: make code use provided in self.dims, and make it extensible
+        self.dims = ['x', 'y'] # TODO: use user passed dimensions in self.dims, and make it extensible
         self.sig_mat_meas = {'x': [], 'y': []}
         # Twiss0 should be for the first wire of multiwire measurements
         self.twiss0 = get_twiss0(self.config_dict['beamline_info'])  # emit0, beta0, alpha0

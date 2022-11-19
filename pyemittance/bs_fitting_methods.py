@@ -77,12 +77,12 @@ def find_rms_cut_area(y, para0 = None, show_plots=False, cut_area = 0.05):
     var = mean2 - mean**2
     std = np.sqrt(var)
 
-    # TODO: better estimate of peak amplitude in case of noise
+    # TODO: get better estimate of peak amplitude in case of noise
     amp = max(y)
 
     para = np.array([amp, mean, std])
 
-    # TODO: implement errors
+    # TODO: implement errors on params from fitting
     para_errors = np.array([0]*len(para))
     
     if show_plots:

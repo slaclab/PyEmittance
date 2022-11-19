@@ -121,7 +121,8 @@ class MultiWireCalc(EmitCalcBase):
         file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
 
         if not file_exists:
-            # TODO: check how many wires are saving and save appr. num of meas.
+            # TODO: check how many wires are saving and save appropriately.
+            # This is hardcoded for single measurements right now.
             f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
             f.write(
                 f"{'timestamp'},{'varx_cur'},{'vary_cur'},{'varz_cur'},"

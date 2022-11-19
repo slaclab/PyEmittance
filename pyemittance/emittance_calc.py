@@ -127,8 +127,6 @@ class EmitCalc(EmitCalcBase):
         file_exists = path.exists(savepaths['summaries'] + "image_acq_quad_info.csv")
 
         if not file_exists:
-
-            # TODO: add others as inputs
             f = open(savepaths['summaries'] + "image_acq_quad_info.csv", "a+")
             f.write(
                 f"{'timestamp'},{'ncol'},{'nrow'},{'roi_xmin'},{'roi_xmax'}"
@@ -140,7 +138,6 @@ class EmitCalc(EmitCalcBase):
         file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
 
         if not file_exists:
-            # todo add others as inputs
             f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
             f.write(
                 f"{'timestamp'},{'varx_cur'},{'vary_cur'},{'varz_cur'},"

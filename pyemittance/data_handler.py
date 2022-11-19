@@ -3,7 +3,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from pyemittance.optics import get_k1, get_gradient, get_quad_field
 
-# TODO: import m_0
+# TODO: import m_0 from std lib
 m_0 = 0.000511
 
 
@@ -360,7 +360,7 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
             y_err.insert(new_idx, y_err_add[i])
         elif mult_fac == 1:
             # add points to the right
-            # TODO add points to both sides when min is in the middle
+            # TODO: add points to both sides when min is in the middle
             new_idx = argmin+step_mult[i]
             x.insert(new_idx, x_add[i])
             y.insert(new_idx, y_add[i])
