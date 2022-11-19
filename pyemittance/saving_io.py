@@ -67,7 +67,7 @@ def save_config(xrms,
     else:
         f = open(configpath + "beamsize_config_info.csv", "a+")
 
-    # todo make more general, pandas etc
+    # TODO: make more general, save dataframe or some better data structure
     varx_cur = caget(opt_pvs[0])
     vary_cur = caget(opt_pvs[1])
     varz_cur = caget(opt_pvs[2])

@@ -1,60 +1,27 @@
 import numpy as np
 from os import path, makedirs
-import errno, os
-from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL, normalize_emit
-from pyemittance.machine_settings import get_twiss0, get_rmat, get_energy, get_quad_len
+import errno
+import os
+from pyemittance.emittance_calc_base import EmitCalcBase
+from pyemittance.optics import estimate_sigma_mat_thick_quad, get_kL, normalize_emit
+from pyemittance.machine_settings import get_quad_len
 from pyemittance.saving_io import save_emit_run
-from pyemittance.load_json_configs import load_configs
 
 
-class EmitCalc:
-    """
+class EmitCalc(EmitCalcBase):
+    """ Quad scan emittance measurement type
     Uses info recorded in Observer to do an emittance fit
     """
-    def __init__(self,
-                 quad_vals: dict = None,
-                 beam_vals: dict = None,
-                 beam_vals_err: dict = None,
-                 config_dict: dict = None,
-                 config_name: str = None
-                 ):
-
-        self.quad_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if quad_vals is None else quad_vals # in kG
-        self.beam_vals = {'x': np.empty(0, ), 'y': np.empty(0, )} if beam_vals is None else beam_vals
-
-        # Make sure error is added to beamsizes if none is provided
-        if beam_vals_err is None or sum(beam_vals_err['x']) == 0 or sum(beam_vals_err['y']) == 0:
-            self.bs_error = (0.015, 0.015)  # Define some error on beamsizes in each dimension
-            self.beam_vals_err = {'x': np.asarray(self.beam_vals['x'])*self.bs_error[0],
-                                  'y': np.asarray(self.beam_vals['y'])*self.bs_error[1]}
-        else:
-            self.beam_vals_err = beam_vals_err
-
-        # if config is not provided, use LCLS OTR2 as default
-        if config_dict is None and config_name is None:
-            print("No configuration specified. Taking default LCLS-OTR2 configs.")
-            self.config_name = "LCLS_OTR2"
-            self.config_dict = self.load_config()
-        else:
-            self.config_name = config_name
-            self.config_dict = config_dict if config_dict else self.load_config()
-
-        self.dims = ['x', 'y'] # TODO: make code use provided in self.dims, and make it extensible
-        self.sig_mat_screen = {'x': [], 'y': []}
-        self.twiss0 = get_twiss0(self.config_dict['beamline_info'])  # emit, beta, alpha
-        self.twiss_screen = {'x': [], 'y': []} # emit, beta, alpha
-        self.beta_err = None
-        self.alpha_err = None
-        self.energy = get_energy(self.config_dict['beamline_info'])
-        self.rmat = get_rmat(self.config_dict['beamline_info'])
+    def init_class_attr(self):
+        self.quad_vals = self.meas_vals
         self.quad_len = get_quad_len(self.config_dict['beamline_info'])
-
-        self.calc_bmag = False
-        self.plot = False
-        self.verbose = False
-        self.save_runs = False
         # Initialize paths and dirs for saving
         self.init_saving()
+
+    def define_default_config(self):
+        print("No configuration specified. Taking default LCLS-OTR2 configs.")
+        self.config_name = "LCLS_OTR2"
+        self.config_dict = self.load_config()
 
         # Main output of emittance calc
         self.output = {}
@@ -135,8 +102,7 @@ class EmitCalc:
                     
                 beta_rel_err  = res[f'beta_{dim}_rel_err']   
                 alpha_rel_err = res[f'alpha_{dim}_rel_err']   
-                
-                
+          
                 self.beta_err = beta_rel_err
                 self.alpha_err = alpha_rel_err
 
@@ -228,8 +194,8 @@ class EmitCalc:
             print("Savepaths not set. Please set them in 'configs/savepaths.json'")
             from pathlib import Path
             parent = Path(__file__).resolve().parent
-            examples_dir = str(parent)[:-11] + "examples"
-            print("Using examples directory: ", examples_dir)
+            examples_dir = str(parent)[:-11] + "docs/examples"
+            print("Using docs examples directory: ", examples_dir)
             savepaths['images'] = examples_dir + "/saved_images/"
             savepaths['summaries'] = examples_dir + "/summaries/"
             savepaths['fits'] = examples_dir + "/saved_fits/"
@@ -243,8 +209,6 @@ class EmitCalc:
         file_exists = path.exists(savepaths['summaries'] + "image_acq_quad_info.csv")
 
         if not file_exists:
-
-            # TODO: add others as inputs
             f = open(savepaths['summaries'] + "image_acq_quad_info.csv", "a+")
             f.write(
                 f"{'timestamp'},{'ncol'},{'nrow'},{'roi_xmin'},{'roi_xmax'}"
@@ -256,7 +220,6 @@ class EmitCalc:
         file_exists = path.exists(savepaths['summaries'] + "beamsize_config_info.csv")
 
         if not file_exists:
-            # todo add others as inputs
             f = open(savepaths['summaries'] + "beamsize_config_info.csv", "a+")
             f.write(
                 f"{'timestamp'},{'varx_cur'},{'vary_cur'},{'varz_cur'},"

@@ -4,6 +4,9 @@ import time
 from epics import PV
 from pyemittance.saving_io import save_config
 from pyemittance.load_json_configs import load_configs
+# DAQ modules
+from pyemittance.wire_io import get_beamsizes_wire
+from pyemittance.otrs_io import get_beamsizes_otrs
 
 
 class MachineIO():
@@ -11,6 +14,8 @@ class MachineIO():
     def __init__(self, config_name='LCLS_OTR2', config_dict=None, meas_type='OTRS'):
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
+        # emittance measurement type
+        self.emit_calc_type = "quadscan" # quadscan is default
         self.online = False
         self.use_profmon = False
         self.settle_time = 3  # sleep time in seconds
@@ -25,13 +30,17 @@ class MachineIO():
             self.config_name = config_name
             self.config_dict = config_dict if config_dict else self.load_config()
 
+        # Measurement quad info
         self.meas_pv_info = self.config_dict['meas_pv_info']
         self.meas_read_pv = PV(self.meas_pv_info['meas_device']['pv']['read'])
+        self.meas_cntrl_pv = PV(self.meas_pv_info['meas_device']['pv']['cntrl'])
 
-        # load info about settings to optimize
+        # Load info about injector settings to optimize
+        # TODO: currently this is only being used by BAX modules.
+        # Need to remove all optimization/injector config methods from pyemittance
+        # and make separate optimization module for BAX or integrate with Badger
         self.opt_pv_info = self.config_dict['opt_pv_info']
         self.opt_pvs = self.opt_pv_info['opt_vars']
-        self.meas_cntrl_pv = PV(self.meas_pv_info['meas_device']['pv']['cntrl'])
         self.sol_cntrl_pv = PV(self.opt_pvs[0])
         self.cq_cntrl_pv = PV(self.opt_pvs[1])
         self.sq_cntrl_pv = PV(self.opt_pvs[2])
@@ -55,11 +64,10 @@ class MachineIO():
         #     print("Running offline.")
 
         if self.meas_type == 'OTRS' and self.online:
-            from pyemittance.otrs_io import get_beamsizes_otrs
             return get_beamsizes_otrs(self.config_dict, self.use_profmon)
         elif self.meas_type == 'WIRE' and self.online:
-            from pyemittance.wire_io import get_beamsizes_wire
             print("Running wire scanner")
+            # This runs a single wire for quadscan measurement
             return get_beamsizes_wire(self.online, self.config_dict)
         elif not self.online:
             return np.random.uniform(0.5e-4,5e-4), np.random.uniform(1e-4,6e-4), 0, 0
@@ -67,6 +75,8 @@ class MachineIO():
             raise NotImplementedError('No valid measurement type defined.')
 
     def setinjector(self, set_list):
+        # TODO: this method needs to be removed once optimization
+        # is externalized for BAX
         if self.online and set_list is not None:
             self.sol_cntrl_pv.put(set_list[0])
             self.cq_cntrl_pv.put(set_list[1])
@@ -85,6 +95,10 @@ class MachineIO():
             print("Not setting quad online values.")
             pass
 
+    def getquad(self):
+        """Get current Q525 value"""
+        return self.meas_cntrl_pv.get()
+
     def get_beamsize_inj(self, set_list, quad):
         """Get beamsize fn that changes upstream cu injector
         Returns xrms and yrms in [m]
@@ -100,3 +114,19 @@ class MachineIO():
                     opt_pvs=self.opt_pvs,
                     impath=self.config_dict['savepaths']['images'])
         return np.array([beamsize[0], beamsize[1]])
+
+    def get_multiwire_beamsizes(self):
+        if self.meas_type == 'WIRE' and self.online:
+            print("Running wire scanner(s).")
+            multiwire = True if self.emit_calc_type=="multiwire" else False
+            # This returns lists now: xrms, yrms, xrms_err, yrms_err
+            # TODO: implement error dict to be returned to track multiwire success
+            return get_beamsizes_wire(self.online, self.config_dict, multiwire=multiwire)
+
+        elif not self.online:
+            # Return random values (for testing)
+            n_wires = 3
+            xsize_list = [abs(np.random.uniform(0.5e-4, 5e-4)) for _ in range(n_wires)]
+            ysize_list = [abs(np.random.uniform(0.5e-4, 5e-4)) for _ in range(n_wires)]
+            err_list = [0]*n_wires
+            return xsize_list, ysize_list, err_list, err_list

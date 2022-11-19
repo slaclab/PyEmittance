@@ -1,13 +1,15 @@
 import bisect
 import numpy as np
 
+from pyemittance.beam_io import MachineIO
+
 class Observer:
     """
     Observer reads beamsizes and sets measurement quad
     Observer stores values for beamsizes and quad settings
     """
-
-    def __init__(self, quad_meas, beam_meas, beam_meas_err):
+    # Init val defaults are none since not used in multiwire scans
+    def __init__(self, quad_meas=None, beam_meas=None, beam_meas_err=None):
         self.quad_meas = quad_meas
         self.beam_meas = beam_meas
         self.beam_meas_err = beam_meas_err
@@ -27,6 +29,8 @@ class Observer:
         self.config_name = 'sim'
         self.config_dict = None
         self.meas_type = 'OTRS'
+        # emittance measurement type: quadscan or multiwire
+        self.emit_calc_type = "quadscan" # quadscan is default
 
         self.verbose = True
 
@@ -128,10 +132,20 @@ class Observer:
             return self.get_beamsizes_model(self.inj_config, val)
 
         else:
-            from pyemittance.beam_io import MachineIO
             io = MachineIO(self.config_name, self.config_dict, self.meas_type)
             io.online = self.online
             io.use_profmon = self.use_profmon
             # note we are not setting the injector on the machine here
             return io.get_beamsizes_machine(self.inj_config, val)
+
+    def multiwire_measure_beam(self):
+        """Get multiwire beamsize measurements"""
+        io = MachineIO(self.config_name, self.config_dict, self.meas_type)
+        io.online = self.online
+        io.emit_calc_type = self.emit_calc_type
+        # Note we are not setting the injector on the machine here
+        # This returns lists now: xrms, yrms, xrms_err, yrms_err
+        # TODO: implement error dict to be returned to track multiwire success
+        return io.get_multiwire_beamsizes()
+
         

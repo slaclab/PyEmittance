@@ -2,11 +2,11 @@
 import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
-# TODO update fns
+
+# TODO: update fns from scipy for c_light #, m_e as m0
 from scipy.constants import c as c_light #, m_e as m0
 # TODO: use this:
 # mec2 = scipy.constants.value('electron mass energy equivalent in MeV')*1e6
-
 
 import matplotlib.pyplot as plt
 
@@ -303,8 +303,7 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, energy,
 
     if plot:
         # Plot the data
-        #plt.figure(figsize=(5.5,3.5))
-        #plt.figure(figsize=(5,3.5))
+        plt.figure(figsize=(5,3.5))
 
         quad = get_quad_field(kLlist / Lquad, energy, Lquad)
         plt.errorbar(quad, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
@@ -314,7 +313,7 @@ def propagate_to_screen(s11, s12, s22, kLlist, mat2s, Lquad, energy,
 
         plt.xlabel('Quadrupole Strength (kG)')
         plt.ylabel(r'Beam Size ($\mu$m)')
-        plt.legend(fontsize=14)
+        plt.legend()
 
         if save_plot:
             import datetime
@@ -415,4 +414,103 @@ def get_twiss_error(emit, a1, a2, a3, B):
     twiss_error = get_fit_param_error(f_gradient, B)
 
     return twiss_error
+
+def estimate_sigma_mat_multiwire(wire_rmat, sizes, sizes_err=None, weights=None, locations=None,
+                                 dim='x', plot=True, verbose=False, calc_bmag=False):
+    """
+    Estimates the beam sigma matrix at a wire using multiwire measurement
+    :return: emittance/Twiss, sig11, sig12 and sig22 at measurement screen
+    """
+    # Measurement vector
+    sizes = np.array(sizes)
+    if np.isnan(sizes).any():
+        idx_not_nan = ~np.isnan(sizes)
+        idx_nan = np.isnan(sizes)
+        sizes = sizes[idx_not_nan]
+        sizes_err = np.array(sizes_err)[idx_not_nan]
+        wires_nan = list(wire_rmat.values())[idx_nan]
+        for w in wires_nan:
+            del wire_rmat[w]
+        if weights is not None:
+            weights = np.array(weights)
+            weights = weights[idx_not_nan]
+
+    if len(sizes) < 3:
+        if verbose:
+            print("Less than 3 data points were passed. Returning NaN.")
+        return [np.nan,np.nan,np.nan,np.nan]
+
+    b = sizes ** 2
+    n = len(b)
+
+    # Fill in defaults, checking.
+    if weights is None:
+        weights = np.ones(n)
+    assert len(weights) == n
+
+    # Get rmat from configs
+    rmat_calc = []
+    for w in wire_rmat:
+        # only need r11 and r12
+        rmat_calc.append(wire_rmat[w]['rMatx'][0] if dim == 'x' else wire_rmat[w]['rMaty'][0])
+
+    # Multiply by weights. This should correspond to the other weight multiplication below
+    b = weights * sizes ** 2
+
+    # form B matrix
+    B = []
+
+    for rmat, weight in zip(rmat_calc, weights):
+        r11, r12 = rmat[0], rmat[1]
+        r_mat_factor = np.array([r11 ** 2, 2 * r11 * r12, r12 ** 2])
+        B.append(r_mat_factor * weight)  # corresponding weight multiplication
+
+    B = np.array(B)
+
+    # Invert (pseudoinverse)
+    s11, s12, s22 = scipy.linalg.pinv(B) @ b
+
+    # Twiss calc just before the quad
+    emit2 = s11 * s22 - s12 ** 2
+
+    #return NaN if emit can't be calculated
+    if emit2 < 0:
+        if verbose:
+            print("Emittance can't be computed. Returning NaN.")
+        #plt.plot(kLlist, sizes**2)
+        return [np.nan,np.nan,np.nan,np.nan]
+
+    emit = np.sqrt(emit2)
+    beta = s11 / emit
+    alpha = -s12 / emit
+
+    # Get error on emittance from fitted params
+    emit_err, beta_err, alpha_err = get_twiss_error(emit, s11, s12, s22, B)
+
+    if plot:
+        plot_multiwire(sizes, sizes_err, locations, plot)
+
+    return [emit, emit_err, beta_err/beta, alpha_err/alpha, s11, s12, s22]
+
+
+def plot_multiwire(sizes, sizes_err, locations, save_plot=False):
+    # Plot the data
+    plt.figure(figsize=(5,3.5))
+
+    plt.errorbar(locations, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
+
+    # Model prediction
+    # TODO: add plotting of model sigma propagation to locations
+
+    plt.xlabel('Position (m)')
+    plt.ylabel(r'Beam Size ($\mu$m)')
+    plt.legend()
+
+    if save_plot:
+        import datetime
+        plt.tight_layout()
+        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+        plt.savefig(f"emit_fit_{timestamp}.png", dpi=300)
+    plt.show()
+    plt.close()
 

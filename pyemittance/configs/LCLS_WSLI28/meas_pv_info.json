@@ -1,0 +1,34 @@
+{
+  "wires": {
+    "wire1": {
+      "name": "WIRE:IN20:561",
+      "scan": "SIOC:SYS0:ML06:AO501",
+      "xsize": "WIRE:IN20:561:XRMS",
+      "ysize": "WIRE:IN20:561:YRMS"
+    },
+    "wire2": {
+      "name": "WIRE:IN20:561",
+      "scan": "SIOC:SYS0:ML06:AO501",
+      "xsize": "WIRE:IN20:561:XRMS",
+      "ysize": "WIRE:IN20:561:YRMS"
+    },
+    "wire3": {
+      "name": "WIRE:IN20:561",
+      "scan": "SIOC:SYS0:ML06:AO501",
+      "xsize": "WIRE:IN20:561:XRMS",
+      "ysize": "WIRE:IN20:561:YRMS"
+    },
+    "wire4": {
+      "name": "WIRE:IN20:561",
+      "scan": "SIOC:SYS0:ML06:AO501",
+      "xsize": "WIRE:IN20:561:XRMS",
+      "ysize": "WIRE:IN20:561:YRMS"
+    }
+  },
+  "pv_unit": {
+    "resolution": "(um)"
+  },
+  "beam_info": {
+    "energy": "REFS:IN20:751:EDES"
+  }
+}

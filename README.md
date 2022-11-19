@@ -13,3 +13,6 @@ Or install by running:
     
     pip install pyemittance
     
+## Setting the correct configuration parameters for the machine/simulation
+
+For examples on how to set the correct configuration and how to use the new API, please see [`examples/tutorial.ipynb`](https://github.com/pluflou/PyEmittance/blob/main/docs/examples/tutorial.ipynb).
