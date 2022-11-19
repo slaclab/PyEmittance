@@ -24,7 +24,7 @@
     0,
     1
   ],
-  "Wire1": {
+  "wire1": {
     "location": 100,
     "rMatx": [
     1,
@@ -39,7 +39,7 @@
     1
   ]
   },
-  "Wire2": {
+  "wire2": {
     "location": 100,
     "rMatx": [
     1,
@@ -54,7 +54,7 @@
     4
   ]
   },
-    "Wire3": {
+    "wire3": {
     "location": 100,
     "rMatx": [
     1,
@@ -69,7 +69,7 @@
     4
   ]
   },
-    "Wire4": {
+    "wire4": {
     "location": 100,
     "rMatx": [
     1,

@@ -73,10 +73,10 @@ def get_rmat_wires(beamline_info_config_dict):
 
     # setup for 3 or 4 wires
     # if there is only 3, fourth is ignored in calculations
-    rmat_wires = {'wire1': None,
-                  'wire2': None,
-                  'wire3': None,
-                  'wire4': None
+    rmat_wires = {'wire1': {'rMatx': np.array([]), 'rMaty': np.array([])},
+                  'wire2': {'rMatx': np.array([]), 'rMaty': np.array([])},
+                  'wire3': {'rMatx': np.array([]), 'rMaty': np.array([])},
+                  'wire4': {'rMatx': np.array([]), 'rMaty': np.array([])}
                   }
     for w in rmat_wires.keys():
         if w in beamline_info.keys():
@@ -84,7 +84,9 @@ def get_rmat_wires(beamline_info_config_dict):
             rmat_wires[w]['rMaty'] = beamline_info[w]['rMaty']
         else:
             if w == "wire1":
+                # If can't find any wire configurations for multiwire scan
                 raise Exception("Wire configuration in beamline_info.json is set incorrectly.")
+            # Remove unused wire
             del rmat_wires[w]
         # m11, m12, m21, m22
         # in the form below in the Matlab model:

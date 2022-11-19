@@ -65,7 +65,7 @@ class PyEmittance:
 
     def measure_emittance(self):
         if self.emit_calc_type == 'quadscan':
-            self.measure_emittance_quad_scan()
+           self.measure_emittance_quad_scan()
         elif self.emit_calc_type == 'multiwire':
             self.measure_emittance_multiwire()
         else:

@@ -109,8 +109,8 @@ class MultiWireCalc(EmitCalcBase):
             print("Savepaths not set. Please set them in 'configs/savepaths.json'")
             from pathlib import Path
             parent = Path(__file__).resolve().parent
-            examples_dir = str(parent)[:-11] + "examples"
-            print("Using examples directory: ", examples_dir)
+            examples_dir = str(parent)[:-11] + "docs/examples"
+            print("Using docs examples directory: ", examples_dir)
             savepaths['summaries'] = examples_dir + "/summaries/"
             savepaths['fits'] = examples_dir + "/saved_fits/"
             savepaths['raw_saves'] = examples_dir + "/raw_saves/"

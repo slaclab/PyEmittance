@@ -125,4 +125,8 @@ class MachineIO():
 
         elif not self.online:
             # Return random values (for testing)
-            return abs(np.random.uniform(0.5e-4, 5e-4)), abs(np.random.uniform(1e-4, 6e-4)), 0, 0
+            n_wires = 3
+            xsize_list = [abs(np.random.uniform(0.5e-4, 5e-4)) for _ in range(n_wires)]
+            ysize_list = [abs(np.random.uniform(0.5e-4, 5e-4)) for _ in range(n_wires)]
+            err_list = [0]*n_wires
+            return xsize_list, ysize_list, err_list, err_list

@@ -8,8 +8,8 @@ class Observer:
     Observer reads beamsizes and sets measurement quad
     Observer stores values for beamsizes and quad settings
     """
-
-    def __init__(self, quad_meas, beam_meas, beam_meas_err):
+    # Init val defaults are none since not used in multiwire scans
+    def __init__(self, quad_meas=None, beam_meas=None, beam_meas_err=None):
         self.quad_meas = quad_meas
         self.beam_meas = beam_meas
         self.beam_meas_err = beam_meas_err
