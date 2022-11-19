@@ -108,9 +108,9 @@ def eval_emit_machine(inj_config=None,
     ef.get_emit()
 
     # save total number of points queried
-    ef.out_dict["total_points_measured"] = len(o.quad_meas)
+    ef.output["total_points_measured"] = len(o.quad_meas)
 
-    return ef.out_dict
+    return ef.output
 
 
 def eval_emit_surrogate(get_bs_model,
@@ -214,6 +214,6 @@ def eval_emit_surrogate(get_bs_model,
     ef.get_emit()
 
     # save total number of points queried
-    ef.out_dict["total_points_measured"] = len(o.quad_meas)
+    ef.output["total_points_measured"] = len(o.quad_meas)
 
-    return ef.out_dict
+    return ef.output
