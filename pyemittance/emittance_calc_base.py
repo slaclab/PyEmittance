@@ -68,6 +68,9 @@ class EmitCalcBase:
         # Define class specific attributes
         self.init_class_attr()
 
+        # Main output of emittance calc
+        self.output = {}
+
     def init_class_attr(self):
         pass
 
