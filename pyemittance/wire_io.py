@@ -50,7 +50,7 @@ def get_beamsizes_wire(online=False,
         xrms_err.append(xrms*0.02)
         yrms_err.append(yrms*0.02)
     
-    '''change below''' # TODO: used to save scalars, now it's lists
+    # TODO: this saves scalars, update to saving lists better
     if save_summary:
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         save_config(xrms,
@@ -62,6 +62,7 @@ def get_beamsizes_wire(online=False,
                     opt_pvs,
                     configpath=savepaths['summaries'],
                     impath=savepaths['images']
+                    )
                     
         numpy_save(xrms,
                    yrms,
@@ -93,6 +94,8 @@ def get_beamsize(online, scan_pv):
         # When measurement is done, associated
         # WIRE:*:XRMS and *:YRMS PVs are updated.
         if online:
+            if scan_pv.get() != 0:
+                raise NotImplementedError(f"WS {scan_pv} not ready for running.")
             scan_pv.put(1)
             time.sleep(1)  
 
@@ -101,9 +104,8 @@ def get_beamsize(online, scan_pv):
                 while scan_pv.get()!= 0:
                     time.sleep(5) 
                 time.sleep(3)  # to not break the wire scanner
-                
-            print(f"Acquired {wire_pv}.")
-
+            elif status == 0:
+                print(f"WS {wire_pv} acquired successfully.")
             else: 
                 print(f"WS {wire_pv} did not run. Status {status}.")
                 error[f"{wire_pv}"] = True

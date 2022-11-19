@@ -7,7 +7,10 @@ from pyemittance.emittance_calc import EmitCalc
 from pyemittance.emittance_calc_multiwire import MultiWireCalc
 from pyemittance.load_json_configs import load_configs
 
+# For setting quad back after scan is done
+from pyemittance.beam_io import MachineIO
 
+# TODO: set up unit testing for PyEmittance, EmitCalc, MultiWireCalc, Observer
 class PyEmittance:
 
     def __init__(self,
@@ -94,7 +97,12 @@ class PyEmittance:
         energy = o.config_dict['beamline_info']['energy']
         l_quad = o.config_dict['beamline_info']['l']
 
-        # get initial beamsizes (rough scan)
+        # Save init quad value
+        io = MachineIO(self.config_name, self.config_dict, self.meas_type)
+        io.online = self.online
+        quad_init = io.getquad()
+
+        # Get initial beamsizes (rough scan)
         bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(self.quad_init)
 
         quad_range_x = self.quad_init
@@ -174,7 +182,11 @@ class PyEmittance:
                                                                                 bs_fn=o.measure_beam
                                                                                 )
 
-        # finally get emittance
+        # Put quad back
+        io.online = self.online
+        io.setquad(quad_init)
+
+        # Finally get emittance
         ef = EmitCalc({'x': quad_range_x, 'y': quad_range_y},
                       {'x': bs_x_list, 'y': bs_y_list},
                       {'x': bs_x_list_err, 'y': bs_y_list_err},
@@ -210,10 +222,12 @@ class PyEmittance:
         else:
             print("Running offline.")
 
-        # get beamsizes
+        # Get beamsizes
+        # This returns lists now: xrms, yrms, xrms_err, yrms_err
+        # TODO: implement error dict to be returned to track multiwire success
         bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.multiwire_measure_beam()
 
-        # finally get emittance
+        # Finally get emittance
         ef = MultiWireCalc(beam_vals={'x': bs_x_list, 'y': bs_y_list},
                            beam_vals_err={'x': bs_x_list_err, 'y': bs_y_list_err},
                            config_dict=o.config_dict,
