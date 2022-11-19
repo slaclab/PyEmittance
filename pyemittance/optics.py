@@ -495,22 +495,26 @@ def estimate_sigma_mat_multiwire(wire_rmat, sizes, sizes_err=None, weights=None,
 
 def plot_multiwire(sizes, sizes_err, locations, save_plot=False):
     # Plot the data
-    plt.figure(figsize=(5,3.5))
+    try:
+        plt.figure(figsize=(5, 3.5))
 
-    plt.errorbar(locations, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
+        plt.errorbar(locations, np.asarray(sizes)/1e-6, yerr=np.asarray(sizes_err)/1e-6, fmt='o', label=f'Measurements')
 
-    # Model prediction
-    # TODO: add plotting of model sigma propagation to locations
+        # Model prediction
+        # TODO: add plotting of model sigma propagation to locations
 
-    plt.xlabel('Position (m)')
-    plt.ylabel(r'Beam Size ($\mu$m)')
-    plt.legend()
+        plt.xlabel('Position (m)')
+        plt.ylabel(r'Beam Size ($\mu$m)')
+        plt.legend()
 
-    if save_plot:
-        import datetime
-        plt.tight_layout()
-        timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-        plt.savefig(f"emit_fit_{timestamp}.png", dpi=300)
-    plt.show()
-    plt.close()
+        if save_plot:
+            import datetime
+            plt.tight_layout()
+            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
+            plt.savefig(f"emit_fit_{timestamp}.png", dpi=300)
+        plt.show()
+        plt.close()
+    except:
+        print("Plotting not implemented yet.")
+        # TODO: fix plotting for multiwire
 

@@ -3,9 +3,10 @@ from os import path, makedirs
 import errno
 import os
 from pyemittance.emittance_calc_base import EmitCalcBase
-from pyemittance.optics import estimate_sigma_mat_multiwire, normalize_emit
+from pyemittance.optics import estimate_sigma_mat_multiwire, twiss_and_bmag
 from pyemittance.machine_settings import get_rmat_wires, get_loc_wires
 from pyemittance.saving_io import save_emit_run
+from pyemittance.load_json_configs import load_configs
 
 
 class MultiWireCalc(EmitCalcBase):
@@ -24,6 +25,12 @@ class MultiWireCalc(EmitCalcBase):
         print("No configuration specified. Taking default LCLS-WS02 configs.")
         self.config_name = "LCLS_WS02"
         self.config_dict = self.load_config()
+
+    def load_config(self):
+        # if path exists, load from path
+        if self.config_name is not None:
+            self.config_dict = load_configs(self.config_name)
+        return self.config_dict
 
     def get_emit(self):
         """
@@ -46,41 +53,96 @@ class MultiWireCalc(EmitCalcBase):
 
             res = estimate_sigma_mat_multiwire(self.wire_rmat, bs, bs_err, weights, self.out_dict[f'locations'],
                                                dim=dim, plot=self.plot, verbose=self.verbose)
-            # res is [emit, emit_err, beta_err/beta, alpha_err/alpha, s11, s12, s22]
-            if np.isnan(res[0]):
-                self.out_dict['nemitx'], self.out_dict['nemity'] = np.nan, np.nan
-                self.out_dict['nemitx_err'], self.out_dict['nemity_err'] = np.nan, np.nan
-                self.out_dict['bmagx'], self.out_dict['bmagy'] = np.nan, np.nan
-                self.out_dict['bmagx_err'], self.out_dict['bmagy_err'] = np.nan, np.nan
-                return self.out_dict
-            else:
-                emit, emit_err, beta_rel_err, alpha_rel_err = res[0:4]
-                if self.calc_bmag:
-                    sig_11, sig_12, sig_22 = res[4:]
 
-            norm_emit_res = normalize_emit(emit, emit_err, self.energy)
-            self.out_dict[f'nemit{dim}'] = norm_emit_res[0]
-            self.out_dict[f'nemit{dim}_err'] = norm_emit_res[1]
+            # Add all results
+            print(res)
+            self.output.update(res)
+
+            # Skip further calcs if there was an error
+            if res[f'error_{dim}']:
+                continue
 
             if self.calc_bmag:
-                # bmag is calculated at the first wire
+                # TODO: implement match at first wire
+                # if dim == 'x':
+                #     sig_11 = res['screen_sigma_11']
+                #     sig_12 = res['screen_sigma_12']
+                #     sig_22 = res['screen_sigma_22']
+                #
+                # else:
+                #     sig_11 = res['screen_sigma_33']
+                #     sig_12 = res['screen_sigma_34']
+                #     sig_22 = res['screen_sigma_44']
+                # self.sig_mat_screen[dim] = [sig_11, sig_12, sig_22]
+                #
+                # beta_rel_err = res[f'beta_{dim}_rel_err']
+                # alpha_rel_err = res[f'alpha_{dim}_rel_err']
+                #
+                # self.beta_err = beta_rel_err
+                # self.alpha_err = alpha_rel_err
+                #
+                # bmag_calc_res = self.get_twiss_bmag(dim=dim)
+                # # Get bmag and bmag_err
+                # self.output[f'screen_bmag{dim}'] = bmag_calc_res[0]
+                # self.output[f'screen_bmag{dim}_err'] = bmag_calc_res[1]
+                print("Match not implemented for multiwire scan yet.")
+                pass
 
-                self.sig_mat_meas[dim] = [sig_11, sig_12, sig_22]
-                self.beta_err = beta_rel_err
-                self.alpha_err = alpha_rel_err
-
-                bmag_calc_res = self.get_twiss_bmag(dim=dim)
-                # Get bmag and bmag_err
-                self.out_dict[f'bmag{dim}'] = bmag_calc_res[0]
-                self.out_dict[f'bmag{dim}_err'] = bmag_calc_res[1]
-
-        # get geometric mean (set to None when x and y are not calculated)
-        self.get_gmean_emit()
+        # get geometric mean if possible
+        if (not self.output['error_x']) and (not self.output['error_y']) :
+            self.get_gmean_emit()
 
         if self.save_runs:
             self.save_run()
 
         return self.out_dict
+
+    def get_twiss_bmag(self, dim='x'):
+        '''Not Implemented'''
+        # TODO: implement match at first wire
+        # sig_11 = self.sig_mat_screen[dim][0]
+        # sig_12 = self.sig_mat_screen[dim][1]
+        # sig_22 = self.sig_mat_screen[dim][2]
+        #
+        # # twiss0 in x or y AT THE SCREEN
+        # beta0, alpha0 = self.twiss0[dim][1], self.twiss0[dim][2]
+        #
+        # # return dict of emit, beta, alpha, bmag
+        # twiss = twiss_and_bmag(sig_11, sig_12, sig_22,
+        #                        self.beta_err, self.alpha_err,
+        #                        beta0=beta0, alpha0=alpha0)
+        # # Save twiss at screen
+        # self.twiss_screen[dim] = [twiss['emit'], twiss['beta'], twiss['alpha']]
+        #
+        # return twiss['bmag'], twiss['bmag_err'], twiss['min_idx']
+        pass
+
+    def get_gmean_emit(self):
+
+        try:
+            nemit = np.sqrt( self.output['norm_emit_x'] * self.output['norm_emit_y'] )
+            nemit_err = nemit * ( (self.output['norm_emit_x_err']/self.output['norm_emit_x'])**2 +
+                                  (self.output['norm_emit_y_err']/self.output['norm_emit_y'])**2 )**0.5
+
+            self.output['sqrt_norm_emit_4d'] = nemit
+            self.output['sqrt_norm_emit_4d_err'] = nemit_err
+
+            # TODO: implement match stats at first wire
+            # if 'bmag_x' in self.output and 'bmag_y' in self.output:
+            #     nbmag = np.sqrt( self.output['bmag_x'] * self.output['bmag_y'] )
+            #     bmag_emit_err = nemit*nbmag * (
+            #         (self.output['norm_emit_x_err']/self.output['norm_emit_x'])**2 +
+            #         (self.output['norm_emit_y_err']/self.output['norm_emit_y'])**2 +
+            #         (self.output['bmag_x_err']/self.output['bmag_x'])**2 +
+            #         (self.output['bmag_y_err']/self.output['bmag_y'])**2)**0.5
+            #     self.output['bmag_emit'] = nemit * nbmag
+            #     self.output['bmag_emit_err'] = bmag_emit_err
+
+        except TypeError:
+            self.output['sqrt_norm_emit_4d'] = np.nan
+            self.output['sqrt_norm_emit_4d_err'] = np.nan
+            self.output['bmag_emit'] = np.nan
+            self.output['bmag_emit_err'] = np.nan
 
     def save_run(self):
         save_emit_run(self.out_dict, path=self.config_dict['savepaths']['fits'])

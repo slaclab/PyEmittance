@@ -3,9 +3,10 @@ from os import path, makedirs
 import errno
 import os
 from pyemittance.emittance_calc_base import EmitCalcBase
-from pyemittance.optics import estimate_sigma_mat_thick_quad, get_kL, normalize_emit
+from pyemittance.optics import estimate_sigma_mat_thick_quad, twiss_and_bmag, get_kL
 from pyemittance.machine_settings import get_quad_len
 from pyemittance.saving_io import save_emit_run
+from pyemittance.load_json_configs import load_configs
 
 
 class EmitCalc(EmitCalcBase):
@@ -22,9 +23,6 @@ class EmitCalc(EmitCalcBase):
         print("No configuration specified. Taking default LCLS-OTR2 configs.")
         self.config_name = "LCLS_OTR2"
         self.config_dict = self.load_config()
-
-        # Main output of emittance calc
-        self.output = {}
 
     def load_config(self):
         # if path exists, load from path
@@ -81,6 +79,7 @@ class EmitCalc(EmitCalcBase):
             res = estimate_sigma_mat_thick_quad(bs, kL, bs_err, weights, dim=dim, Lquad=self.quad_len,
                                                 energy=self.energy, rmat=self.rmat,
                                                 plot=self.plot, verbose=self.verbose)
+
             # Add all results
             self.output.update(res)            
             
