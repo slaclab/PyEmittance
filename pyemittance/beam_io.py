@@ -6,9 +6,10 @@ from pyemittance.saving_io import save_config
 from pyemittance.load_json_configs import load_configs
 
 
-class MachineIO():
+class MachineIO:
     """Class for handling all machine I/O"""
-    def __init__(self, config_name='LCLS_OTR2', config_dict=None, meas_type='OTRS'):
+
+    def __init__(self, config_name="LCLS_OTR2", config_dict=None, meas_type="OTRS"):
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
         self.online = False
@@ -25,13 +26,13 @@ class MachineIO():
             self.config_name = config_name
             self.config_dict = config_dict if config_dict else self.load_config()
 
-        self.meas_pv_info = self.config_dict['meas_pv_info']
-        self.meas_read_pv = PV(self.meas_pv_info['meas_device']['pv']['read'])
+        self.meas_pv_info = self.config_dict["meas_pv_info"]
+        self.meas_read_pv = PV(self.meas_pv_info["meas_device"]["pv"]["read"])
 
         # load info about settings to optimize
-        self.opt_pv_info = self.config_dict['opt_pv_info']
-        self.opt_pvs = self.opt_pv_info['opt_vars']
-        self.meas_cntrl_pv = PV(self.meas_pv_info['meas_device']['pv']['cntrl'])
+        self.opt_pv_info = self.config_dict["opt_pv_info"]
+        self.opt_pvs = self.opt_pv_info["opt_vars"]
+        self.meas_cntrl_pv = PV(self.meas_pv_info["meas_device"]["pv"]["cntrl"])
         self.sol_cntrl_pv = PV(self.opt_pvs[0])
         self.cq_cntrl_pv = PV(self.opt_pvs[1])
         self.sq_cntrl_pv = PV(self.opt_pvs[2])
@@ -54,17 +55,19 @@ class MachineIO():
         # else:
         #     print("Running offline.")
 
-        if self.meas_type == 'OTRS' and self.online:
+        if self.meas_type == "OTRS" and self.online:
             from pyemittance.otrs_io import get_beamsizes_otrs
+
             return get_beamsizes_otrs(self.config_dict, self.use_profmon)
-        elif self.meas_type == 'WIRE' and self.online:
+        elif self.meas_type == "WIRE" and self.online:
             from pyemittance.wire_io import get_beamsizes_wire
+
             print("Running wire scanner")
             return get_beamsizes_wire(self.online, self.config_dict)
         elif not self.online:
-            return np.random.uniform(0.5e-4,5e-4), np.random.uniform(1e-4,6e-4), 0, 0
+            return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
         else:
-            raise NotImplementedError('No valid measurement type defined.')
+            raise NotImplementedError("No valid measurement type defined.")
 
     def setinjector(self, set_list):
         if self.online and set_list is not None:
@@ -88,15 +91,17 @@ class MachineIO():
     def get_beamsize_inj(self, set_list, quad):
         """Get beamsize fn that changes upstream cu injector
         Returns xrms and yrms in [m]
-        """            
+        """
         beamsize = self.get_beamsizes_machine(set_list, quad)
         # save BAX beam size data
-        save_config(beamsize[0],
-                    beamsize[1],
-                    beamsize[2],
-                    beamsize[3],
-                    None,
-                    meas_read_pv=self.meas_read_pv,
-                    opt_pvs=self.opt_pvs,
-                    impath=self.config_dict['savepaths']['images'])
+        save_config(
+            beamsize[0],
+            beamsize[1],
+            beamsize[2],
+            beamsize[3],
+            None,
+            meas_read_pv=self.meas_read_pv,
+            opt_pvs=self.opt_pvs,
+            impath=self.config_dict["savepaths"]["images"],
+        )
         return np.array([beamsize[0], beamsize[1]])

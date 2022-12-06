@@ -4,12 +4,14 @@ this_dir, this_filename = os.path.split(__file__)
 CONFIG_PATH = os.path.join(this_dir, "configs")
 
 # default jsons that include the configurations for the emittance scan
-json_namelist = ["beamline_info",
-                 "img_proc",
-                 "meas_pv_info",
-                 "opt_pv_info",
-                 "save_scalar_pvs",
-                 "savepaths"]
+json_namelist = [
+    "beamline_info",
+    "img_proc",
+    "meas_pv_info",
+    "opt_pv_info",
+    "save_scalar_pvs",
+    "savepaths",
+]
 
 
 def load_configs(dir_name="LCLS2_OTR3"):
@@ -21,11 +23,16 @@ def load_configs(dir_name="LCLS2_OTR3"):
         # TODO: validate that all configs are consistent across directories/locations
         # TODO: eg all have rmatx and rmaty
         try:
-            f = open(os.path.join(CONFIG_PATH + "/" + dir_name, json_namelist[i] + ".json"), encoding='utf-8')
+            f = open(
+                os.path.join(CONFIG_PATH + "/" + dir_name, json_namelist[i] + ".json"),
+                encoding="utf-8",
+            )
         except FileNotFoundError:
-            print(f"*** File '{json_namelist[i]}.json' does not exist,"
-                  f" please create appropriate json file for configuration. *** \n"
-                  f"*** Or alternatively, initialize EmitCalc with dict directly. ***")
+            print(
+                f"*** File '{json_namelist[i]}.json' does not exist,"
+                f" please create appropriate json file for configuration. *** \n"
+                f"*** Or alternatively, initialize EmitCalc with dict directly. ***"
+            )
             raise
         file = f.read()
         f.close()
