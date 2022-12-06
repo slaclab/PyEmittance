@@ -1,3 +1,4 @@
+from pyemittance.tools import NpEncoder
 import numpy as np
 import json
 import datetime
@@ -84,4 +85,4 @@ def save_config(xrms,
 def save_emit_run(out_dict, path=""):
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     with open(path + f"pyemittance_data_{timestamp}.json", "w") as outfile:
-        json.dump(out_dict, outfile)
+        json.dump(out_dict, outfile, cls=NpEncoder)
