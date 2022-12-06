@@ -45,7 +45,6 @@ class PyEmittance:
         # simulation/model options
         # beamsize function from model
         self.get_bs_model = None
-        self.add_noise = False
 
         # to save total number of points queried
         self.return_num_points = False
@@ -69,7 +68,6 @@ class PyEmittance:
         # if using sim
         # set beamsize fn
         o.get_beamsizes_model = self.get_bs_model
-        o.add_noise = self.add_noise
 
         o.config_name = self.config_name
         o.config_dict = self.config_dict
