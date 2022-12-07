@@ -5,7 +5,7 @@ from pyemittance.saving_io import numpy_save, save_config
 
 
 def get_beamsizes_wire(online=False, config_dict=None, save_summary=False):
-    """Main function imported by beam_io
+    """Main function imported by machine_io
     Returns xrms, yrms, xrms_err, yrms_err
     """
     # Saving configs

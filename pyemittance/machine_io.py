@@ -2,7 +2,6 @@ import numpy as np
 import time
 
 from epics import PV
-from pyemittance.saving_io import save_config
 from pyemittance.load_json_configs import load_configs
 from pyemittance.otrs_io import get_beamsizes_otrs
 from pyemittance.wire_io import get_beamsizes_wire
@@ -54,9 +53,7 @@ class MachineIO:
             self.setquad(quad_val)
             self.setinjector(config)
             time.sleep(self.settle_time)
-        # else:
-        #     print("Running offline.")
-
+        
         if self.meas_type == "OTRS" and self.online:
             return get_beamsizes_otrs(self.config_dict, self.use_profmon)
         elif self.meas_type == "WIRE" and self.online:
@@ -66,4 +63,3 @@ class MachineIO:
             return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
         else:
             raise NotImplementedError("No valid measurement type defined.")
-

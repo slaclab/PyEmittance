@@ -6,7 +6,7 @@ from pyemittance.saving_io import save_image, numpy_save, save_config
 
 
 def get_beamsizes_otrs(config_dict, use_profmon=False):
-    """Main function imported by beam_io
+    """Main function imported by machine_io
     Option to use ProfMon PVs to get beamsizes
     Returns xrms, yrms, xrms_err, yrms_err
     """
