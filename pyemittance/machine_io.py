@@ -58,11 +58,10 @@ class MachineIO:
             return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
         else:
             raise NotImplementedError("No valid measurement type defined.")
-
-     def setquad(self, value):
-         """Sets quad to new scan value"""
-         if self.online:
-             self.meas_cntrl_pv.put(value)
-         else:
-             print("Not setting quad online values.")
-             pass
+    def setquad(self, value):
+        """Sets quad to new scan value"""
+        if self.online:
+            self.meas_cntrl_pv.put(value)
+        else:
+            print("Not setting quad online values.")
+            pass
