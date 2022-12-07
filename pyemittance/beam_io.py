@@ -67,39 +67,3 @@ class MachineIO:
         else:
             raise NotImplementedError("No valid measurement type defined.")
 
-    def setinjector(self, set_list):
-        if self.online and set_list is not None:
-            self.sol_cntrl_pv.put(set_list[0])
-            self.cq_cntrl_pv.put(set_list[1])
-            self.sq_cntrl_pv.put(set_list[2])
-        elif not set_list:
-            pass
-        else:
-            print("Not setting injector online values.")
-            pass
-
-    def setquad(self, value):
-        """Sets Q525 to new scan value"""
-        if self.online:
-            self.meas_cntrl_pv.put(value)
-        else:
-            print("Not setting quad online values.")
-            pass
-
-    def get_beamsize_inj(self, set_list, quad):
-        """Get beamsize fn that changes upstream cu injector
-        Returns xrms and yrms in [m]
-        """
-        beamsize = self.get_beamsizes_machine(set_list, quad)
-        # save BAX beam size data
-        save_config(
-            beamsize[0],
-            beamsize[1],
-            beamsize[2],
-            beamsize[3],
-            None,
-            meas_read_pv=self.meas_read_pv,
-            opt_pvs=self.opt_pvs,
-            impath=self.config_dict["savepaths"]["images"],
-        )
-        return np.array([beamsize[0], beamsize[1]])
