@@ -33,10 +33,6 @@ class MachineIO:
         # load info about settings to optimize
         self.opt_pv_info = self.config_dict["opt_pv_info"]
         self.opt_pvs = self.opt_pv_info["opt_vars"]
-        self.meas_cntrl_pv = PV(self.meas_pv_info["meas_device"]["pv"]["cntrl"])
-        self.sol_cntrl_pv = PV(self.opt_pvs[0])
-        self.cq_cntrl_pv = PV(self.opt_pvs[1])
-        self.sq_cntrl_pv = PV(self.opt_pvs[2])
 
     def load_config(self):
         # if path exists, load from path
