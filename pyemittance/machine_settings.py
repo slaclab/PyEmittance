@@ -3,14 +3,6 @@
 # These should be specified here or in json config files
 import numpy as np
 
-
-def which_machine(beamline_info_config_dict):
-    """Print which machine settings are being used"""
-    beamline_info = beamline_info_config_dict
-    name = beamline_info["name"]
-    print(f"Using {name} beamline info.")
-
-
 def get_twiss0(beamline_info_config_dict):
     """Import Twiss0 from config file"""
 
