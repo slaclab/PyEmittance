@@ -43,7 +43,7 @@ class PyEmittance:
         self.check_sym = True
         self.infl_check = True
         self.add_pnts = True
-        self.show_plots = True
+        self.show_plots = False
         self.use_prev_meas = True
         self.quad_tol = 0.05
         self.save_runs = False
