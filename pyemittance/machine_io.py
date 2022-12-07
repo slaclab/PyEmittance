@@ -28,6 +28,7 @@ class MachineIO:
 
         self.meas_pv_info = self.config_dict["meas_pv_info"]
         self.meas_read_pv = PV(self.meas_pv_info["meas_device"]["pv"]["read"])
+        self.meas_cntrl_pv = PV(self.meas_pv_info["meas_device"]["pv"]["cntrl"])
 
         # load info about settings to optimize
         self.opt_pv_info = self.config_dict["opt_pv_info"]
