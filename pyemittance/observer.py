@@ -1,5 +1,6 @@
 import bisect
 import numpy as np
+from pyemittance.beam_io import MachineIO
 
 
 class Observer:
@@ -127,7 +128,7 @@ class Observer:
             return self.get_beamsizes_model(self.inj_config, val)
 
         else:
-            from pyemittance.beam_io import MachineIO
+            
 
             io = MachineIO(self.config_name, self.config_dict, self.meas_type)
             io.online = self.online
