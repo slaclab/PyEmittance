@@ -5,12 +5,11 @@ from pyemittance.image import Image
 from pyemittance.saving_io import save_image, numpy_save, save_config
 
 
-def get_beamsizes_otrs(config_dict, use_profmon=False):
+def get_beamsizes_otrs(config_dict):
     """Main function imported by machine_io
-    Option to use ProfMon PVs to get beamsizes
     Returns xrms, yrms, xrms_err, yrms_err
     """
-    beamsize = get_beamsizes(config_dict=config_dict, use_profMon=use_profmon)
+    beamsize = get_beamsizes(config_dict=config_dict)
     xrms = beamsize[0]
     yrms = beamsize[1]
     xrms_err = beamsize[2]
@@ -19,10 +18,9 @@ def get_beamsizes_otrs(config_dict, use_profmon=False):
 
 
 def get_beamsizes(
-    config_dict, use_profMon=False, reject_bad_beam=True, save_summary=False, post=None
+    config_dict, reject_bad_beam=True, save_summary=False, post=None
 ):
     """Data acquisition from OTRS
-    Option to use either ProfMon or image processing
     Additional option to reject bad beams
     Returns xrms, yrms, xrms_err, yrms_err
     """
@@ -43,8 +41,6 @@ def get_beamsizes(
     meas_pv_info = config_dict["meas_pv_info"]
     # in meters for emittance calc
     resolution = caget(meas_pv_info["diagnostic"]["pv"]["resolution"]) * 1e-6
-    x_size_pv = PV(meas_pv_info["diagnostic"]["pv"]["profmonxsize"])
-    y_size_pv = PV(meas_pv_info["diagnostic"]["pv"]["profmonysize"])
 
     # Thresholds in meters
     min_sigma_meters = im_proc["min_sigma"] * resolution
@@ -92,76 +88,43 @@ def get_beamsizes(
             if count > 0:
                 print("Low beam intensity/noisy or beam too small/large.")
                 # print("Waiting 1 sec and repeating measurement...")
-                # time.sleep(1)
+                # time.sleep(1)         
 
-            # if this fails, make sure stats is checked on profmon gui
-            if use_profMon:
-                print("using profmon")
-                beamsizes = []
-                xrms = x_size_pv.get() * 1e-6  # in meters
-                yrms = y_size_pv.get() * 1e-6  # in meters
-                # add 2% error on ProfMon measurement
-                xrms_err = xrms * 0.02
-                yrms_err = yrms * 0.02
-
-                xamp, yamp = (
-                    amp_threshold_x,
-                    amp_threshold_y,
-                )  # DOES NOT UPDATE W/PROFMON
-
-                count = count + 1
-
-            if not use_profMon:
-
-                # if post:
-                #    beamsizes = getbeamsizes_from_img(post = post)
-                #:
-                beamsizes = getbeamsizes_from_img(config_dict)
-
-                xrms = beamsizes[0]
-                yrms = beamsizes[1]
-                xrms_err = beamsizes[2]
-                yrms_err = beamsizes[3]
-                xamp = beamsizes[4]
-                yamp = beamsizes[5]
-                # im = beamsizes[6]
-
-                # convert to meters
-                xrms = xrms * resolution
-                yrms = yrms * resolution
-                xrms_err = xrms_err * resolution
-                yrms_err = yrms_err * resolution
-
-            count = count + 1
-
-    else:
-
-        # make sure stats is checked on profmon gui
-        if use_profMon:
-            xrms, xrms_err = x_size_pv.get() * 1e-6, 0  # in meters
-            yrms, yrms_err = y_size_pv.get() * 1e-6, 0  # in meters
-            xamp, yamp = amp_threshold_x, amp_threshold_y  # DOES NOT UPDATE W/PROFMON
-            # print("Using ProfMon beamsizes.")
-
-        else:
-            if post:
-                beamsizes = getbeamsizes_from_img(config_dict, post=post)
-            else:
-                beamsizes = getbeamsizes_from_img(config_dict)
-
+            beamsizes = getbeamsizes_from_img(config_dict)          
             xrms = beamsizes[0]
             yrms = beamsizes[1]
             xrms_err = beamsizes[2]
             yrms_err = beamsizes[3]
             xamp = beamsizes[4]
             yamp = beamsizes[5]
-            # im = beamsizes[6]
-
+            # im = beamsizes[6]         
             # convert to meters
             xrms = xrms * resolution
             yrms = yrms * resolution
             xrms_err = xrms_err * resolution
             yrms_err = yrms_err * resolution
+
+            count = count + 1
+
+    else:
+         if post:
+             beamsizes = getbeamsizes_from_img(config_dict, post=post)
+         else:
+             beamsizes = getbeamsizes_from_img(config_dict)
+
+         xrms = beamsizes[0]
+         yrms = beamsizes[1]
+         xrms_err = beamsizes[2]
+         yrms_err = beamsizes[3]
+         xamp = beamsizes[4]
+         yamp = beamsizes[5]
+         # im = beamsizes[6]
+
+         # convert to meters
+         xrms = xrms * resolution
+         yrms = yrms * resolution
+         xrms_err = xrms_err * resolution
+         yrms_err = yrms_err * resolution
 
     if save_summary:
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")

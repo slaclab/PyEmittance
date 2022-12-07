@@ -23,7 +23,6 @@ class Observer:
         self.noise_red = 100000
 
         # if using machine
-        self.use_profmon = False
         self.online = False
         self.config_name = "sim"
         self.config_dict = None
@@ -130,6 +129,5 @@ class Observer:
         else:
             io = MachineIO(self.config_name, self.config_dict, self.meas_type)
             io.online = self.online
-            io.use_profmon = self.use_profmon
             # note we are not setting the injector on the machine here
             return io.get_beamsizes_machine(self.inj_config, val)

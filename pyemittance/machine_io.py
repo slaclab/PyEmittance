@@ -14,7 +14,6 @@ class MachineIO:
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
         self.online = False
-        self.use_profmon = False
         self.settle_time = 3  # sleep time in seconds
 
         # Set configs for measurement
@@ -50,7 +49,7 @@ class MachineIO:
             time.sleep(self.settle_time)
         
         if self.meas_type == "OTRS" and self.online:
-            return get_beamsizes_otrs(self.config_dict, self.use_profmon)
+            return get_beamsizes_otrs(self.config_dict)
         elif self.meas_type == "WIRE" and self.online:
             print("Running wire scanner")
             return get_beamsizes_wire(self.online, self.config_dict)
