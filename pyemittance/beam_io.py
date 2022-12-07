@@ -4,6 +4,8 @@ import time
 from epics import PV
 from pyemittance.saving_io import save_config
 from pyemittance.load_json_configs import load_configs
+from pyemittance.otrs_io import get_beamsizes_otrs
+from pyemittance.wire_io import get_beamsizes_wire
 
 
 class MachineIO:
@@ -56,12 +58,8 @@ class MachineIO:
         #     print("Running offline.")
 
         if self.meas_type == "OTRS" and self.online:
-            from pyemittance.otrs_io import get_beamsizes_otrs
-
             return get_beamsizes_otrs(self.config_dict, self.use_profmon)
         elif self.meas_type == "WIRE" and self.online:
-            from pyemittance.wire_io import get_beamsizes_wire
-
             print("Running wire scanner")
             return get_beamsizes_wire(self.online, self.config_dict)
         elif not self.online:
