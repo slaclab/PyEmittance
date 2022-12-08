@@ -73,7 +73,7 @@ class Screen:
         return  self.height/2      
         
     def background(self): 
-        im = np.random.rand(self.ncol, self.nrow) * self.noise
+        im = np.random.rand(self.nrow, self.ncol) * self.noise
         return im.astype(self.dtype)
     
     def spot(self, sigma_x=100e-6, sigma_y=200e-6, 
@@ -97,7 +97,7 @@ class Screen:
                                  bins=(self.ncol, self.nrow),
                                         density=False,
                                          )        
-        return H*1e17
+        H *= 1e17 # TEMP
         
         return (np.flipud(H.T)).astype(self.dtype)
     
@@ -169,7 +169,7 @@ class BeamSim:
                     sigma_y=sigma_y,
                     n_particle=100_000,
                     total_charge=total_charge)
-        return  im + bg
+        return im + bg
     
     def plot_screen(self, return_figure=False, vmax=128):
         """
@@ -181,7 +181,7 @@ class BeamSim:
         ax.imshow(im, extent=1e3*np.array([S.xmin, S.xmax, S.ymin, S.ymax]), vmax=vmax)
         ax.set_xlabel('x (mm)')
         ax.set_ylabel('y (mm)')
-        
+        ax.set_aspect('auto')
         if return_figure:
             return figure
         
