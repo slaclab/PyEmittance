@@ -80,7 +80,7 @@ class PyEmittance:
         o.config_dict = self.config_dict
 
         energy = o.config_dict["beamline_info"]["energy"]
-        l_quad = o.config_dict["beamline_info"]["l"]
+        l_quad = o.config_dict["beamline_info"]["Lquad"]
 
         # get initial beamsizes (rough scan)
         bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(
@@ -96,7 +96,6 @@ class PyEmittance:
                 bs_x_list,
                 "x",
                 w=bs_x_list_err,
-                energy=energy,
                 l_eff=l_quad,
                 num_points=self.num_points,
             )
@@ -105,7 +104,6 @@ class PyEmittance:
                 bs_y_list,
                 "y",
                 w=bs_y_list_err,
-                energy=energy,
                 l_eff=l_quad,
                 num_points=self.num_points,
             )
@@ -184,7 +182,6 @@ class PyEmittance:
             {"x": bs_x_list, "y": bs_y_list},
             {"x": bs_x_list_err, "y": bs_y_list_err},
             config_dict=o.config_dict,
-            config_name=o.config_name,
         )
         ef.plot = self.show_plots
         ef.save_runs = self.save_runs

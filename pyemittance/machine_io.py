@@ -27,6 +27,8 @@ class MachineIO:
             self.config_dict = config_dict if config_dict else self.load_config()
 
         self.meas_pv_info = self.config_dict["meas_pv_info"]
+
+        # Connect to PVs 
         self.meas_read_pv = PV(self.meas_pv_info["meas_device"]["pv"]["read"])
         self.meas_cntrl_pv = PV(self.meas_pv_info["meas_device"]["pv"]["cntrl"])
 

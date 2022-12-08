@@ -1,31 +1,44 @@
 # module containing function to add/remove points to quad emit scan
 import numpy as np
 from scipy.optimize import curve_fit
-from pyemittance.optics import get_k1, get_gradient, get_quad_field
-
-# TODO: import m_0
-m_0 = 0.000511
-
 
 def adapt_range(
-    x,
+    x, 
     y,
     axis,
     w=None,
-    energy=0.135,
-    l_eff=0.1,
     cutoff_percent=0.3,
     num_points=5,
     verbose=False,
 ):
-    """Returns new scan quad values AS LIST"""
+    """
+    Returns new scan quad values AS LIST
+    
+    Parameters
+    ----------
+    x : list
+        quad values in machine units [kG SLAC convention]
+    y : list
+        beamsize values
+    axis : str
+        "x" or "y"
+    w : list, optional
+        weights for beamsize values, by default None
+    num_points : int, optional
+        number of points to add, by default 5
+    verbose : bool, optional
+        print statements, by default False
+
+    Returns 
+    -------
+    list
+        new quad values
+    
+    """
     x = np.array(x)
     y = np.array(y)
     if w is not None:
         w = np.array(w)
-
-    #     print("x ", x)
-    #     print("y ", y)
 
     idx = ~np.isnan(y)
 
@@ -57,9 +70,6 @@ def adapt_range(
     else:
         # Take weight as beamsize
         w = y
-
-    # quad vals are passed in machine units
-    x = get_k1(get_gradient(x, l_eff=l_eff), energy=energy, m_0=m_0)
 
     # y-dimensions has opposite polarity
     sign = -1 if axis == "y" else 1
@@ -95,9 +105,7 @@ def adapt_range(
             x_max_concave = max_x_range
 
         x_fine_fit = np.linspace(x_min_concave, x_max_concave, num_points)
-        return [
-            sign * get_quad_field(ele, energy=energy, l=l_eff) for ele in x_fine_fit
-        ]
+        return list(x_fine_fit)
 
     # find range within 2-3x the focus size
     # cutoff = 1.2-1.3 for lcls, 2 last MD
@@ -134,8 +142,8 @@ def adapt_range(
         # instead of reversing array later
         x_fine_fit = np.linspace(roots.max(), roots.min(), num_points)
 
-    # return the new quad measurement range for this axis (in kG!!)
-    return [sign * get_quad_field(ele, energy=energy, l=l_eff) for ele in x_fine_fit]
+    # return the new quad measurement range for this axis (machine units)
+    return list(x_fine_fit)
 
 
 def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
