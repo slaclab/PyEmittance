@@ -79,10 +79,14 @@ class Screen:
     def spot(self, sigma_x=100e-6, sigma_y=200e-6, 
              mean_x = 0,
              mean_y = 0,
-             total_charge=100e-12, n_particle=10_000):
+             total_charge=100e-12, n_particle=10_000,
+            brightness = 6e15,
+            ):
         
         """
         Generate a spot due to a beam of particles.
+        
+        brightness: enhancement factor
         """
         x, y = generate_particles(n_particle, x_std=sigma_x,
                                   y_std=sigma_y,
@@ -97,7 +101,7 @@ class Screen:
                                  bins=(self.ncol, self.nrow),
                                         density=False,
                                          )        
-        H *= 1e17 # TEMP
+        H *= brightness 
         
         return (np.flipud(H.T)).astype(self.dtype)
     
