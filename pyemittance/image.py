@@ -8,9 +8,9 @@ from pyemittance.bs_fitting_methods import (
 class Image:
     """Beam image processing and fitting for beamsize, amplitude, centroid"""
 
-    def __init__(self, image, ncol, nrow, bg_image=None):
-        self.ncol = ncol
+    def __init__(self, image, nrow, ncol, bg_image=None):
         self.nrow = nrow
+        self.ncol = ncol        
         self.flat_image = image
         self.bg_image = bg_image
         self.offset = 20
@@ -34,7 +34,7 @@ class Image:
     def reshape_im(self, im=None):
         """Reshapes flattened OTR image to 2D array"""
 
-        self.proc_image = self.flat_image.reshape(self.ncol, self.nrow)
+        self.proc_image = self.flat_image.reshape(self.nrow, self.ncol)
         return self.proc_image
 
     def subtract_bg(self):
@@ -48,7 +48,7 @@ class Image:
                 print("Error in load bg_image: not .npy format.")
                 return self.proc_image
 
-            self.bg_image = self.bg_image.reshape(self.ncol, self.nrow)
+            self.bg_image = self.bg_image.reshape(self.nrow, self.ncol)
             if self.proc_image.shape == self.bg_image.shape:
                 self.proc_image = self.proc_image - self.bg_image
                 # some pixels may end up with negative data
@@ -56,7 +56,7 @@ class Image:
                 self.proc_image = np.array(
                     [e if e >= 0 else 0 for ele in self.proc_image for e in ele]
                 )
-                self.proc_image = self.proc_image.reshape(self.ncol, self.nrow)
+                self.proc_image = self.proc_image.reshape(self.nrow, self.ncol)
             else:
                 print("Beam image and background image are not the same shape.")
 

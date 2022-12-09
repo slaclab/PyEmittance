@@ -4,7 +4,7 @@ import json
 from epics import caget, caget_many
 
 
-def save_image(im, ncol, nrow, timestamp, impath="", avg_img=True):
+def save_image(im, nrow, ncol,  timestamp, impath="", avg_img=True):
     """Saves images with col,row info and corresp. settings"""
 
     if avg_img:

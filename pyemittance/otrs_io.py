@@ -211,7 +211,7 @@ def getbeamsizes_from_img(config_dict):
 
         im = np.mean(im, axis=0)
 
-        im = Image(im, ncol, nrow, bg_image=bg_image)
+        im = Image(im, nrow, ncol, bg_image=bg_image)
 
         im.reshape_im()
         if subtract_bg:
@@ -246,7 +246,7 @@ def getbeamsizes_from_img(config_dict):
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         # pass beamsizes in um
         save_image(
-            im.proc_image, ncol, nrow, timestamp, impath=save_im_path, avg_img=True
+            im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True
         )
 
         return [
@@ -274,7 +274,7 @@ def getbeamsizes_from_img(config_dict):
         mean_xamp = np.mean(np.array(xamp)[idx])
         mean_yamp = np.mean(np.array(yamp)[idx])
 
-        im = Image(im[0], ncol, nrow, bg_image=bg_image)
+        im = Image(im[0], nrow, ncol, bg_image=bg_image)
 
         im.reshape_im()
         im.get_im_projection()
@@ -315,7 +315,7 @@ def get_beam_image(config_dict):
     im = im_pv.get()
     ncol, nrow = n_col_pv.get(), n_row_pv.get()
 
-    beam_image = Image(im, ncol, nrow, bg_image=bg_image)
+    beam_image = Image(im, nrow, ncol, bg_image=bg_image)
     beam_image.reshape_im()
 
     if subtract_bg:
@@ -335,7 +335,7 @@ def get_beam_image(config_dict):
 
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
-    save_image(im, ncol, nrow, timestamp, impath=save_im_path, avg_img=False)
+    save_image(im,  nrow, ncol, timestamp, impath=save_im_path, avg_img=False)
     print(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]
