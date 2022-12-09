@@ -96,7 +96,6 @@ class PyEmittance:
                 bs_x_list,
                 "x",
                 w=bs_x_list_err,
-                l_eff=l_quad,
                 num_points=self.num_points,
             )
             quad_range_y = adapt_range(
@@ -104,7 +103,6 @@ class PyEmittance:
                 bs_y_list,
                 "y",
                 w=bs_y_list_err,
-                l_eff=l_quad,
                 num_points=self.num_points,
             )
 

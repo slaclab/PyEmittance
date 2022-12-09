@@ -19,8 +19,8 @@ def get_twiss0(beamline_info_config_dict):
 
 def get_rmat(beamline_info_config_dict):
     """Import r-matrix from config file"""
-    rMatx = beamline_info_config_dict["rMatx"].reshape(2, 2)
-    rMaty = beamline_info_config_dict["rMaty"].reshape(2, 2)
+    rMatx = np.array(beamline_info_config_dict["rMatx"]).reshape(2, 2)
+    rMaty = np.array(beamline_info_config_dict["rMaty"]).reshape(2, 2)
     return rMatx, rMaty
 
 def get_energy(beamline_info_config_dict):

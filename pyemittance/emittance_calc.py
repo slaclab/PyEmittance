@@ -139,7 +139,7 @@ class EmitCalc:
         for dim in self.dims:
             # run emit calc for x and y
 
-            q = self.quad_vals[dim]
+            q = np.array(self.quad_vals[dim])
             # quad vals are passed in machine units
             kL = kL_from_machine_value(q, self.energy)
 
