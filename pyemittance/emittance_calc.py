@@ -219,14 +219,13 @@ class EmitCalc:
         else:
             suffix = '33'
             color = 'red'
-        y0 = output[f'screen_sigma_{suffix}']
-        y1 = output[f'beamsizes{dim}']**2
-        y1err = output[f'beamsizeserr{dim}']**3
-        ax.plot(x, y0*1e6, label=f'Model', color=color)
-        #ax.scatter(x, y1*1e6, marker='x', label=f'Measured', color=color)
-        ax.errorbar(x, y1*1e6, yerr=y1err*1e6, fmt='o', label=f'Measured', color=color)
+        scale = 1e6 # m -> um 
+       # y1err = output[f'beamsizeserr{dim}'] * scale 
+        ax.plot(x, np.sqrt(output[f'screen_sigma_{suffix}']) * scale, label=f'Model', color=color)
+        ax.scatter(x, output[f'beamsizes{dim}'] * scale , marker='x', label=f'Measured', color=color)
+        #ax.errorbar(x, y1, yerr=y1err, fmt='o', label=f'Measured', color=color)
         ax.set_xlabel('Quad Value (kG)')
-        ax.set_ylabel(fr'Beam Size {dim} ($\mu$mm$^2$)')
+        ax.set_ylabel(fr'Beam Size {dim} ($\mu$m)')
         plt.legend()
 
 
