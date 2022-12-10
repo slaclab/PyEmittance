@@ -6,6 +6,35 @@ from pyemittance.optics import machine_value_from_kL, kL_from_machine_value
 import matplotlib.pyplot as plt
 
 
+BUNCH_PARAMS = {
+    'LCLS2_OTR0H04': {
+        'total_charge': 50e-12,
+        'norm_emit_x': 1e-6,
+        'norm_emit_y': 2e-6,
+        'beta_x': 10,
+        'alpha_x': -2,
+        'beta_y': 11,
+        'alpha_y': 20,
+        'energy': 80e6,
+        'species':'electron'
+    }
+}
+
+SCREEN_PARAMS = {
+    'LCLS2_OTR0H04': {
+     'nrow':1040,
+     'ncol':1392,
+     'resolution': 20.2e-6,
+     'noise': 10,
+    }    
+}
+
+DEFAULT_CONFIG_NAME = 'LCLS2_OTR0H04'
+DEFAULT_BUNCH_PARAMS = BUNCH_PARAMS[DEFAULT_CONFIG_NAME]
+DEFAULT_SCREEN_PARAMS = SCREEN_PARAMS[DEFAULT_CONFIG_NAME]
+
+
+
 def generate_particles(n_particles, x_mean=0, x_std=1, y_mean=0, y_std=1, x_y_cov=0):
     """Generate a set of particles with a given mean and standard deviation in x and y,
     and a given covariance between x and y.
@@ -80,7 +109,7 @@ class Screen:
              mean_x = 0,
              mean_y = 0,
              total_charge=100e-12, n_particle=10_000,
-            brightness = 6e15,
+            brightness = 1e17,
             ):
         
         """
@@ -119,12 +148,19 @@ class BeamSim:
         self.screen = screen
         
         self._quad_value = 0.0  # machine units
+        self._beamon = True # Beam on
         self.configure()
+    
+    @property
+    def beamon(self):
+        return self._beamon
+    @beamon.setter
+    def beamon(self, value):
+        self._beamon = bool(value)
         
     @property
     def quad_value(self):
-        return self._quad_value
-    
+        return self._quad_value  
     @quad_value.setter
     def quad_value(self, value):
         self._quad_value = value
@@ -144,20 +180,23 @@ class BeamSim:
         alpha = self.bunch_params[f'alpha_{dim}']
         return sigma_from_twiss(emit, beta, alpha)
     
-    def screen_beam_sizes(self):
+    def screen_sigma(self, dim='x'):
         kL = kL_from_machine_value(self.quad_value, self.energy)
-        
-        # X
-        sigma0 = self.initial_sigma_matrix2('x')
-        mat2 = self.rmatx @ quad_mat2(kL, L=self.Lquad)
+        sigma0 = self.initial_sigma_matrix2(dim)
+        if dim == 'x':
+            sign = 1
+        elif dim == 'y':
+            sign = -1
+        else:
+            raise ValueError(f"dim = {dim} not in ('x', 'y')")
+        mat2 = self.rmatx @ quad_mat2(sign*kL, L=self.Lquad)
         sigma1 = propagate_sigma(sigma0, mat2)
-        meas_sigma_x =  np.sqrt(sigma1[0,0])
-        # Y
-        sigma0 =  self.initial_sigma_matrix2('y')
-        mat2 = self.rmaty @ quad_mat2(-kL, L=self.Lquad)
-        sigma1 = propagate_sigma(sigma0, mat2) 
-        meas_sigma_y =  np.sqrt(sigma1[0,0])
-        return meas_sigma_x, meas_sigma_y  
+        meas_sigma =  np.sqrt(sigma1[0,0])
+        
+        return meas_sigma
+      
+    def screen_beam_sizes(self):
+        return self.screen_sigma('x'), self.screen_sigma('y')
     
     def beam_size_meas(self, quad_value):
         self.quad_value = quad_value
@@ -167,6 +206,10 @@ class BeamSim:
     def screen_image(self):
         S = self.screen
         bg = S.background()
+        if not self.beamon:
+            return bg
+        
+        
         sigma_x, sigma_y = self.screen_beam_sizes()
         total_charge = self.bunch_params['total_charge']
         im = S.spot(sigma_x=sigma_x,
