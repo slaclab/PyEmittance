@@ -14,7 +14,7 @@ class MachineIO:
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
         self.online = False
-        self.settle_time = 3  # sleep time in seconds
+        self.settle_time = 1  # sleep time in seconds
 
         # Set configs for measurement
         # if config is not provided, use LCLS OTR2 as default
