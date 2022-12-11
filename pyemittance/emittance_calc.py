@@ -1,6 +1,7 @@
 import numpy as np
-from os import path, makedirs
-import errno, os
+import os
+from pathlib import Path
+
 from pyemittance.optics import (
     estimate_sigma_mat_thick_quad,
     twiss_and_bmag,
@@ -10,8 +11,12 @@ from pyemittance.optics import (
 from pyemittance.machine_settings import get_twiss0, get_rmat, get_energy, get_quad_len
 from pyemittance.saving_io import save_emit_run
 from pyemittance.load_json_configs import load_configs
+from pyemittance.tools import mkdir_p
 
 import matplotlib.pyplot as plt
+
+import logging
+logger = logging.getLogger(__name__)
 
 class EmitCalc:
     """
@@ -93,7 +98,6 @@ class EmitCalc:
 
         self.calc_bmag = False
         self.plot = False
-        self.verbose = False
         self.save_runs = False
         # Initialize paths and dirs for saving
         self.init_saving()
@@ -163,7 +167,6 @@ class EmitCalc:
                 energy=self.energy,
                 rmats=self.rmat,
                 plot=self.plot,
-                verbose=self.verbose,
             )
             # Add all results
             self.output.update(res)
@@ -323,16 +326,6 @@ class EmitCalc:
 
         savepaths = self.config_dict["savepaths"]
 
-        def mkdir_p(path_):
-            """Set up dirs for results in working dir"""
-            try:
-                makedirs(path_)
-            except OSError as exc:
-                if exc.errno == errno.EEXIST and os.path.isdir(path_):
-                    pass
-                else:
-                    raise
-
         # Make directories if needed
         try:
             mkdir_p(savepaths["images"])
@@ -340,12 +333,11 @@ class EmitCalc:
             mkdir_p(savepaths["fits"])
             mkdir_p(savepaths["raw_saves"])
         except OSError:
-            print("Savepaths not set. Please set them in 'configs/savepaths.json'")
-            from pathlib import Path
+            logger.info("Savepaths not set. Please set them in 'configs/savepaths.json'")
 
             parent = Path(__file__).resolve().parent
             examples_dir = str(parent)[:-11] + "examples"
-            print("Using examples directory: ", examples_dir)
+            logger.info("Using examples directory: ", examples_dir)
             savepaths["images"] = examples_dir + "/saved_images/"
             savepaths["summaries"] = examples_dir + "/summaries/"
             savepaths["fits"] = examples_dir + "/saved_fits/"
@@ -356,7 +348,7 @@ class EmitCalc:
             mkdir_p(savepaths["raw_saves"])
 
         # Start headings
-        file_exists = path.exists(savepaths["summaries"] + "image_acq_quad_info.csv")
+        file_exists = os.path.exists(savepaths["summaries"] + "image_acq_quad_info.csv")
 
         if not file_exists:
 
@@ -370,7 +362,7 @@ class EmitCalc:
             )
             f.close()
 
-        file_exists = path.exists(savepaths["summaries"] + "beamsize_config_info.csv")
+        file_exists = os.path.exists(savepaths["summaries"] + "beamsize_config_info.csv")
 
         if not file_exists:
             # todo add others as inputs

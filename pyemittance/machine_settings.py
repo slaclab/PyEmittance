@@ -3,6 +3,10 @@
 # These should be specified here or in json config files
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 def get_twiss0(beamline_info_config_dict):
     """Import Twiss0 from config file"""
 

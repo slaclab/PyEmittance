@@ -8,6 +8,9 @@ mec2 = scipy.constants.value('electron mass energy equivalent in MeV')*1e6
 
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def kL_from_machine_value(quad_val, energy):
     """
@@ -148,7 +151,6 @@ def estimate_sigma_mat_thick_quad(
     rmats=None,
     calc_bmag=False,
     plot=True,
-    verbose=False,
 ):
     """
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
@@ -176,8 +178,7 @@ def estimate_sigma_mat_thick_quad(
             weights = weights[idx_not_nan]
 
     if len(sizes) < 3:
-        if verbose:
-            print("Less than 3 data points were passed. Returning NaN.")
+        logger.warning("Less than 3 data points were passed. Returning NaN.")
         return [np.nan, np.nan, np.nan, np.nan]
 
     b = sizes**2
@@ -218,8 +219,7 @@ def estimate_sigma_mat_thick_quad(
 
     # return NaN if emit can't be calculated
     if emit2 < 0:
-        if verbose:
-            print("Emittance can't be computed. Returning error")
+        logger.error("Emittance can't be computed. Returning error")
         return {f"error_{dim}": True}
 
     emit = np.sqrt(emit2)

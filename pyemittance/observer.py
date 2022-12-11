@@ -2,6 +2,8 @@ import bisect
 import numpy as np
 from pyemittance.machine_io import MachineIO
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Observer:
     """
@@ -28,7 +30,6 @@ class Observer:
         self.config_dict = None
         self.meas_type = "OTRS"
 
-        self.verbose = True
 
     def measure_beam(self, quad_list):
         xrms = []

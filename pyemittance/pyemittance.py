@@ -8,6 +8,8 @@ from pyemittance.data_handler import (
 from pyemittance.emittance_calc import EmitCalc
 from pyemittance.load_json_configs import load_configs
 
+import logging
+logger = logging.getLogger(__name__)
 
 class PyEmittance:
     def __init__(
@@ -30,7 +32,6 @@ class PyEmittance:
         self.use_model = use_model
         # only True if setting PVs
         self.online = online
-        self.verbose = True
 
         # injector settings (SOL, CQ, SQ) if optimizing
         self.inj_config = None
@@ -66,11 +67,11 @@ class PyEmittance:
         o.use_prev_meas = self.use_prev_meas
         o.tolerance = self.quad_tol
 
-        # print warning
-        if self.online and self.verbose:
-            print("Running online!")
+        # logger.info warning
+        if self.online:
+            logger.info("Running online!")
         else:
-            print("Running offline.")
+            logger.info("Running offline.")
 
         # if using sim
         # set beamsize fn

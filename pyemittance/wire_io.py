@@ -3,6 +3,8 @@ import datetime
 from epics import PV
 from pyemittance.saving_io import numpy_save, save_config
 
+import logging
+logger = logging.getLogger(__name__)
 
 def get_beamsizes_wire(online=False, config_dict=None, save_summary=False):
     """Main function imported by machine_io
@@ -70,4 +72,4 @@ def get_beamsize(online, scan_pv):
             time.sleep(3)  # to not break the wire scanner
 
         else:
-            print(f"WS did not run. Status {status}.")
+            logger.info(f"WS did not run. Status {status}.")

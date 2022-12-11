@@ -6,6 +6,8 @@ from pyemittance.load_json_configs import load_configs
 from pyemittance.otrs_io import get_beamsizes_otrs
 from pyemittance.wire_io import get_beamsizes_wire
 
+import logging
+logger = logging.getLogger(__name__)
 
 class MachineIO:
     """Class for handling all machine I/O"""
@@ -19,7 +21,7 @@ class MachineIO:
         # Set configs for measurement
         # if config is not provided, use LCLS OTR2 as default
         if config_dict is None and config_name is None:
-            print("No configuration specified. Taking default LCLS-OTR2 configs.")
+            logger.info("No configuration specified. Taking default LCLS-OTR2 configs.")
             self.config_name = "LCLS_OTR2"
             self.config_dict = self.load_config()
         else:
@@ -54,7 +56,7 @@ class MachineIO:
         if self.meas_type == "OTRS" and self.online:
             return get_beamsizes_otrs(self.config_dict)
         elif self.meas_type == "WIRE" and self.online:
-            print("Running wire scanner")
+            logger.info("Running wire scanner")
             return get_beamsizes_wire(self.online, self.config_dict)
         elif not self.online:
             return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
@@ -63,7 +65,8 @@ class MachineIO:
     def setquad(self, value):
         """Sets quad to new scan value"""
         if self.online:
+            logger.info(f'EPICS put {self.meas_cntrl_pv.pvname} = {value}')
             self.meas_cntrl_pv.put(value)
         else:
-            print("Not setting quad online values.")
+            logger.info("Not setting quad online values.")
             pass

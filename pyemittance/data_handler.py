@@ -2,6 +2,9 @@
 import numpy as np
 from scipy.optimize import curve_fit
 
+import logging
+logger = logging.getLogger(__name__)
+
 def adapt_range(
     x, 
     y,
@@ -9,7 +12,6 @@ def adapt_range(
     w=None,
     cutoff_percent=0.3,
     num_points=5,
-    verbose=False,
 ):
     """
     Returns new scan quad values AS LIST
@@ -26,9 +28,7 @@ def adapt_range(
         weights for beamsize values, by default None
     num_points : int, optional
         number of points to add, by default 5
-    verbose : bool, optional
-        print statements, by default False
-
+        
     Returns 
     -------
     list
@@ -43,7 +43,7 @@ def adapt_range(
     idx = ~np.isnan(y)
 
     if True not in idx:
-        print("no valid points")
+        logger.info("no valid points")
         return x
     x = x[idx]
     y = y[idx]
@@ -90,8 +90,7 @@ def adapt_range(
     c2, c1, c0 = fit_coefs
 
     if c2 < 0:  # same if s11q is negative
-        if verbose:
-            print("Adjusting concave poly.")
+        logger.debug("Adjusting concave poly.")
         # go to lower side of concave polynomials
         # (assuming it is closer to the local minimum)
         x_min_concave = x[np.argmin(y)]
@@ -118,7 +117,7 @@ def adapt_range(
         y_lim = y_min_poly * cutoff
 
     if y_lim < 0:
-        print(f"{axis} axis: min. of poly fit is negative. Setting it to a small val.")
+        logger.info(f"{axis} axis: min. of poly fit is negative. Setting it to a small val.")
         y_lim = np.mean(y**2) / 5
 
     roots = np.roots((c2, c1, c0 - y_lim))
@@ -266,8 +265,8 @@ def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
             right = np.max(infls) + 1
 
         else:
-            print("Case not implemented. Keeping data as is.")
-            print(f"infls: {infls}, min: {np.argmin(y)}")
+            logger.info("Case not implemented. Keeping data as is.")
+            logger.info(f"infls: {infls}, min: {np.argmin(y)}")
             return None, None
 
     # if we end up with less than 3 points, don't do anything

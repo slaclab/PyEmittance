@@ -81,7 +81,7 @@ class BeamSimDriver(Driver):
         self.pvmap = pvmap
 
     def read(self, reason):  
-        print(f'--- read {reason}')
+        logger.debug(f'BeamSimDriver read reason: {reason}')
         if reason in (self.pvmap['quadval_rbv'], self.pvmap['quadval']):
              value = self.sim.quad_value          
         elif reason == self.pvmap['image_array']:

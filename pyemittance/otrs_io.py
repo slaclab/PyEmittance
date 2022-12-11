@@ -4,6 +4,8 @@ from epics import caget, PV
 from pyemittance.image import Image
 from pyemittance.saving_io import save_image, numpy_save, save_config
 
+import logging
+logger = logging.getLogger(__name__)
 
 def get_beamsizes_otrs(config_dict):
     """Main function imported by machine_io
@@ -72,22 +74,22 @@ def get_beamsizes(
 
             if count == max_samples:
                 # resample beamsize only max_samples times
-                print(f"Resampled {count-1} times, beam still out of bounds \n")
-                print(
+                logger.info(f"Resampled {count-1} times, beam still out of bounds \n")
+                logger.info(
                     f"xrms {xrms/1e-6:.2f} um, yrms {yrms/1e-6:.2f} um (threshold: min_rms {min_sigma_meters/1e-6:.2f} um, max_rms {max_sigma_meters/1e-6:.2f} um)"
                 )
-                print(
+                logger.info(
                     f"xamp {xamp:.2f}, yamp {yamp:.2f} (amp_thresh: {amp_threshold_x}, in json)"
                 )
-                print(
+                logger.info(
                     f"area_x {xamp*amp_threshold_x:.1f}, area_y {yamp*amp_threshold_y:.1f} (threshold: 1500, hardcoded)\n"
                 )
-                print("Returning NaNs")
+                logger.info("Returning NaNs")
                 return np.nan, np.nan, np.nan, np.nan
 
             if count > 0:
-                print("Low beam intensity/noisy or beam too small/large.")
-                # print("Waiting 1 sec and repeating measurement...")
+                logger.info("Low beam intensity/noisy or beam too small/large.")
+                # logger.info("Waiting 1 sec and repeating measurement...")
                 # time.sleep(1)         
 
             beamsizes = getbeamsizes_from_img(config_dict)          
@@ -192,7 +194,7 @@ def getbeamsizes_from_img(config_dict):
                 repeat = False
             elif count == max_samples:
                 # if still bad after retries, return as is (reject in outer function)
-                print(
+                logger.info(
                     f"Beam params out of bounds in image {i} out of {num_images} samples"
                 )
                 repeat = False
@@ -202,7 +204,7 @@ def getbeamsizes_from_img(config_dict):
 
         idx = ~np.isnan(xrms)
         if True not in idx:
-            print(
+            logger.info(
                 f"All {num_images} image NaNs are NaNs, trying to average images now."
             )
             all_nan = True
@@ -234,9 +236,9 @@ def getbeamsizes_from_img(config_dict):
             and mean_yrms > max_sigma
         ):
             if not all_nan:
-                print(f"Beam params out of bounds in averaged image")
+                logger.info(f"Beam params out of bounds in averaged image")
             else:
-                print(
+                logger.info(
                     f"Beam params out of bounds in averaged image, initial {num_images} all NaNs"
                 )
                 # return [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -264,7 +266,7 @@ def getbeamsizes_from_img(config_dict):
         idx = ~np.isnan(xrms)
 
         if True not in idx:
-            print("All points are NaNs")
+            logger.info("All points are NaNs")
             return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
         mean_xrms = np.mean(np.array(xrms)[idx])
@@ -336,6 +338,6 @@ def get_beam_image(config_dict):
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
     save_image(im,  nrow, ncol, timestamp, impath=save_im_path, avg_img=False)
-    print(timestamp)
+    logger.info(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]

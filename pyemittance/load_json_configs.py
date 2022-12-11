@@ -1,5 +1,8 @@
 import os, json
 
+import logging
+logger = logging.getLogger(__name__)
+
 this_dir, this_filename = os.path.split(__file__)
 CONFIG_PATH = os.path.join(this_dir, "configs")
 
@@ -14,7 +17,7 @@ json_namelist = [
 ]
 
 
-def load_configs(dir_name="LCLS2_OTR3"):
+def load_configs(dir_name="LCLS2_OTR0H04"):
     all_data = {}
     for i in range(len(json_namelist)):
         # load all jsons and save into one dict
@@ -28,7 +31,7 @@ def load_configs(dir_name="LCLS2_OTR3"):
                 encoding="utf-8",
             )
         except FileNotFoundError:
-            print(
+            logger.warning(
                 f"*** File '{json_namelist[i]}.json' does not exist,"
                 f" please create appropriate json file for configuration. *** \n"
                 f"*** Or alternatively, initialize EmitCalc with dict directly. ***"

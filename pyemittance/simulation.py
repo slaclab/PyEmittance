@@ -5,6 +5,8 @@ from pyemittance.optics import machine_value_from_kL, kL_from_machine_value
 
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger(__name__)
 
 BUNCH_PARAMS = {
     'LCLS2_OTR0H04': {

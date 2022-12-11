@@ -3,6 +3,8 @@ import datetime
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger(__name__)
 
 def gaussian_linear_background(x, amp, mu, sigma, slope=0, offset=0):
     """Gaussian plus linear background fn"""
@@ -31,7 +33,7 @@ def fit_gaussian_linear_background(y, para0=None, show_plots=True, cut_area=None
     try:
         para, para_error = curve_fit(gaussian_linear_background, x, y, p0=para0)
     except:
-        print("Fitting failed, taking initial guess.")
+        logger.info("Fitting failed, taking initial guess.")
         para = para0
         para_error = np.array([0] * len(para0))
 
