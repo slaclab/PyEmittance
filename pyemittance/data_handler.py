@@ -71,9 +71,6 @@ def adapt_range(
         # Take weight as beamsize
         w = y
 
-    # y-dimensions has opposite polarity
-    sign = -1 if axis == "y" else 1
-    x = sign * x
     min_x, max_x = np.min(x), np.max(x)
 
     # we need a poly fit here to find roots, poly_ylim, etc
@@ -136,11 +133,7 @@ def adapt_range(
     if roots.max() > max_x_range:
         roots[np.argmax(roots)] = max_x_range
 
-    if axis == "x":
-        x_fine_fit = np.linspace(roots.min(), roots.max(), num_points)
-    else:
-        # instead of reversing array later
-        x_fine_fit = np.linspace(roots.max(), roots.min(), num_points)
+    x_fine_fit = np.linspace(roots.min(), roots.max(), num_points)
 
     # return the new quad measurement range for this axis (machine units)
     return list(x_fine_fit)
