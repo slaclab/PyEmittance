@@ -3,80 +3,86 @@ import numpy as np
 from numpy import sin, cos, sinh, cosh, sqrt
 import scipy.linalg
 
-# TODO update fns
-from scipy.constants import c as c_light  # , m_e as m0
-
-# TODO: use this:
-# mec2 = scipy.constants.value('electron mass energy equivalent in MeV')*1e6
-
+from scipy.constants import c as c_light 
+mec2 = scipy.constants.value('electron mass energy equivalent in MeV')*1e6
 
 import matplotlib.pyplot as plt
 
+import logging
+logger = logging.getLogger(__name__)
 
-def get_gradient(b_field, l_eff):
+
+def kL_from_machine_value(quad_val, energy):
     """
-    Calculates quadrupole gradient from B field.
+    Calculates quadrupole strength from machine value.
 
     Parameters
     ----------
-    b_field: ndarray
-        Integrated field [kG]
-    l_eff: float
-        Effective length [m]
+    quad_val: ndarray
+        integrated quad field -[kG] (SLAC convention)
 
-    Returns
-    -------
-    array
-    Quad field gradient [T/m]
-    """
-    return np.array(b_field) * 0.1 / l_eff
-
-
-def get_k1(g, energy, m_0=0.000511):
-    """
-    Calculates quadrupole strength from gradient.
-
-    Parameters
-    ----------
-    g: ndarray
-        Quad field gradient [T/m]
     energy: float
-        Beam energy [GeV]
-        # TODO: update to eV
-    m_0: float
-        Electron mass [GeV]
-        # TODO: update to kg
+        Beam energy [eV]
 
     Returns
     -------
     ndarray
-    Quad strength [1/m^2]
+    Quad strength  [1/m^2]
 
     """
-
-    gamma = energy / m_0
+    gamma = energy / mec2
     beta = np.sqrt(1 - 1 / gamma**2)
-    return 0.2998 * g / energy / beta
+
+    return c_light*quad_val * 0.1 / (beta * energy) # 1/m^2
+
+def machine_value_from_kL(kL, energy):
+    """
+    Calculates machine value from quadrupole strength.
+
+    Parameters
+    ----------
+    kL: ndarray
+        integrated quad focusing strength [1/m]
+
+    energy: float
+        Beam energy [eV]
+
+    Returns
+    -------
+    ndarray
+    Integrated quad field [kG] (SLAC positron convention)
+
+    """
+    gamma = energy / mec2
+    beta = np.sqrt(1 - 1 / gamma**2)
+    return kL * beta * energy / c_light * 10 # 1/m -> kG
 
 
-def normalize_emit(emit, energy, m_0=0.000511):
-    gamma = energy / m_0
+
+
+
+
+
+def sigma_from_twiss(emit, beta, alpha):
+    """
+    Returns the 2x2 covariance matrix from Twiss parameters
+    """
+    gamma = (1+alpha**2)/beta
+    sigma_x = np.sqrt(emit*beta)
+    sigma_px = np.sqrt(emit*gamma)
+    cov_x__px = -alpha*emit
+    sigma_11 = sigma_x**2
+    sigma_12 = cov_x__px
+    sigma_22 = sigma_px**2
+    sigma0 = np.array([[sigma_11, sigma_12], [sigma_12, sigma_22]])
+    return sigma0
+
+
+def normalize_emit(emit, energy, species="electron"):
+    assert species == "electron", "Only electron species supported"
+    gamma = energy / mec2
     beta = np.sqrt(1 - 1 / gamma**2)
     return emit * gamma * beta
-
-
-def get_kL(quad_vals, l, energy, m_0=0.000511):
-    kL = get_k1(get_gradient(quad_vals, l), energy, m_0=m_0) * l
-    return kL
-
-
-def get_quad_field(k, energy, l, m_0=0.000511):
-    """Get quad field [kG] from k1 [1/m^2]"""
-
-    gamma = energy / m_0
-    beta = np.sqrt(1 - 1 / gamma**2)
-    return np.array(k) * l / 0.1 / 0.2998 * energy * beta
-
 
 def thin_quad_mat2(kL):
     """
@@ -87,18 +93,14 @@ def thin_quad_mat2(kL):
     return np.array([[1, 0], [-kL, 1]])
 
 
-def r_mat2(rmat, d=None):
+def drift_mat2(L):
     """
-    Transport matrix after quad to screen, 2x2
+    2x2 Transport matrix for a simple drift with length L
     """
-    if d is not None:
-        # return drift mat
-        return np.array([[1, d], [0, 1]])
-    # if other elements are there
-    return rmat
+    return np.array([[1, L], [0, 1]])
 
 
-def quad_mat2(rmat, kL, L=0, d=None):
+def quad_mat2(kL, L=0):
     """
     Quadrupole transfer matrix, 2x2, assuming some quad thickness
     L = 0 returns thin quad matrix
@@ -115,7 +117,7 @@ def quad_mat2(rmat, kL, L=0, d=None):
 
     if k == 0:
         # Take drift or custom mat
-        mat2 = r_mat2(rmat, d=d)
+        mat2 = drift_mat2(L)
     elif k > 0:
         # Focusing
         rk = sqrt(k)
@@ -128,24 +130,6 @@ def quad_mat2(rmat, kL, L=0, d=None):
         mat2 = [[cosh(phi), sinh(phi) / rk], [rk * sinh(phi), cosh(phi)]]
 
     return mat2
-
-
-def quad_rmat_mat2(kL, d=None, Lquad=0, rmat=None):
-    """
-    Composite [quad, drift] 2x2 transfer matrix
-    :param kL: quad strength * quad length (1/m)
-    :param Lquad: quad length (m)
-    :param d: drift length from quad to screen (m);
-    pass only if there is no other components
-    :return: full rmatrix from quad to screen
-    """
-
-    if kL == 0:
-        # Return matrix after quad to screen
-        return r_mat2(rmat, d)
-
-    # if quad is on, multiply by quad matrix
-    return r_mat2(rmat, d) @ quad_mat2(rmat, kL, Lquad, d=d)
 
 
 def propagate_sigma(mat2_init, mat2_ele):
@@ -164,10 +148,9 @@ def estimate_sigma_mat_thick_quad(
     dim="x",
     Lquad=None,
     energy=None,
-    rmat=None,
+    rmats=None,
     calc_bmag=False,
     plot=True,
-    verbose=False,
 ):
     """
     Estimates the beam sigma matrix at a screen by scanning an upstream quad.
@@ -195,8 +178,7 @@ def estimate_sigma_mat_thick_quad(
             weights = weights[idx_not_nan]
 
     if len(sizes) < 3:
-        if verbose:
-            print("Less than 3 data points were passed. Returning NaN.")
+        logger.warning("Less than 3 data points were passed. Returning NaN.")
         return [np.nan, np.nan, np.nan, np.nan]
 
     b = sizes**2
@@ -208,7 +190,7 @@ def estimate_sigma_mat_thick_quad(
     assert len(weights) == n
 
     # Get rmat from configs
-    rmat = rmat[0] if dim == "x" else rmat[1]
+    r_mat = rmats[0] if dim == "x" else rmats[1]
 
     # Multiply by weights. This should correspond to the other weight multiplication below
     b = weights * sizes**2
@@ -218,7 +200,10 @@ def estimate_sigma_mat_thick_quad(
     # Collect mat2 for later
     mat2s = []
     for kL, weight in zip(kLlist, weights):
-        mat2 = quad_rmat_mat2(kL, Lquad=Lquad, rmat=rmat)
+        if dim == 'x':
+            mat2 = r_mat @ quad_mat2( kL, L=Lquad)
+        else:
+            mat2 = r_mat @ quad_mat2(-kL, L=Lquad)
         mat2s.append(mat2)
         r11, r12, r21, r22 = mat2.flatten()
         r_mat_factor = np.array([r11**2, 2 * r11 * r12, r12**2])
@@ -234,9 +219,7 @@ def estimate_sigma_mat_thick_quad(
 
     # return NaN if emit can't be calculated
     if emit2 < 0:
-        if verbose:
-            print("Emittance can't be computed. Returning error")
-        # plt.plot(kLlist, sizes**2)
+        logger.error("Emittance can't be computed. Returning error")
         return {f"error_{dim}": True}
 
     emit = np.sqrt(emit2)
@@ -252,7 +235,7 @@ def estimate_sigma_mat_thick_quad(
 
     # Propagate to screen
     s11_screen, s12_screen, s22_screen = propagate_to_screen(
-        s11, s12, s22, kLlist, mat2s, Lquad, energy, sizes, sizes_err, plot
+        s11, s12, s22, kLlist, mat2s, Lquad, energy, sizes, sizes_err,
     )
 
     out = {}
@@ -288,8 +271,8 @@ def estimate_sigma_mat_thick_quad(
 
 
 def propagate_to_screen(
-    s11, s12, s22, kLlist, mat2s, Lquad, energy, sizes, sizes_err, plot, save_plot=False
-):
+    s11, s12, s22, kLlist, mat2s, Lquad, energy, sizes, sizes_err,
+    ):
     # Matrix form for propagation
     sigma0 = np.array([[s11, s12], [s12, s22]])
 
@@ -305,36 +288,6 @@ def propagate_to_screen(
     s11_screen = np.array(s11_screen)
     s12_screen = np.array(s12_screen)
     s22_screen = np.array(s22_screen)
-
-    if plot:
-        # Plot the data
-        # plt.figure(figsize=(5.5,3.5))
-        # plt.figure(figsize=(5,3.5))
-
-        quad = get_quad_field(kLlist / Lquad, energy, Lquad)
-        plt.errorbar(
-            quad,
-            np.asarray(sizes) / 1e-6,
-            yerr=np.asarray(sizes_err) / 1e-6,
-            fmt="o",
-            label=f"Measurements",
-        )
-
-        # Model prediction
-        plt.errorbar(quad, np.sqrt(s11_screen) / 1e-6, marker=".", label=f"Model")
-
-        plt.xlabel("Quadrupole Strength (kG)")
-        plt.ylabel(r"Beam Size ($\mu$m)")
-        plt.legend(fontsize=14)
-
-        if save_plot:
-            import datetime
-
-            plt.tight_layout()
-            timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
-            plt.savefig(f"emit_fit_{timestamp}.png", dpi=300)
-        plt.show()
-        plt.close()
 
     return s11_screen, s12_screen, s22_screen
 

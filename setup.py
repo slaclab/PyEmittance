@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from os import path, environ
+from os import path
 import versioneer
 
 cur_dir = path.abspath(path.dirname(__file__))

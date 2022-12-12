@@ -3,8 +3,10 @@ import numpy as np
 import json
 from epics import caget, caget_many
 
+import logging
+logger = logging.getLogger(__name__)
 
-def save_image(im, ncol, nrow, timestamp, impath="", avg_img=True):
+def save_image(im, nrow, ncol,  timestamp, impath="", avg_img=True):
     """Saves images with col,row info and corresp. settings"""
 
     if avg_img:

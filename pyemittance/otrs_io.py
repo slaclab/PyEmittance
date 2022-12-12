@@ -4,13 +4,14 @@ from epics import caget, PV
 from pyemittance.image import Image
 from pyemittance.saving_io import save_image, numpy_save, save_config
 
+import logging
+logger = logging.getLogger(__name__)
 
-def get_beamsizes_otrs(config_dict, use_profmon=False):
-    """Main function imported by beam_io
-    Option to use ProfMon PVs to get beamsizes
+def get_beamsizes_otrs(config_dict):
+    """Main function imported by machine_io
     Returns xrms, yrms, xrms_err, yrms_err
     """
-    beamsize = get_beamsizes(config_dict=config_dict, use_profMon=use_profmon)
+    beamsize = get_beamsizes(config_dict=config_dict)
     xrms = beamsize[0]
     yrms = beamsize[1]
     xrms_err = beamsize[2]
@@ -19,10 +20,9 @@ def get_beamsizes_otrs(config_dict, use_profmon=False):
 
 
 def get_beamsizes(
-    config_dict, use_profMon=False, reject_bad_beam=True, save_summary=False, post=None
+    config_dict, reject_bad_beam=True, save_summary=False,
 ):
     """Data acquisition from OTRS
-    Option to use either ProfMon or image processing
     Additional option to reject bad beams
     Returns xrms, yrms, xrms_err, yrms_err
     """
@@ -43,8 +43,6 @@ def get_beamsizes(
     meas_pv_info = config_dict["meas_pv_info"]
     # in meters for emittance calc
     resolution = caget(meas_pv_info["diagnostic"]["pv"]["resolution"]) * 1e-6
-    x_size_pv = PV(meas_pv_info["diagnostic"]["pv"]["profmonxsize"])
-    y_size_pv = PV(meas_pv_info["diagnostic"]["pv"]["profmonysize"])
 
     # Thresholds in meters
     min_sigma_meters = im_proc["min_sigma"] * resolution
@@ -76,92 +74,44 @@ def get_beamsizes(
 
             if count == max_samples:
                 # resample beamsize only max_samples times
-                print(f"Resampled {count-1} times, beam still out of bounds \n")
-                print(
+                logger.info(f"Resampled {count-1} times, beam still out of bounds \n")
+                logger.info(
                     f"xrms {xrms/1e-6:.2f} um, yrms {yrms/1e-6:.2f} um (threshold: min_rms {min_sigma_meters/1e-6:.2f} um, max_rms {max_sigma_meters/1e-6:.2f} um)"
                 )
-                print(
+                logger.info(
                     f"xamp {xamp:.2f}, yamp {yamp:.2f} (amp_thresh: {amp_threshold_x}, in json)"
                 )
-                print(
+                logger.info(
                     f"area_x {xamp*amp_threshold_x:.1f}, area_y {yamp*amp_threshold_y:.1f} (threshold: 1500, hardcoded)\n"
                 )
-                print("Returning NaNs")
+                logger.info("Returning NaNs")
                 return np.nan, np.nan, np.nan, np.nan
 
             if count > 0:
-                print("Low beam intensity/noisy or beam too small/large.")
-                # print("Waiting 1 sec and repeating measurement...")
-                # time.sleep(1)
+                logger.info("Low beam intensity/noisy or beam too small/large.")
+                # logger.info("Waiting 1 sec and repeating measurement...")
+                # time.sleep(1)         
 
-            # if this fails, make sure stats is checked on profmon gui
-            if use_profMon:
-                print("using profmon")
-                beamsizes = []
-                xrms = x_size_pv.get() * 1e-6  # in meters
-                yrms = y_size_pv.get() * 1e-6  # in meters
-                # add 2% error on ProfMon measurement
-                xrms_err = xrms * 0.02
-                yrms_err = yrms * 0.02
-
-                xamp, yamp = (
-                    amp_threshold_x,
-                    amp_threshold_y,
-                )  # DOES NOT UPDATE W/PROFMON
-
-                count = count + 1
-
-            if not use_profMon:
-
-                # if post:
-                #    beamsizes = getbeamsizes_from_img(post = post)
-                #:
-                beamsizes = getbeamsizes_from_img(config_dict)
-
-                xrms = beamsizes[0]
-                yrms = beamsizes[1]
-                xrms_err = beamsizes[2]
-                yrms_err = beamsizes[3]
-                xamp = beamsizes[4]
-                yamp = beamsizes[5]
-                # im = beamsizes[6]
-
-                # convert to meters
-                xrms = xrms * resolution
-                yrms = yrms * resolution
-                xrms_err = xrms_err * resolution
-                yrms_err = yrms_err * resolution
-
+            beamsizes = getbeamsizes_from_img(config_dict)          
             count = count + 1
 
     else:
 
-        # make sure stats is checked on profmon gui
-        if use_profMon:
-            xrms, xrms_err = x_size_pv.get() * 1e-6, 0  # in meters
-            yrms, yrms_err = y_size_pv.get() * 1e-6, 0  # in meters
-            xamp, yamp = amp_threshold_x, amp_threshold_y  # DOES NOT UPDATE W/PROFMON
-            # print("Using ProfMon beamsizes.")
+        beamsizes = getbeamsizes_from_img(config_dict)
 
-        else:
-            if post:
-                beamsizes = getbeamsizes_from_img(config_dict, post=post)
-            else:
-                beamsizes = getbeamsizes_from_img(config_dict)
+    # Extract beam sizes
+    xrms = beamsizes[0]
+    yrms = beamsizes[1]
+    xrms_err = beamsizes[2]
+    yrms_err = beamsizes[3]
+    xamp = beamsizes[4]
+    yamp = beamsizes[5]
 
-            xrms = beamsizes[0]
-            yrms = beamsizes[1]
-            xrms_err = beamsizes[2]
-            yrms_err = beamsizes[3]
-            xamp = beamsizes[4]
-            yamp = beamsizes[5]
-            # im = beamsizes[6]
-
-            # convert to meters
-            xrms = xrms * resolution
-            yrms = yrms * resolution
-            xrms_err = xrms_err * resolution
-            yrms_err = yrms_err * resolution
+     # convert to meters
+    xrms = xrms * resolution
+    yrms = yrms * resolution
+    rms_err = xrms_err * resolution
+    yrms_err = yrms_err * resolution
 
     if save_summary:
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
@@ -189,7 +139,7 @@ def get_beamsizes(
     return xrms, yrms, xrms_err, yrms_err
 
 
-def getbeamsizes_from_img(config_dict, post=None):
+def getbeamsizes_from_img(config_dict):
     """Returns xrms, yrms, xrms_err, yrms_err for multiple sampled images;
     can optionally average multiple images
     RETURNS IN RAW PIXEL UNITS-- NEED TO MULTIPLY BY RESOLUTION FOR METERS
@@ -217,11 +167,7 @@ def getbeamsizes_from_img(config_dict, post=None):
     xrms_err, yrms_err = [0] * num_images, [0] * num_images
     xamp, yamp, im = [0] * num_images, [0] * num_images, [0] * num_images
 
-    if post:
-        ncol = post[0][1]
-        nrow = post[0][2]
-    else:
-        ncol, nrow = n_col_pv.get(), n_row_pv.get()
+    ncol, nrow = n_col_pv.get(), n_row_pv.get()
 
     for i in range(0, num_images):
 
@@ -230,14 +176,10 @@ def getbeamsizes_from_img(config_dict, post=None):
 
         # retake bad images
         while repeat:
-            meas = get_beam_image(config_dict, post)
+            meas = get_beam_image(config_dict)
             xrms[i], yrms[i] = meas[0:2]
             xrms_err[i], yrms_err[i] = meas[2:4]
             xamp[i], yamp[i], im[i] = meas[4:]
-
-            # plt.imshow(im[i])
-            # plt.show()
-
             count = count + 1
 
             if (
@@ -252,11 +194,9 @@ def getbeamsizes_from_img(config_dict, post=None):
                 repeat = False
             elif count == max_samples:
                 # if still bad after retries, return as is (reject in outer function)
-                print(
+                logger.info(
                     f"Beam params out of bounds in image {i} out of {num_images} samples"
                 )
-                # xrms[i], yrms[i], xrms_err[i], yrms_err[i], xamp[i], yamp[
-                #     i] = np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
                 repeat = False
 
     # average images before taking fits
@@ -264,7 +204,7 @@ def getbeamsizes_from_img(config_dict, post=None):
 
         idx = ~np.isnan(xrms)
         if True not in idx:
-            print(
+            logger.info(
                 f"All {num_images} image NaNs are NaNs, trying to average images now."
             )
             all_nan = True
@@ -273,7 +213,7 @@ def getbeamsizes_from_img(config_dict, post=None):
 
         im = np.mean(im, axis=0)
 
-        im = Image(im, ncol, nrow, bg_image=bg_image)
+        im = Image(im, nrow, ncol, bg_image=bg_image)
 
         im.reshape_im()
         if subtract_bg:
@@ -296,9 +236,9 @@ def getbeamsizes_from_img(config_dict, post=None):
             and mean_yrms > max_sigma
         ):
             if not all_nan:
-                print(f"Beam params out of bounds in averaged image")
+                logger.info(f"Beam params out of bounds in averaged image")
             else:
-                print(
+                logger.info(
                     f"Beam params out of bounds in averaged image, initial {num_images} all NaNs"
                 )
                 # return [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -308,7 +248,7 @@ def getbeamsizes_from_img(config_dict, post=None):
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         # pass beamsizes in um
         save_image(
-            im.proc_image, ncol, nrow, timestamp, impath=save_im_path, avg_img=True
+            im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True
         )
 
         return [
@@ -326,7 +266,7 @@ def getbeamsizes_from_img(config_dict, post=None):
         idx = ~np.isnan(xrms)
 
         if True not in idx:
-            print("All points are NaNs")
+            logger.info("All points are NaNs")
             return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
 
         mean_xrms = np.mean(np.array(xrms)[idx])
@@ -336,7 +276,7 @@ def getbeamsizes_from_img(config_dict, post=None):
         mean_xamp = np.mean(np.array(xamp)[idx])
         mean_yamp = np.mean(np.array(yamp)[idx])
 
-        im = Image(im[0], ncol, nrow, bg_image=bg_image)
+        im = Image(im[0], nrow, ncol, bg_image=bg_image)
 
         im.reshape_im()
         im.get_im_projection()
@@ -352,7 +292,7 @@ def getbeamsizes_from_img(config_dict, post=None):
         ]
 
 
-def get_beam_image(config_dict, post=None):
+def get_beam_image(config_dict):
     """Get beam image from screen
     Return beamsize info and processed image
     """
@@ -374,15 +314,10 @@ def get_beam_image(config_dict, post=None):
     n_col_pv = PV(meas_pv_info["diagnostic"]["pv"]["ncol"])
     n_row_pv = PV(meas_pv_info["diagnostic"]["pv"]["nrow"])
 
-    if post:
-        im = post[0]
-        ncol = post[1]
-        nrow = post[2]
-    else:
-        im = im_pv.get()
-        ncol, nrow = n_col_pv.get(), n_row_pv.get()
+    im = im_pv.get()
+    ncol, nrow = n_col_pv.get(), n_row_pv.get()
 
-    beam_image = Image(im, ncol, nrow, bg_image=bg_image)
+    beam_image = Image(im, nrow, ncol, bg_image=bg_image)
     beam_image.reshape_im()
 
     if subtract_bg:
@@ -402,7 +337,7 @@ def get_beam_image(config_dict, post=None):
 
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
-    save_image(im, ncol, nrow, timestamp, impath=save_im_path, avg_img=False)
-    print(timestamp)
+    save_image(im,  nrow, ncol, timestamp, impath=save_im_path, avg_img=False)
+    logger.info(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]

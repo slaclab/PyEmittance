@@ -8,6 +8,8 @@ from pyemittance.data_handler import (
 from pyemittance.emittance_calc import EmitCalc
 from pyemittance.load_json_configs import load_configs
 
+import logging
+logger = logging.getLogger(__name__)
 
 class PyEmittance:
     def __init__(
@@ -30,7 +32,6 @@ class PyEmittance:
         self.use_model = use_model
         # only True if setting PVs
         self.online = online
-        self.verbose = True
 
         # injector settings (SOL, CQ, SQ) if optimizing
         self.inj_config = None
@@ -43,7 +44,7 @@ class PyEmittance:
         self.check_sym = True
         self.infl_check = True
         self.add_pnts = True
-        self.show_plots = True
+        self.show_plots = False
         self.use_prev_meas = True
         self.quad_tol = 0.05
         self.save_runs = False
@@ -66,11 +67,11 @@ class PyEmittance:
         o.use_prev_meas = self.use_prev_meas
         o.tolerance = self.quad_tol
 
-        # print warning
-        if self.online and self.verbose:
-            print("Running online!")
+        # logger.info warning
+        if self.online:
+            logger.info("Running online!")
         else:
-            print("Running offline.")
+            logger.info("Running offline.")
 
         # if using sim
         # set beamsize fn
@@ -80,7 +81,7 @@ class PyEmittance:
         o.config_dict = self.config_dict
 
         energy = o.config_dict["beamline_info"]["energy"]
-        l_quad = o.config_dict["beamline_info"]["l"]
+        l_quad = o.config_dict["beamline_info"]["Lquad"]
 
         # get initial beamsizes (rough scan)
         bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(
@@ -96,8 +97,6 @@ class PyEmittance:
                 bs_x_list,
                 "x",
                 w=bs_x_list_err,
-                energy=energy,
-                l_eff=l_quad,
                 num_points=self.num_points,
             )
             quad_range_y = adapt_range(
@@ -105,8 +104,6 @@ class PyEmittance:
                 bs_y_list,
                 "y",
                 w=bs_y_list_err,
-                energy=energy,
-                l_eff=l_quad,
                 num_points=self.num_points,
             )
 
@@ -184,7 +181,6 @@ class PyEmittance:
             {"x": bs_x_list, "y": bs_y_list},
             {"x": bs_x_list_err, "y": bs_y_list_err},
             config_dict=o.config_dict,
-            config_name=o.config_name,
         )
         ef.plot = self.show_plots
         ef.save_runs = self.save_runs

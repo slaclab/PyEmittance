@@ -1,20 +1,31 @@
 import numpy as np
-from os import path, makedirs
-import errno, os
+import os
+from pathlib import Path
+
 from pyemittance.optics import (
     estimate_sigma_mat_thick_quad,
     twiss_and_bmag,
-    get_kL,
+    kL_from_machine_value,
     normalize_emit,
 )
 from pyemittance.machine_settings import get_twiss0, get_rmat, get_energy, get_quad_len
 from pyemittance.saving_io import save_emit_run
 from pyemittance.load_json_configs import load_configs
+from pyemittance.tools import mkdir_p
 
+import matplotlib.pyplot as plt
+
+import logging
+logger = logging.getLogger(__name__)
 
 class EmitCalc:
     """
     Uses info recorded in Observer to do an emittance fit
+
+    quad_vals: dict of quad values in machine units:
+        kL = 
+
+
     """
 
     def __init__(
@@ -22,8 +33,7 @@ class EmitCalc:
         quad_vals: dict = None,
         beam_vals: dict = None,
         beam_vals_err: dict = None,
-        config_dict: dict = None,
-        config_name: str = None,
+        config_dict: dict = None, 
     ):
 
         self.quad_vals = (
@@ -68,14 +78,10 @@ class EmitCalc:
         else:
             self.beam_vals_err = beam_vals_err
 
-        # if config is not provided, use LCLS OTR2 as default
-        if config_dict is None and config_name is None:
-            print("No configuration specified. Taking default LCLS-OTR2 configs.")
-            self.config_name = "LCLS_OTR2"
-            self.config_dict = self.load_config()
-        else:
-            self.config_name = config_name
-            self.config_dict = config_dict if config_dict else self.load_config()
+        if config_dict is None:
+            raise ValueError("Must provide config_dict to EmitCalc class")
+
+        self.config_dict = config_dict
 
         self.dims = [
             "x",
@@ -92,7 +98,6 @@ class EmitCalc:
 
         self.calc_bmag = False
         self.plot = False
-        self.verbose = False
         self.save_runs = False
         # Initialize paths and dirs for saving
         self.init_saving()
@@ -138,9 +143,9 @@ class EmitCalc:
         for dim in self.dims:
             # run emit calc for x and y
 
-            q = self.quad_vals[dim]
+            q = np.array(self.quad_vals[dim])
             # quad vals are passed in machine units
-            kL = get_kL(q, self.quad_len, self.energy)
+            kL = kL_from_machine_value(q, self.energy)
 
             bs = self.beam_vals[dim]
             bs_err = self.beam_vals_err[dim]
@@ -148,9 +153,9 @@ class EmitCalc:
             weights = self.weighting_func(bs, bs_err)  # 1/sigma
 
             # Storing quadvals and beamsizes in self.output for plotting purposes
-            self.output[f"quadvals{dim}"] = list(q)
-            self.output[f"beamsizes{dim}"] = list(bs)
-            self.output[f"beamsizeserr{dim}"] = list(bs_err)
+            self.output[f"quadvals{dim}"] = np.array(q)
+            self.output[f"beamsizes{dim}"] = np.array(bs)
+            self.output[f"beamsizeserr{dim}"] = np.array(bs_err)
 
             res = estimate_sigma_mat_thick_quad(
                 bs,
@@ -160,9 +165,8 @@ class EmitCalc:
                 dim=dim,
                 Lquad=self.quad_len,
                 energy=self.energy,
-                rmat=self.rmat,
+                rmats=self.rmat,
                 plot=self.plot,
-                verbose=self.verbose,
             )
             # Add all results
             self.output.update(res)
@@ -196,6 +200,9 @@ class EmitCalc:
                 # Get best value for scanning quad
                 self.output[f"optimal_quadval_{dim}"] = q[bmag_calc_res[2]]
 
+            if self.plot:
+                self.plot_output(dim=dim)
+
         # get geometric mean if possible
         if (not self.output["error_x"]) and (not self.output["error_y"]):
             self.get_gmean_emit()
@@ -204,6 +211,48 @@ class EmitCalc:
             self.save_run()
 
         return self.output
+
+    def plot_output(self, dim='x'):
+        output = self.output
+        fig, ax = plt.subplots(figsize=(8,2))
+        x = output[f"quadvals{dim}"]
+        if dim == 'x':
+            suffix = '11'
+            color = 'black'
+        else:
+            suffix = '33'
+            color = 'red'
+        scale = 1e6 # m -> um 
+       # y1err = output[f'beamsizeserr{dim}'] * scale 
+        ax.plot(x, np.sqrt(output[f'screen_sigma_{suffix}']) * scale, label=f'Model', color=color)
+        ax.scatter(x, output[f'beamsizes{dim}'] * scale , marker='x', label=f'Measured', color=color)
+        #ax.errorbar(x, y1, yerr=y1err, fmt='o', label=f'Measured', color=color)
+        ax.set_xlabel('Quad Value (kG)')
+        ax.set_ylabel(fr'Beam Size {dim} ($\mu$m)')
+        plt.legend()
+
+
+    def summary(self):
+        data = self.output
+        s = f""""
+    Emittance Calculation Summary
+    
+    Emittance x: {data['norm_emit_x']/1e-6:.3f} +/- {data['norm_emit_x_err']/1e-6:.3f} mm mrad
+    Emittance y: {data['norm_emit_y']/1e-6:.3f} +/- {data['norm_emit_y_err']/1e-6:.3f} mm mrad
+    
+    Before scanning quad:
+                    x        y
+    norm_emit  {data['norm_emit_x']/1e-6:8.2f}  {data['norm_emit_y']/1e-6:8.2f} (mm-mrad)                    
+    beta       {data['beta_x']:8.2f}  {data['beta_y']:8.2f} (m)
+    alpha      {data['alpha_x']:8.2f}  {data['alpha_y']:8.2f} (1)
+
+    
+    """
+        return s
+
+
+
+
 
     def get_twiss_bmag(self, dim="x"):
 
@@ -277,16 +326,6 @@ class EmitCalc:
 
         savepaths = self.config_dict["savepaths"]
 
-        def mkdir_p(path_):
-            """Set up dirs for results in working dir"""
-            try:
-                makedirs(path_)
-            except OSError as exc:
-                if exc.errno == errno.EEXIST and os.path.isdir(path_):
-                    pass
-                else:
-                    raise
-
         # Make directories if needed
         try:
             mkdir_p(savepaths["images"])
@@ -294,12 +333,11 @@ class EmitCalc:
             mkdir_p(savepaths["fits"])
             mkdir_p(savepaths["raw_saves"])
         except OSError:
-            print("Savepaths not set. Please set them in 'configs/savepaths.json'")
-            from pathlib import Path
+            logger.info("Savepaths not set. Please set them in 'configs/savepaths.json'")
 
             parent = Path(__file__).resolve().parent
             examples_dir = str(parent)[:-11] + "examples"
-            print("Using examples directory: ", examples_dir)
+            logger.info("Using examples directory: ", examples_dir)
             savepaths["images"] = examples_dir + "/saved_images/"
             savepaths["summaries"] = examples_dir + "/summaries/"
             savepaths["fits"] = examples_dir + "/saved_fits/"
@@ -310,7 +348,7 @@ class EmitCalc:
             mkdir_p(savepaths["raw_saves"])
 
         # Start headings
-        file_exists = path.exists(savepaths["summaries"] + "image_acq_quad_info.csv")
+        file_exists = os.path.exists(savepaths["summaries"] + "image_acq_quad_info.csv")
 
         if not file_exists:
 
@@ -324,7 +362,7 @@ class EmitCalc:
             )
             f.close()
 
-        file_exists = path.exists(savepaths["summaries"] + "beamsize_config_info.csv")
+        file_exists = os.path.exists(savepaths["summaries"] + "beamsize_config_info.csv")
 
         if not file_exists:
             # todo add others as inputs

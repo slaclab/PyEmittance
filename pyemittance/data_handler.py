@@ -1,36 +1,49 @@
 # module containing function to add/remove points to quad emit scan
 import numpy as np
 from scipy.optimize import curve_fit
-from pyemittance.optics import get_k1, get_gradient, get_quad_field
 
-# TODO: import m_0
-m_0 = 0.000511
-
+import logging
+logger = logging.getLogger(__name__)
 
 def adapt_range(
-    x,
+    x, 
     y,
     axis,
     w=None,
-    energy=0.135,
-    l_eff=0.1,
     cutoff_percent=0.3,
     num_points=5,
-    verbose=False,
 ):
-    """Returns new scan quad values AS LIST"""
+    """
+    Returns new scan quad values AS LIST
+    
+    Parameters
+    ----------
+    x : list
+        quad values in machine units [kG SLAC convention]
+    y : list
+        beamsize values
+    axis : str
+        "x" or "y"
+    w : list, optional
+        weights for beamsize values, by default None
+    num_points : int, optional
+        number of points to add, by default 5
+        
+    Returns 
+    -------
+    list
+        new quad values
+    
+    """
     x = np.array(x)
     y = np.array(y)
     if w is not None:
         w = np.array(w)
 
-    #     print("x ", x)
-    #     print("y ", y)
-
     idx = ~np.isnan(y)
 
     if True not in idx:
-        print("no valid points")
+        logger.info("no valid points")
         return x
     x = x[idx]
     y = y[idx]
@@ -58,12 +71,6 @@ def adapt_range(
         # Take weight as beamsize
         w = y
 
-    # quad vals are passed in machine units
-    x = get_k1(get_gradient(x, l_eff=l_eff), energy=energy, m_0=m_0)
-
-    # y-dimensions has opposite polarity
-    sign = -1 if axis == "y" else 1
-    x = sign * x
     min_x, max_x = np.min(x), np.max(x)
 
     # we need a poly fit here to find roots, poly_ylim, etc
@@ -83,8 +90,7 @@ def adapt_range(
     c2, c1, c0 = fit_coefs
 
     if c2 < 0:  # same if s11q is negative
-        if verbose:
-            print("Adjusting concave poly.")
+        logger.debug("Adjusting concave poly.")
         # go to lower side of concave polynomials
         # (assuming it is closer to the local minimum)
         x_min_concave = x[np.argmin(y)]
@@ -95,9 +101,7 @@ def adapt_range(
             x_max_concave = max_x_range
 
         x_fine_fit = np.linspace(x_min_concave, x_max_concave, num_points)
-        return [
-            sign * get_quad_field(ele, energy=energy, l=l_eff) for ele in x_fine_fit
-        ]
+        return list(x_fine_fit)
 
     # find range within 2-3x the focus size
     # cutoff = 1.2-1.3 for lcls, 2 last MD
@@ -113,7 +117,7 @@ def adapt_range(
         y_lim = y_min_poly * cutoff
 
     if y_lim < 0:
-        print(f"{axis} axis: min. of poly fit is negative. Setting it to a small val.")
+        logger.info(f"{axis} axis: min. of poly fit is negative. Setting it to a small val.")
         y_lim = np.mean(y**2) / 5
 
     roots = np.roots((c2, c1, c0 - y_lim))
@@ -128,14 +132,10 @@ def adapt_range(
     if roots.max() > max_x_range:
         roots[np.argmax(roots)] = max_x_range
 
-    if axis == "x":
-        x_fine_fit = np.linspace(roots.min(), roots.max(), num_points)
-    else:
-        # instead of reversing array later
-        x_fine_fit = np.linspace(roots.max(), roots.min(), num_points)
+    x_fine_fit = np.linspace(roots.min(), roots.max(), num_points)
 
-    # return the new quad measurement range for this axis (in kG!!)
-    return [sign * get_quad_field(ele, energy=energy, l=l_eff) for ele in x_fine_fit]
+    # return the new quad measurement range for this axis (machine units)
+    return list(x_fine_fit)
 
 
 def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
@@ -265,8 +265,8 @@ def find_inflection_pnt(x, y, show_plots=True, save_plots=False):
             right = np.max(infls) + 1
 
         else:
-            print("Case not implemented. Keeping data as is.")
-            print(f"infls: {infls}, min: {np.argmin(y)}")
+            logger.info("Case not implemented. Keeping data as is.")
+            logger.info(f"infls: {infls}, min: {np.argmin(y)}")
             return None, None
 
     # if we end up with less than 3 points, don't do anything
