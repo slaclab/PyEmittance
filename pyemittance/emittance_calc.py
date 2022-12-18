@@ -99,8 +99,9 @@ class EmitCalc:
         self.calc_bmag = False
         self.plot = False
         self.save_runs = False
+        
         # Initialize paths and dirs for saving
-        self.init_saving()
+        ### self.init_saving()
 
         # Main output of emittance calc
         self.output = {}
