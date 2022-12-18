@@ -44,7 +44,7 @@ class MachineIO:
             self.config_dict = load_configs(self.config_name)
         return self.config_dict
 
-    def get_beamsizes_machine(self, config, quad_val):
+    def get_beamsizes_machine(self, quad_val):
         """Fn that pyemittance.observer calls
         Takes quad value as input,
         Returns xrms, yrms, xrms_err, yrms_err
