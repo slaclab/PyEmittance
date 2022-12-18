@@ -36,4 +36,5 @@ jobs:
         shell: bash -l {0}
         run: |
           python tests/start_server.py &
+          sleep 5
           pytest tests
