@@ -248,9 +248,11 @@ def getbeamsizes_from_img(config_dict):
 
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         # pass beamsizes in um
-        if os.path.exists(save_im_path):
+        if save_im_path is None:
+            pass
+        elif os.path.exists(save_im_path):
             save_image(im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True)
-        elif save_im_path is not None:
+        else:
             logger.warning(f"Save image path does not exist: {save_im_path}, not saving")
 
 
@@ -340,9 +342,11 @@ def get_beam_image(config_dict):
 
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
-    if os.path.exists(save_im_path):
-        save_image(im,  nrow, ncol, timestamp, impath=save_im_path, avg_img=False)
-    elif save_im_path is not None:
+    if save_im_path is None:
+        pass
+    elif os.path.exists(save_im_path):
+        save_image(im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True)
+    else:
         logger.warning(f"Save image path does not exist: {save_im_path}, not saving")
     logger.info(timestamp)
 
