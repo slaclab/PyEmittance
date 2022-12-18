@@ -22,4 +22,5 @@ dependencies:
   - pip
   - pip:
     - mkdocstrings-python
+    - pcaspy
 
