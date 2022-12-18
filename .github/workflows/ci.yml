@@ -22,10 +22,10 @@ jobs:
           activate-environment: pyemittance-dev
           environment-file: environment-dev.yml
           
-      - name: flake8
-        shell: bash -l {0}
-        run: |
-          flake8 .
+#      - name: flake8
+#        shell: bash -l {0}
+#        run: |
+#          flake8 .
 
       - name: Install PyEmittance
         shell: bash -l {0}
