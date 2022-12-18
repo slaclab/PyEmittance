@@ -3,6 +3,7 @@ from pcaspy import Driver, SimpleServer
 from pyemittance.load_json_configs import load_configs
 from pyemittance.optics import drift_mat2
 from pyemittance.simulation import BeamSim, Screen, BUNCH_PARAMS, SCREEN_PARAMS
+import epics
 
 import logging
 logger = logging.getLogger(__name__)
@@ -130,6 +131,13 @@ def start_server(config_name='LCLS2_OTR0H04', prefix=''):
     bunch_params, screen_params, pvmap, beamline_info = get_all_params(config_name=config_name)
     pvdb = make_pvdb(pvmap, screen_params)
     
+    # Try a pv
+    #pvtest = list(pvdb)[0]
+    #logger.info(f'Checking that another server is not serving {pvtest}')    
+    #val = epics.caget(pvtest)
+    #if val is not None:
+    #    raise ValueError(f'Another server is serving {pvtest}, aborting')
+    
     beamsim = BeamSim(bunch_params=bunch_params,
               beamline_info=beamline_info,
              screen=Screen(**screen_params),
@@ -145,6 +153,8 @@ def start_server(config_name='LCLS2_OTR0H04', prefix=''):
     # process CA transactions
     while True:
         server.process(0.1)      
+        
+        
 
 if __name__ == '__main__':
     start_server()
