@@ -1,9 +1,9 @@
 name: Publish Documentation
 
-on: 
+on:
   push:
-    #branches:
-    #  - main
+    branches:
+      - main
 
 jobs:
   deploy:
