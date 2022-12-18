@@ -1,5 +1,6 @@
 include README
 include LICENSE
 include requirements.txt
-recursive-include pyemittance/ *ui *txt *pkl
-recursive-include docs/ *
+recursive-include pyemittance/configs *json
+include versioneer.py
+include pyemittance/_version.py
