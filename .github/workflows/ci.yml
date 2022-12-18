@@ -35,4 +35,5 @@ jobs:
       - name: Run Tests
         shell: bash -l {0}
         run: |
-          python scripts/run_tests.py
+          python tests/start_server.py &
+          pytest tests
