@@ -16,7 +16,7 @@ class MachineIO:
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
         self.online = False
-        self.settle_time = 1  # sleep time in seconds
+        self.settle_time = 0.1  # sleep time in seconds
 
         # Set configs for measurement
         # if config is not provided, use LCLS OTR2 as default
@@ -44,7 +44,7 @@ class MachineIO:
             self.config_dict = load_configs(self.config_name)
         return self.config_dict
 
-    def get_beamsizes_machine(self, config, quad_val):
+    def get_beamsizes_machine(self, quad_val):
         """Fn that pyemittance.observer calls
         Takes quad value as input,
         Returns xrms, yrms, xrms_err, yrms_err

@@ -131,4 +131,4 @@ class Observer:
             io = MachineIO(self.config_name, self.config_dict, self.meas_type)
             io.online = self.online
             # note we are not setting the injector on the machine here
-            return io.get_beamsizes_machine(self.inj_config, val)
+            return io.get_beamsizes_machine(val)

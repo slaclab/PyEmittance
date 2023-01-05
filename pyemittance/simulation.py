@@ -149,9 +149,11 @@ class BeamSim:
             screen = Screen() # use defaults
         self.screen = screen
         
+        # Internal state
         self._quad_value = 0.0  # machine units
         self._beamon = True # Beam on
-        self.configure()
+        
+        self.output = {}
     
     @property
     def beamon(self):
@@ -167,12 +169,31 @@ class BeamSim:
     def quad_value(self, value):
         self._quad_value = value
         
-        
-    def configure(self):
-        self.energy = self.beamline_info['energy']
-        self.rmatx = np.array(self.beamline_info['rMatx']).reshape(2,2)
-        self.rmaty = np.array(self.beamline_info['rMaty']).reshape(2,2)
-        self.Lquad = self.beamline_info['Lquad']
+    @property
+    def energy(self):
+        return self.beamline_info['energy']
+    @energy.setter
+    def energy(self, value):
+        self.beamline_info['energy'] = value
+    @property
+    def rmatx(self):
+        return np.array(self.beamline_info['rMatx']).reshape(2,2)
+    @rmatx.setter
+    def rmatx(self, value):
+        self.beamline_info['rMatx'] = np.array(value).reshape(2,2)    
+    @property
+    def rmaty(self):
+        return np.array(self.beamline_info['rMaty']).reshape(2,2)
+    @rmaty.setter
+    def rmaty(self, value):
+        self.beamline_info['rMaty'] = np.array(value).reshape(2,2)            
+    
+    @property 
+    def Lquad(self):
+        return self.beamline_info['Lquad']
+    @Lquad.setter 
+    def Lquad(self, value):
+        self.beamline_info['Lquad'] = value
 
     def initial_sigma_matrix2(self, dim=''):
         norm_emit = self.bunch_params[f'norm_emit_{dim}']
@@ -187,11 +208,13 @@ class BeamSim:
         sigma0 = self.initial_sigma_matrix2(dim)
         if dim == 'x':
             sign = 1
+            rmat = self.rmatx
         elif dim == 'y':
             sign = -1
+            rmat = self.rmaty
         else:
             raise ValueError(f"dim = {dim} not in ('x', 'y')")
-        mat2 = self.rmatx @ quad_mat2(sign*kL, L=self.Lquad)
+        mat2 = rmat @ quad_mat2(sign*kL, L=self.Lquad)
         sigma1 = propagate_sigma(sigma0, mat2)
         meas_sigma =  np.sqrt(sigma1[0,0])
         
@@ -233,6 +256,7 @@ class BeamSim:
         ax.set_aspect('auto')
         if return_figure:
             return figure
+        
         
         
         

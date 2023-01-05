@@ -3,6 +3,7 @@ import datetime
 from epics import caget, PV
 from pyemittance.image import Image
 from pyemittance.saving_io import save_image, numpy_save, save_config
+import os
 
 import logging
 logger = logging.getLogger(__name__)
@@ -247,9 +248,13 @@ def getbeamsizes_from_img(config_dict):
 
         timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
         # pass beamsizes in um
-        save_image(
-            im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True
-        )
+        if save_im_path is None:
+            pass
+        elif os.path.exists(save_im_path):
+            save_image(im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True)
+        else:
+            logger.warning(f"Save image path does not exist: {save_im_path}, not saving")
+
 
         return [
             mean_xrms,
@@ -337,7 +342,12 @@ def get_beam_image(config_dict):
 
     timestamp = (datetime.datetime.now()).strftime("%Y-%m-%d_%H-%M-%S-%f")
     # savesummary(beamsizes,timestamp)# pass beamsizes in um
-    save_image(im,  nrow, ncol, timestamp, impath=save_im_path, avg_img=False)
+    if save_im_path is None:
+        pass
+    elif os.path.exists(save_im_path):
+        save_image(im.proc_image,  nrow, ncol, timestamp, impath=save_im_path, avg_img=True)
+    else:
+        logger.warning(f"Save image path does not exist: {save_im_path}, not saving")
     logger.info(timestamp)
 
     return list(beamsizes) + [beam_image.proc_image]

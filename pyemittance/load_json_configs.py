@@ -25,22 +25,16 @@ def load_configs(dir_name="LCLS2_OTR0H04"):
         # TODO: validate that all jsons/needed keywords configs do exist
         # TODO: validate that all configs are consistent across directories/locations
         # TODO: eg all have rmatx and rmaty
-        try:
-            f = open(
-                os.path.join(CONFIG_PATH + "/" + dir_name, json_namelist[i] + ".json"),
-                encoding="utf-8",
-            )
-        except FileNotFoundError:
-            logger.warning(
+       
+        fname = os.path.join(CONFIG_PATH + "/" + dir_name, json_namelist[i] + ".json")
+        if not os.path.exists(fname):
+            raise FileNotFoundError(
                 f"*** File '{json_namelist[i]}.json' does not exist,"
                 f" please create appropriate json file for configuration. *** \n"
                 f"*** Or alternatively, initialize EmitCalc with dict directly. ***"
             )
-            raise
-        file = f.read()
-        f.close()
         # make dict keys json file names for reference
-        data = {json_namelist[i]: json.loads(file)}
+        data = {json_namelist[i]: json.load(open(fname))}
         all_data = {**all_data, **data}
 
     # dict of all configs

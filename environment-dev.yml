@@ -2,8 +2,9 @@
 name: pyemittance-dev
 channels:
   - conda-forge
+  - paulscherrerinstitute
 dependencies:
-  - python=3.8
+  - python=3.9
   - matplotlib-base
   - numpy
   - scipy
@@ -19,7 +20,9 @@ dependencies:
   - mkdocstrings
   - mkdocs-material
   - mkdocs-jupyter
+  - pcaspy  
   - pip
   - pip:
     - mkdocstrings-python
+
 
