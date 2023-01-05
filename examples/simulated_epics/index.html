@@ -8,8 +8,14 @@
       
       
       
+      
+        <link rel="prev" href="../simulated_online/">
+      
+      
+        <link rel="next" href="../image_analysis/">
+      
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.1">
     
     
       
@@ -17,11 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.975780f9.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3bd4f189.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.2505c338.min.css">
-        
       
       
 
@@ -113,8 +118,6 @@
       <form class="md-header__option" data-md-component="palette">
         
           
-          
-          
           <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
@@ -122,8 +125,6 @@
             </label>
           
         
-          
-          
           
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
           
@@ -223,13 +224,15 @@
         
   
   
+    
+  
 
 
   
   
   
     <li class="md-tabs__item">
-      <a href="../tutorial/" class="md-tabs__link">
+      <a href="../simulated_online/" class="md-tabs__link md-tabs__link--active">
         Examples
       </a>
     </li>
@@ -316,15 +319,19 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       
       
+        
+          
         
           
         
@@ -356,9 +363,33 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorial/" class="md-nav__link">
-        PyEmittance Tutorial
+      <a href="../simulated_online/" class="md-nav__link">
+        Online PyEmittance
       </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Beam Simulator and EPICS server
+      </a>
+      
     </li>
   
 
@@ -384,8 +415,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../simple_fit_test.ipynb" class="md-nav__link">
-        None
+      <a href="../simulated_quad_scan/" class="md-nav__link">
+        Simulated Quad Scan
       </a>
     </li>
   
@@ -398,8 +429,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../pyemittance_bmad_demo/" class="md-nav__link">
-        PyEmittance Bmad Demo
+      <a href="../simulated_screen/" class="md-nav__link">
+        Simulated Screen
       </a>
     </li>
   
@@ -465,10 +496,9 @@
 
                   
 
-  <a href="https://github.com/slaclab/pyemittance/edit/master/docs/examples/simulated_epics.ipynb" title="Edit this page" class="md-content__button md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
-  </a>
+  
+  
+
 
 
 <script>
@@ -1509,12 +1539,16 @@ Licensed under the Apache License, Version 2.0.
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="Beam-Simulator-and-EPICS-server">Beam Simulator and EPICS server<a class="anchor-link" href="#Beam-Simulator-and-EPICS-server">&#182;</a></h1><p>Run this cell to start the server.</p>
+<p>Then try on the command line:</p>
+<pre><code>caput QUAD:HTR:120:BCTRL 1.234
+caget QUAD:HTR:120:BACT
+</code></pre>
 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1535,22 +1569,130 @@ Licensed under the Apache License, Version 2.0.
             </clipboard-copy>
         </div>
             <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">pyemittance.simulation_server</span> <span class="kn">import</span> <span class="n">start_server</span>
-
+<span class="kn">from</span> <span class="nn">pyemittance</span> <span class="kn">import</span> <span class="n">print_logging</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> | </span><span class="si">%(levelname)s</span><span class="s1"> : </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
-                     <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+<span class="n">print_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
 <span class="n">start_server</span><span class="p">()</span>
 </pre></div>
 <div id="cell-1" class="clipboard-copy-txt">from pyemittance.simulation_server import start_server
-
+from pyemittance import print_logging
 import logging
-import sys
-logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',
-                     level=logging.INFO, stream=sys.stdout)
+print_logging(level=10)
 
 start_server()</div>
+    
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>2022-12-18 13:35:30,729 | INFO : Checking that another server is not serving QUAD:HTR:120:BCTRL
+cannot connect to QUAD:HTR:120:BCTRL
+2022-12-18 13:35:35,762 | INFO : Initialized config: LCLS2_OTR0H04
+2022-12-18 13:35:35,769 | INFO : Serving: [&#39;QUAD:HTR:120:BCTRL&#39;, &#39;QUAD:HTR:120:BACT&#39;, &#39;OTRS:HTR:330:Image:ArrayData&#39;, &#39;OTRS:HTR:330:Image:ArraySize1_RBV&#39;, &#39;OTRS:HTR:330:Image:ArraySize0_RBV&#39;, &#39;OTRS:HTR:330:RESOLUTION&#39;, &#39;sim_screen_sigma_x&#39;, &#39;sim_screen_sigma_y&#39;]
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
+<pre>cas warning: Configured TCP port was unavailable.
+cas warning: Using dynamically assigned TCP port 49561,
+cas warning: but now two or more servers share the same UDP port.
+cas warning: Depending on your IP kernel this server may not be
+cas warning: reachable with UDP unicast (a host&#39;s IP in EPICS_CA_ADDR_LIST)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>2022-12-18 13:35:50,220 | INFO : Setting QUAD:HTR:120:BCTRL =  -6.0
+2022-12-18 13:45:03,748 | INFO : Setting QUAD:HTR:120:BCTRL =  -6.0
+2022-12-18 13:45:04,122 | INFO : Setting QUAD:HTR:120:BCTRL =  -4.0
+2022-12-18 13:45:04,402 | INFO : Setting QUAD:HTR:120:BCTRL =  -2.0
+2022-12-18 13:45:04,682 | INFO : Setting QUAD:HTR:120:BCTRL =  0.0
+2022-12-18 13:45:04,958 | INFO : Setting QUAD:HTR:120:BCTRL =  -0.7474116230308091
+2022-12-18 13:45:05,260 | INFO : Setting QUAD:HTR:120:BCTRL =  -0.20617635252567423
+2022-12-18 13:45:05,534 | INFO : Setting QUAD:HTR:120:BCTRL =  0.33505891797946064
+2022-12-18 13:45:05,815 | INFO : Setting QUAD:HTR:120:BCTRL =  0.8762941884845955
+2022-12-18 13:45:06,089 | INFO : Setting QUAD:HTR:120:BCTRL =  1.4175294589897303
+2022-12-18 13:45:06,357 | INFO : Setting QUAD:HTR:120:BCTRL =  1.9587647294948654
+2022-12-18 13:45:06,667 | INFO : Setting QUAD:HTR:120:BCTRL =  2.5
+2022-12-18 13:45:06,937 | INFO : Setting QUAD:HTR:120:BCTRL =  -1.7330866930797668
+2022-12-18 13:45:07,211 | INFO : Setting QUAD:HTR:120:BCTRL =  -1.027572244233139
+2022-12-18 13:45:07,489 | INFO : Setting QUAD:HTR:120:BCTRL =  -0.32205779538651114
+2022-12-18 13:45:07,764 | INFO : Setting QUAD:HTR:120:BCTRL =  1.0889711023067445
+2022-12-18 13:45:08,077 | INFO : Setting QUAD:HTR:120:BCTRL =  1.7944855511533724
+2022-12-18 13:45:28,025 | INFO : Setting QUAD:HTR:120:BCTRL =  -6.0
+2022-12-18 13:45:28,414 | INFO : Setting QUAD:HTR:120:BCTRL =  -4.0
+2022-12-18 13:45:28,689 | INFO : Setting QUAD:HTR:120:BCTRL =  -2.0
+2022-12-18 13:45:28,967 | INFO : Setting QUAD:HTR:120:BCTRL =  0.0
+2022-12-18 13:45:29,245 | INFO : Setting QUAD:HTR:120:BCTRL =  -1.5833333333333333
+2022-12-18 13:45:29,546 | INFO : Setting QUAD:HTR:120:BCTRL =  -1.1666666666666665
+2022-12-18 13:45:29,825 | INFO : Setting QUAD:HTR:120:BCTRL =  -0.75
+2022-12-18 13:45:30,096 | INFO : Setting QUAD:HTR:120:BCTRL =  -0.33333333333333326
+2022-12-18 13:45:30,375 | INFO : Setting QUAD:HTR:120:BCTRL =  0.08333333333333348
+2022-12-18 13:45:30,655 | INFO : Setting QUAD:HTR:120:BCTRL =  0.5
+2022-12-18 13:45:30,967 | INFO : Setting QUAD:HTR:120:BCTRL =  -6.5
+2022-12-18 13:45:31,248 | INFO : Setting QUAD:HTR:120:BCTRL =  -5.416666666666667
+2022-12-18 13:45:31,527 | INFO : Setting QUAD:HTR:120:BCTRL =  -4.333333333333334
+2022-12-18 13:45:31,802 | INFO : Setting QUAD:HTR:120:BCTRL =  -3.25
+2022-12-18 13:45:32,083 | INFO : Setting QUAD:HTR:120:BCTRL =  -2.166666666666667
+2022-12-18 13:45:32,403 | INFO : Setting QUAD:HTR:120:BCTRL =  -1.083333333333334
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+        <div class="zeroclipboard-container">
+            <clipboard-copy for="cell-2">
+            <div>
+                <span class="notice" hidden>Copied!</span>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                </svg>
+                </div>
+            </clipboard-copy>
+        </div>
+            <div class="highlight-ipynb hl-python"><pre><span></span>
+</pre></div>
+<div id="cell-2" class="clipboard-copy-txt"></div>
     
         </div>
     </div>
@@ -1611,12 +1753,11 @@ start_server()</div>
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.top", "navigation.tabs", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.top", "navigation.tabs", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.12658920.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      <script src="../../assets/javascripts/bundle.5cf534bf.min.js"></script>
       
-    
     
   </body>
 </html>
