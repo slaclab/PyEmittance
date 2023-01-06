@@ -1929,8 +1929,8 @@ meas.config_dict.keys()</div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1960,29 +1960,6 @@ res = meas.measure_emittance()</div>
     </div>
 
 </div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
-<pre>/usr/share/miniconda/envs/pyemittance-dev/lib/python3.9/site-packages/scipy/optimize/_minpack_py.py:906: OptimizeWarning: Covariance of the parameters could not be estimated
-  warnings.warn(&#39;Covariance of the parameters could not be estimated&#39;,
-Emittance can&#39;t be computed. Returning error
-</pre>
-</div>
-</div>
-
-</div>
-
 </div>
 
 </div>
@@ -2108,34 +2085,59 @@ Emittance can&#39;t be computed. Returning error
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>{&#39;quadvalsx&#39;: array([-4. , -3.5, -3. , -2.5, -2. ]),
- &#39;beamsizesx&#39;: array([4.59410844e-04, 1.94695323e-04, 1.95128336e-04, 8.91497821e-05,
-        6.58120018e-05]),
- &#39;beamsizeserrx&#39;: array([6.89116266e-06, 2.92042985e-06, 2.92692504e-06, 1.33724673e-06,
-        9.87180027e-07]),
+<pre>{&#39;quadvalsx&#39;: array([-4.39950786, -3.17463089, -1.94975393, -0.72487696,  0.5       ]),
+ &#39;beamsizesx&#39;: array([3.96145492e-04, 1.50609131e-04, 1.20979665e-04, 9.33417809e-05,
+        5.89692321e-05]),
+ &#39;beamsizeserrx&#39;: array([5.94218238e-06, 2.25913697e-06, 1.81469497e-06, 1.40012671e-06,
+        8.84538482e-07]),
  &#39;error_x&#39;: False,
- &#39;emit_x&#39;: 8.053872403971307e-09,
- &#39;norm_emit_x&#39;: 2.1277245002576195e-06,
- &#39;beta_x&#39;: 11.330065142926681,
- &#39;alpha_x&#39;: 9.705849672319507,
- &#39;emit_x_err&#39;: 1.67224645537765e-10,
- &#39;norm_emit_x_err&#39;: 4.417849669211946e-08,
- &#39;beta_x_rel_err&#39;: 0.02076325985188707,
- &#39;alpha_x_rel_err&#39;: 3.774962140973792e-18,
- &#39;sigma_11&#39;: 9.125089898981442e-08,
- &#39;sigma_12&#39;: -7.816967483298803e-08,
- &#39;sigma_22&#39;: 6.767454340240349e-08,
- &#39;screen_sigma_11&#39;: array([8.92528776e-08, 5.05596157e-08, 2.35985806e-08, 8.23135441e-09,
-        4.32040002e-09]),
- &#39;screen_sigma_12&#39;: array([ 2.24214963e-09, -4.97390213e-09, -7.15749923e-09, -4.36874251e-09,
-         3.33265176e-09]),
- &#39;screen_sigma_22&#39;: array([7.83079465e-10, 1.77225562e-09, 4.91956097e-09, 1.01989014e-08,
-        1.75843505e-08]),
- &#39;quadvalsy&#39;: array([-6.5   , -5.6875, -4.875 , -4.0625, -3.25  ]),
- &#39;beamsizesy&#39;: array([0.00058752, 0.00039379, 0.00041597, 0.00048253, 0.00015752]),
- &#39;beamsizeserry&#39;: array([8.81277622e-06, 5.90680749e-06, 6.23956517e-06, 7.23789773e-06,
-        2.36273068e-06]),
- &#39;error_y&#39;: True}</pre>
+ &#39;emit_x&#39;: 1.5028187983623617e-09,
+ &#39;norm_emit_x&#39;: 3.9702446429950967e-07,
+ &#39;beta_x&#39;: 2.9850136008588883,
+ &#39;alpha_x&#39;: 0.42055409627493934,
+ &#39;emit_x_err&#39;: 1.7228294821915547e-10,
+ &#39;norm_emit_x_err&#39;: 4.551483206038359e-08,
+ &#39;beta_x_rel_err&#39;: 0.11463986769855031,
+ &#39;alpha_x_rel_err&#39;: 1.2259586879109864e-18,
+ &#39;sigma_11&#39;: 4.485934552738061e-09,
+ &#39;sigma_12&#39;: -6.320166016102733e-10,
+ &#39;sigma_22&#39;: 5.924984625110045e-10,
+ &#39;screen_sigma_11&#39;: array([4.21459055e-08, 2.68885693e-08, 1.54404908e-08, 7.69609545e-09,
+        3.55142507e-09]),
+ &#39;screen_sigma_12&#39;: array([1.25123064e-08, 7.15595359e-09, 3.43467347e-09, 1.30261901e-09,
+        7.14648716e-10]),
+ &#39;screen_sigma_22&#39;: array([3.76824925e-09, 1.98843365e-09, 9.10297890e-10, 5.13933415e-10,
+        7.79739702e-10]),
+ &#39;quadvalsy&#39;: array([-3.96781128, -2.52114516, -1.07447905,  0.37218707,  1.81885318,
+         2.97618607,  4.51929659,  6.06240711,  7.60551763]),
+ &#39;beamsizesy&#39;: array([0.00029403, 0.00055556, 0.00047224, 0.00032695, 0.00015418,
+        0.00040521, 0.00052936, 0.00019248, 0.00053281]),
+ &#39;beamsizeserry&#39;: array([4.41044797e-06, 8.33344804e-06, 7.08367226e-06, 4.90425243e-06,
+        2.31273435e-06, 6.07811718e-06, 7.94039166e-06, 2.88717073e-06,
+        7.99221084e-06]),
+ &#39;error_y&#39;: False,
+ &#39;emit_y&#39;: 5.823925984172062e-09,
+ &#39;norm_emit_y&#39;: 1.5386027221016813e-06,
+ &#39;beta_y&#39;: 1.2330953760326324,
+ &#39;alpha_y&#39;: 1.3639872243744846,
+ &#39;emit_y_err&#39;: 8.798034063174209e-11,
+ &#39;norm_emit_y_err&#39;: 2.32432197722505e-08,
+ &#39;beta_y_rel_err&#39;: 0.015106706519081801,
+ &#39;alpha_y_rel_err&#39;: 1.4136402485843954e-18,
+ &#39;sigma_33&#39;: 7.181456201438868e-09,
+ &#39;sigma_34&#39;: -7.94376063811329e-09,
+ &#39;sigma_44&#39;: 1.350999633268159e-08,
+ &#39;screen_sigma_33&#39;: array([1.12419781e-07, 8.22999199e-08, 5.86086978e-08, 4.15880725e-08,
+        3.14846210e-08, 2.85509096e-08, 3.20021162e-08, 4.41575638e-08,
+        6.53390529e-08]),
+ &#39;screen_sigma_34&#39;: array([5.85478775e-08, 4.35491156e-08, 3.13017062e-08, 2.19106621e-08,
+        1.54830122e-08, 1.25477625e-08, 1.17911325e-08, 1.47682793e-08,
+        2.16189385e-08]),
+ &#39;screen_sigma_44&#39;: array([3.07932645e-08, 2.34562024e-08, 1.72963223e-08, 1.23591981e-08,
+        8.69128395e-09, 6.70256956e-09, 5.40429636e-09, 5.70729376e-09,
+        7.67223574e-09]),
+ &#39;sqrt_norm_emit_4d&#39;: 7.815772012489792e-07,
+ &#39;sqrt_norm_emit_4d_err&#39;: 9.037449822520308e-08}</pre>
 </div>
 
 </div>
@@ -2309,7 +2311,7 @@ get_bs_model()</div>
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>(5.11096372998538e-05, 5.9199654547904566e-06, 0, 0)</pre>
+<pre>(1.9003052704002794e-05, 2.135658416231104e-07, 0, 0)</pre>
 </div>
 
 </div>
@@ -2398,7 +2400,10 @@ meas.get_bs_model = get_bs_model</div>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
-<pre>Emittance can&#39;t be computed. Returning error
+<pre>/usr/share/miniconda/envs/pyemittance-dev/lib/python3.9/site-packages/scipy/optimize/_minpack_py.py:906: OptimizeWarning: Covariance of the parameters could not be estimated
+  warnings.warn(&#39;Covariance of the parameters could not be estimated&#39;,
+Emittance can&#39;t be computed. Returning error
+Emittance can&#39;t be computed. Returning error
 </pre>
 </div>
 </div>
@@ -2453,34 +2458,20 @@ meas.get_bs_model = get_bs_model</div>
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>{&#39;quadvalsx&#39;: array([1.875, 2.5  , 2.75 , 3.   , 3.25 ]),
- &#39;beamsizesx&#39;: array([7.16328656e-06, 5.84695394e-06, 6.69653248e-06, 1.83818557e-05,
-        3.80350264e-05]),
- &#39;beamsizeserrx&#39;: array([1.07449298e-07, 8.77043091e-08, 1.00447987e-07, 2.75727836e-07,
-        5.70525396e-07]),
- &#39;error_x&#39;: False,
- &#39;emit_x&#39;: 5.213544174346051e-11,
- &#39;norm_emit_x&#39;: 1.3773480776106663e-08,
- &#39;beta_x&#39;: 15.004091959219506,
- &#39;alpha_x&#39;: -1.0850794328023858,
- &#39;emit_x_err&#39;: 1.1745339865669909e-12,
- &#39;norm_emit_x_err&#39;: 3.1029604322655513e-10,
- &#39;beta_x_rel_err&#39;: 0.022528513182000918,
- &#39;alpha_x_rel_err&#39;: -1.3375985769361915e-22,
- &#39;sigma_11&#39;: 7.822449622534128e-10,
- &#39;sigma_12&#39;: 5.657109555589596e-11,
- &#39;sigma_22&#39;: 7.565907642448682e-12,
- &#39;screen_sigma_11&#39;: array([5.35217794e-11, 2.71176757e-11, 6.03812410e-11, 1.18463625e-10,
-        2.01216046e-10]),
- &#39;screen_sigma_12&#39;: array([-4.87122318e-11,  4.74072224e-11,  1.04640718e-10,  1.72511592e-10,
-         2.50955254e-10]),
- &#39;screen_sigma_22&#39;: array([9.51198909e-11, 1.83111159e-10, 2.26358118e-10, 2.74163090e-10,
-        3.26498037e-10]),
- &#39;quadvalsy&#39;: array([-8.6  , -7.3  , -6.65 , -6.   , -4.375]),
- &#39;beamsizesy&#39;: array([3.46092736e-06, 1.99180386e-07, 7.22541376e-06, 4.77963526e-06,
-        6.28339392e-07]),
- &#39;beamsizeserry&#39;: array([5.19139104e-08, 2.98770580e-09, 1.08381206e-07, 7.16945289e-08,
-        9.42509088e-09]),
+<pre>{&#39;quadvalsx&#39;: array([-6.30879403, -6.00464711, -5.70050019, -5.39635326, -5.09220634]),
+ &#39;beamsizesx&#39;: array([6.31172480e-06, 9.39874401e-05, 6.73514085e-05, 7.12199494e-05,
+        3.16269364e-05]),
+ &#39;beamsizeserrx&#39;: array([9.46758719e-08, 1.40981160e-06, 1.01027113e-06, 1.06829924e-06,
+        4.74404045e-07]),
+ &#39;error_x&#39;: True,
+ &#39;quadvalsy&#39;: array([-6.        , -6.625     , -7.25      , -7.875     , -8.5       ,
+        -8.        , -7.33333333, -6.66666667, -6.        ]),
+ &#39;beamsizesy&#39;: array([6.53439309e-07, 8.46725497e-07, 4.23497159e-06, 2.47004014e-06,
+        1.08984286e-07, 1.10916908e-05, 2.02871257e-06, 8.46725497e-07,
+        6.53439309e-07]),
+ &#39;beamsizeserry&#39;: array([9.80158964e-09, 1.27008825e-08, 6.35245738e-08, 3.70506021e-08,
+        1.63476429e-09, 1.66375363e-07, 3.04306885e-08, 1.27008825e-08,
+        9.80158964e-09]),
  &#39;error_y&#39;: True}</pre>
 </div>
 
