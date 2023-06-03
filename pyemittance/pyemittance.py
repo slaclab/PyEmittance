@@ -40,10 +40,11 @@ class PyEmittance:
 
         # pyemittance method options
         self.adapt_ranges = True
+        self.settle_time = 0
         self.num_points = 7
-        self.check_sym = True
-        self.infl_check = True
-        self.add_pnts = True
+        self.check_sym = True  # check_sym will add more points to fill out a parabola
+        self.infl_check = True # truncates data outside inflection point
+        self.add_pnts = True   # ensures there are .num_points by adding points in between previous
         self.show_plots = False
         self.use_prev_meas = True
         self.quad_tol = 0.05
@@ -57,12 +58,16 @@ class PyEmittance:
         # to save total number of points queried
         self.return_num_points = False
 
+
+        
+
     def measure_emittance(self):
         # get initial points from the observer
         o = Observer([], {"x": [], "y": []}, {"x": [], "y": []})
         o.use_model = self.use_model
         o.inj_config = self.inj_config
         o.online = self.online
+        o.settle_time = self.settle_time
         o.meas_type = self.meas_type
         o.use_prev_meas = self.use_prev_meas
         o.tolerance = self.quad_tol

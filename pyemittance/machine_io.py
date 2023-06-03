@@ -16,7 +16,7 @@ class MachineIO:
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
         self.online = False
-        self.settle_time = 0.1  # sleep time in seconds
+
 
         # Set configs for measurement
         # if config is not provided, use LCLS OTR2 as default
@@ -30,9 +30,16 @@ class MachineIO:
 
         self.meas_pv_info = self.config_dict["meas_pv_info"]
 
+        if "settle_time" in self.meas_pv_info["meas_device"]:
+            self.settle_time = self.meas_pv_info["meas_device"]["settle_time"]
+        else:
+            self.settle_time = 0
+            logger.warning("No settle_time found in in meas_device, setting to zero")
+
         # Connect to PVs 
         self.meas_read_pv = PV(self.meas_pv_info["meas_device"]["pv"]["read"])
         self.meas_cntrl_pv = PV(self.meas_pv_info["meas_device"]["pv"]["cntrl"])
+        
 
         # load info about settings to optimize
         self.opt_pv_info = self.config_dict["opt_pv_info"]
@@ -51,7 +58,9 @@ class MachineIO:
         """
         if self.online and quad_val is not None:
             self.setquad(quad_val)
-            time.sleep(self.settle_time)
+            if self.settle_time > 0:  
+                logger.info(f"Settling for {self.settle_time} s...")
+                time.sleep(self.settle_time)
         
         if self.meas_type == "OTRS" and self.online:
             return get_beamsizes_otrs(self.config_dict)

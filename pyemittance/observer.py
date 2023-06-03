@@ -18,12 +18,6 @@ class Observer:
         self.use_prev_meas = False
         self.tolerance = 0.1
 
-        self.inj_config = None  # injector configuration settings for SOL, CQ, SQ
-        self.use_model = True
-        # if using the surrogate model
-        self.get_beamsizes_model = None
-        self.noise_red = 100000
-
         # if using machine
         self.online = False
         self.config_name = "sim"
@@ -118,17 +112,6 @@ class Observer:
         return xrms, yrms, xrms_err, yrms_err
 
     def get_beamsizes(self, val):
-        """Define where the beamsizes are acquired from"""
-        if self.use_model:
-            if len(np.asarray(self.inj_config).shape) == 2:
-                # temp workaround for testing
-                out = self.get_beamsizes_model(self.inj_config[0] + [val])
-                return np.array([out["sigma_x"][0], out["sigma_y"][0], 0.0, 0.0])
-
-            return self.get_beamsizes_model(self.inj_config, val)
-
-        else:
-            io = MachineIO(self.config_name, self.config_dict, self.meas_type)
-            io.online = self.online
-            # note we are not setting the injector on the machine here
-            return io.get_beamsizes_machine(val)
+        io = MachineIO(self.config_name, self.config_dict, self.meas_type)
+        io.online = self.online
+        return io.get_beamsizes_machine(val)
