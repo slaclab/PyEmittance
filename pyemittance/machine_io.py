@@ -30,11 +30,18 @@ class MachineIO:
 
         self.meas_pv_info = self.config_dict["meas_pv_info"]
 
-        if "settle_time" in self.meas_pv_info["meas_device"]:
-            self.settle_time = self.meas_pv_info["meas_device"]["settle_time"]
+        meas_device = self.meas_pv_info["meas_device"]
+        if "settle_time" in meas_device:
+            self.settle_time = meas_device["settle_time"]
         else:
             self.settle_time = 0
             logger.warning("No settle_time found in in meas_device, setting to zero")
+
+        
+        if "bounds" in meas_device:
+            self.bounds = meas_device["bounds"]
+        else:
+            self.bounds = None
 
         # Connect to PVs 
         self.meas_read_pv = PV(self.meas_pv_info["meas_device"]["pv"]["read"])
@@ -73,6 +80,14 @@ class MachineIO:
             raise NotImplementedError("No valid measurement type defined.")
     def setquad(self, value):
         """Sets quad to new scan value"""
+
+        if self.bounds is not None:
+            lower, upper = self.bounds
+            if value < lower:
+                raise ValueError(f'Quad set point value {value} < {lower} lower limit')
+            if value > upper:
+                raise ValueError(f'Quad set point value {value} > {upper} upper limit')                
+        
         if self.online:
             logger.info(f'EPICS put {self.meas_cntrl_pv.pvname} = {value}')
             self.meas_cntrl_pv.put(value)
