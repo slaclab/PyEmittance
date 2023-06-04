@@ -12,6 +12,7 @@ def adapt_range(
     w=None,
     cutoff_percent=0.3,
     num_points=5,
+    bounds = None
 ):
     """
     Returns new scan quad values AS LIST
@@ -28,6 +29,9 @@ def adapt_range(
         weights for beamsize values, by default None
     num_points : int, optional
         number of points to add, by default 5
+    bounds: tuple or None
+        Bounds of (min, max) to be honored.
+        If given, will clip the output to be within these bounds.
         
     Returns 
     -------
@@ -83,10 +87,14 @@ def adapt_range(
 
     # no more restrictions on quad vals, just staying within
     # the region already scanned (can increase this if need be)
-    min_x_range, max_x_range = np.min([min_x, x[np.argmin(y)] - 2.5]), np.max(
-        [max_x, x[np.argmin(y)] + 2.5]
-    )
-
+    
+    min_x_range = np.min([min_x, x[np.argmin(y)] - 2.5]) # TODO: where does 2.5 come from?
+    max_x_range =  np.max([max_x, x[np.argmin(y)] + 2.5])
+    # Restrict to be within bounds
+    if bounds is not None:
+        min_x_range = max(min_x_range, bounds[0])
+        max_x_range = min(max_x_range, bounds[1])
+        
     c2, c1, c0 = fit_coefs
 
     if c2 < 0:  # same if s11q is negative
@@ -138,7 +146,7 @@ def adapt_range(
     return list(x_fine_fit)
 
 
-def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
+def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False, bounds=None):
     """Check symmetry of quad scan around min of scan
     and find side (left or right) and num of beamsize
     points to add to get a full curve"""
@@ -153,22 +161,23 @@ def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
 
     if left_side == right_side:
         return None
-
     elif left_side > right_side:
         add_to_side = "right"
         diff = left_side - right_side
         # add points to right_side
         xmin = x[-1] + stepsize
         xmax = xmin + diff * stepsize
-        x_add = np.linspace(xmin, xmax, diff)
-
     elif right_side > left_side:
         add_to_side = "left"
         diff = right_side - left_side
         # add points to left_side
         xmin = x[0] - diff * stepsize
         xmax = x[0] - stepsize
-        x_add = np.linspace(xmin, xmax, diff)
+    x_add = np.linspace(xmin, xmax, diff)
+    
+    # Restrict to be within bounds
+    if bounds is not None:
+        x_add = np.clip(x_add, bounds[0], bounds[1])
 
     if add_meas:
         return add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn)
@@ -179,7 +188,7 @@ def check_symmetry(x, y, y_err, axis, bs_fn=None, add_meas=False):
 def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     """Add beamsize measurements on left or right side based on
     symmetry of scan curve.
-    x_add are the quad scan values k in units of 1/m^2"""
+    x_add are the quad scan values k in units of 1/m^2""" # TODO: this is wrong
 
     # get new data points
     idx_size = 1 if axis == "y" else 0

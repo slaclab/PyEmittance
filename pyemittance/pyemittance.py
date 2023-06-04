@@ -1,3 +1,4 @@
+import numpy as np
 from pyemittance.observer import Observer
 from pyemittance.data_handler import (
     adapt_range,
@@ -33,17 +34,16 @@ class PyEmittance:
         # only True if setting PVs
         self.online = online
 
-        # injector settings (SOL, CQ, SQ) if optimizing
-        self.inj_config = None
         # initial rough quad scan
-        self.quad_init = [-6, -4, -2, 0]
+        self._quad_init = [-6, -4, -2, 0]
 
         # pyemittance method options
         self.adapt_ranges = True
+        self.settle_time = 0
         self.num_points = 7
-        self.check_sym = True
-        self.infl_check = True
-        self.add_pnts = True
+        self.check_sym = True  # check_sym will add more points to fill out a parabola
+        self.infl_check = True # truncates data outside inflection point
+        self.add_pnts = True   # ensures there are .num_points by adding points in between previous
         self.show_plots = False
         self.use_prev_meas = True
         self.quad_tol = 0.05
@@ -57,11 +57,38 @@ class PyEmittance:
         # to save total number of points queried
         self.return_num_points = False
 
+    @property
+    def quad_bounds(self):
+        """
+        Returns a tuple of floats: (lower, upper) limit for quad bounds.
+        """
+        if "bounds" not in self.config_dict["meas_pv_info"]["meas_device"]:
+            bounds =  min(self.quad_init), max(self.quad_init)
+        else:
+            bounds = self.config_dict["meas_pv_info"]["meas_device"]["bounds"]
+            if bounds is None:
+                bounds = min(self.quad_init), max(self.quad_init)
+        return bounds
+            
+    @quad_bounds.setter
+    def quad_bounds(self, value):
+        self.config_dict["meas_pv_info"]["meas_device"]["bounds"] = value
+
+    @property 
+    def quad_init(self):
+        return self._quad_init
+    @quad_init.setter
+    def quad_init(self, values):
+        self._quad_init = list(values)
+    def clip_quad_values(self, values):
+        lower, upper = self.quad_bounds
+        return list(np.clip(values, lower, upper))
+        
+
     def measure_emittance(self):
         # get initial points from the observer
         o = Observer([], {"x": [], "y": []}, {"x": [], "y": []})
         o.use_model = self.use_model
-        o.inj_config = self.inj_config
         o.online = self.online
         o.meas_type = self.meas_type
         o.use_prev_meas = self.use_prev_meas
@@ -92,12 +119,14 @@ class PyEmittance:
         quad_range_y = self.quad_init
 
         if self.adapt_ranges:
+            logger.info('Adapting ranges')
             quad_range_x = adapt_range(
                 quad_range_x,
                 bs_x_list,
                 "x",
                 w=bs_x_list_err,
                 num_points=self.num_points,
+                bounds = self.quad_bounds,
             )
             quad_range_y = adapt_range(
                 quad_range_y,
@@ -105,14 +134,18 @@ class PyEmittance:
                 "y",
                 w=bs_y_list_err,
                 num_points=self.num_points,
+                bounds = self.quad_bounds,
             )
-
+            logger.info(f"Adapting ranges for x beam size measurement: {quad_range_x}")
             new_beamsize_x = o.measure_beam(quad_range_x)
             bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
+
+            logger.info(f"Adapting ranges for y beam size measurement: {quad_range_y}")
             new_beamsize_y = o.measure_beam(quad_range_y)
             bs_y_list, bs_y_list_err = new_beamsize_y[1], new_beamsize_y[3]
 
         if self.check_sym:
+            logger.info('Checking symmetry')
             add_points_x = check_symmetry(
                 quad_range_x,
                 bs_x_list,
@@ -120,6 +153,7 @@ class PyEmittance:
                 "x",
                 bs_fn=o.measure_beam,
                 add_meas=True,
+                bounds = self.quad_bounds,
             )
             add_points_y = check_symmetry(
                 quad_range_y,
@@ -128,6 +162,7 @@ class PyEmittance:
                 "y",
                 bs_fn=o.measure_beam,
                 add_meas=True,
+                bounds = self.quad_bounds,
             )
 
             if add_points_x is not None:
@@ -141,6 +176,7 @@ class PyEmittance:
                 bs_y_list_err = add_points_y[2]
 
         if self.infl_check:
+            logger.info('Checking inflection')
             left_x, right_x = find_inflection_pnt(
                 quad_range_x, bs_x_list, show_plots=self.show_plots
             )
@@ -158,6 +194,7 @@ class PyEmittance:
             bs_y_list_err = bs_y_list_err[left_y:right_y]
 
         if self.add_pnts:
+            logger.info('Adding points')
             quad_range_x, bs_x_list, bs_x_list_err = add_measurements_btwn_pnts(
                 quad_range_x,
                 bs_x_list,
@@ -175,6 +212,7 @@ class PyEmittance:
                 bs_fn=o.measure_beam,
             )
 
+        logger.info(f"Emmitance calc for {len(quad_range_x)} x points, {len(quad_range_x)} y points" )
         # finally get emittance
         ef = EmitCalc(
             {"x": quad_range_x, "y": quad_range_y},

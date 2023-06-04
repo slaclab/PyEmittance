@@ -22,21 +22,6 @@ def save_image(im, nrow, ncol,  timestamp, impath="", avg_img=True):
         np.save(str(impath) + f"nrow_{timestamp}.npy", nrow)
 
 
-def numpy_save(xrms, yrms, xrms_err, yrms_err, timestamp=False, savelist="", path=""):
-    ts = isotime()
-    x = caget_many(savelist)
-    if timestamp:
-        x.append(timestamp)
-    else:
-        x.append(ts)
-    x.append(xrms)
-    x.append(yrms)
-    x.append(xrms_err)
-    x.append(yrms_err)
-
-    np.save(path + ts + "_pv_bs_data_.npy", np.array(x))
-
-
 def save_config(
     xrms,
     yrms,
@@ -44,7 +29,6 @@ def save_config(
     yrms_err,
     timestamp,
     meas_read_pv,
-    opt_pvs,
     im=None,
     configpath="",
     impath="",
@@ -56,9 +40,7 @@ def save_config(
         f = open(configpath + "beamsize_config_info.csv", "a+")
 
     # todo make more general, pandas etc
-    varx_cur = caget(opt_pvs[0])
-    vary_cur = caget(opt_pvs[1])
-    varz_cur = caget(opt_pvs[2])
+
     bact_cur = caget(meas_read_pv)
     f.write(
         f"{timestamp},{varx_cur},{vary_cur},{varz_cur},"
