@@ -11,8 +11,8 @@ json_namelist = [
     "beamline_info",
     "img_proc",
     "meas_pv_info",
-    "opt_pv_info",
-    "save_scalar_pvs",
+  #   "opt_pv_info",
+  #  "save_scalar_pvs",
     "savepaths",
 ]
 

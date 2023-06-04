@@ -34,8 +34,6 @@ class PyEmittance:
         # only True if setting PVs
         self.online = online
 
-        # injector settings (SOL, CQ, SQ) if optimizing
-        self.inj_config = None
         # initial rough quad scan
         self._quad_init = [-6, -4, -2, 0]
 
@@ -91,9 +89,7 @@ class PyEmittance:
         # get initial points from the observer
         o = Observer([], {"x": [], "y": []}, {"x": [], "y": []})
         o.use_model = self.use_model
-        o.inj_config = self.inj_config
         o.online = self.online
-        o.settle_time = self.settle_time
         o.meas_type = self.meas_type
         o.use_prev_meas = self.use_prev_meas
         o.tolerance = self.quad_tol
@@ -216,6 +212,7 @@ class PyEmittance:
                 bs_fn=o.measure_beam,
             )
 
+        logger.info(f"Emmitance calc for {len(quad_range_x)} x points, {len(quad_range_x)} y points" )
         # finally get emittance
         ef = EmitCalc(
             {"x": quad_range_x, "y": quad_range_y},
