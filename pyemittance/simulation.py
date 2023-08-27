@@ -9,6 +9,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 BUNCH_PARAMS = {
+    'LCLS_OTR3': {
+        'total_charge': 250e-12,
+        'norm_emit_x': 1e-6,
+        'norm_emit_y': 2e-6,
+        'beta_x': 6,
+        'alpha_x': 5,
+        'beta_y': 5,
+        'alpha_y': -2,
+        'energy': 135e6,
+        'species':'electron'
+    },    
+    
     'LCLS2_OTR0H04': {
         'total_charge': 50e-12,
         'norm_emit_x': 1e-6,
@@ -23,6 +35,12 @@ BUNCH_PARAMS = {
 }
 
 SCREEN_PARAMS = {
+    'LCLS_OTR3': {
+     'nrow':1040,
+     'ncol':1392,
+     'resolution': 12.12e-6,
+     'noise': 10,
+    },     
     'LCLS2_OTR0H04': {
      'nrow':1040,
      'ncol':1392,
