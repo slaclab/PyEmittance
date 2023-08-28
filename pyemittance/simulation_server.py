@@ -9,7 +9,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_all_params(config_name='LCLS2_OTR0H04'):
-    assert config_name == 'LCLS2_OTR0H04'
+    if config_name not in BUNCH_PARAMS:
+        raise ValueError(f'config_name must be one of {tuple(BUNCH_PARAMS)}')
         
     config_dict = load_configs(config_name)
     # Conveniences
