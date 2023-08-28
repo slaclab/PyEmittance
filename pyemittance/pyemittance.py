@@ -53,9 +53,28 @@ class PyEmittance:
         # simulation/model options
         # beamsize function from model
         self.get_bs_model = None
+        
+        # Internal
+        self.observer = None
 
         # to save total number of points queried
         self.return_num_points = False
+        
+        self.init_observer()
+        
+    def init_observer(self):
+        logger.info("Initializing observer")
+        self.observer = Observer(config_dict=self.config_dict,
+                     quad_meas = [], 
+                     beam_meas = {"x": [], "y": []},
+                     beam_meas_err = {"x": [], "y": []},
+                     use_prev_meas = self.use_prev_meas,
+                     tolerance=self.quad_tol,
+                     online=self.online,
+                     meas_type = self.meas_type,
+                    )        
+        return self.observer
+        
 
     @property
     def quad_bounds(self):
@@ -87,28 +106,13 @@ class PyEmittance:
 
     def measure_emittance(self):
         # get initial points from the observer
-        o = Observer([], {"x": [], "y": []}, {"x": [], "y": []})
-        o.use_model = self.use_model
-        o.online = self.online
-        o.meas_type = self.meas_type
-        o.use_prev_meas = self.use_prev_meas
-        o.tolerance = self.quad_tol
+        o = self.init_observer()
 
         # logger.info warning
         if self.online:
             logger.info("Running online!")
         else:
             logger.info("Running offline.")
-
-        # if using sim
-        # set beamsize fn
-        o.get_beamsizes_model = self.get_bs_model
-
-        o.config_name = self.config_name
-        o.config_dict = self.config_dict
-
-        energy = o.config_dict["beamline_info"]["energy"]
-        l_quad = o.config_dict["beamline_info"]["Lquad"]
 
         # get initial beamsizes (rough scan)
         bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(
@@ -212,8 +216,19 @@ class PyEmittance:
                 bs_fn=o.measure_beam,
             )
 
+            
+        # Finally get emittance
         logger.info(f"Emmitance calc for {len(quad_range_x)} x points, {len(quad_range_x)} y points" )
-        # finally get emittance
+        
+        # Filter out nans
+        good = np.logical_and(~np.isnan(bs_x_list), ~np.isnan(bs_y_list))
+        quad_range_x = np.array(quad_range_x)[good]
+        quad_range_y = np.array(quad_range_y)[good]
+        bs_x_list =  np.array(bs_x_list)[good]
+        bs_y_list =  np.array(bs_y_list)[good]
+        bs_x_list_err =  np.array(bs_x_list_err)[good]
+        bs_y_list_err =  np.array(bs_y_list_err)[good]
+        
         ef = EmitCalc(
             {"x": quad_range_x, "y": quad_range_y},
             {"x": bs_x_list, "y": bs_y_list},

@@ -118,11 +118,11 @@ class Image:
             para_error_y[2],
         )
 
-        return (
-            self.xrms,
-            self.yrms,
-            self.xrms_error,
-            self.yrms_error,
-            self.xamp,
-            self.yamp,
-        )
+        return {
+            'xrms': self.xrms,
+            'yrms': self.yrms,
+            'xrms_err': self.xrms_error,
+            'yrms_err': self.yrms_error,
+            'xamp': self.xamp,
+            'yamp': self.yamp,
+        }

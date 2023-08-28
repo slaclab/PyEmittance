@@ -1,6 +1,7 @@
 import bisect
 import numpy as np
 from pyemittance.machine_io import MachineIO
+from time import sleep
 
 import logging
 logger = logging.getLogger(__name__)
@@ -11,19 +12,27 @@ class Observer:
     Observer stores values for beamsizes and quad settings
     """
 
-    def __init__(self, quad_meas, beam_meas, beam_meas_err):
+    def __init__(self, config_dict=None,
+                 quad_meas=None,
+                 beam_meas=None,
+                 beam_meas_err=None,
+                 use_prev_meas = False,
+                 tolerance=0.1,
+                 online=False,
+                 meas_type = None
+                ):
+        
+        self.config_dict = config_dict        
         self.quad_meas = quad_meas
         self.beam_meas = beam_meas
         self.beam_meas_err = beam_meas_err
-        self.use_prev_meas = False
-        self.tolerance = 0.1
-
-        # if using machine
-        self.online = False
-        self.config_name = "sim"
-        self.config_dict = None
-        self.meas_type = "OTRS"
-
+        self.use_prev_meas = use_prev_meas
+        self.tolerance = tolerance
+        self.online = online
+        self.meas_type = meas_type
+        
+        # Init PVs
+        self.io = MachineIO(self.config_dict, meas_type=self.meas_type, online=self.online)
 
     def measure_beam(self, quad_list):
         xrms = []
@@ -35,11 +44,11 @@ class Observer:
             # if no measurements exist yet, measure all
             for val in quad_list:
                 # measure bs at this value
-                beamsizes = self.get_beamsizes(val)
-                xrms.append(beamsizes[0])
-                yrms.append(beamsizes[1])
-                xrms_err.append(beamsizes[2])
-                yrms_err.append(beamsizes[3])
+                bdat = self.get_beamsizes(val)
+                xrms.append(    bdat['xrms'])
+                yrms.append(    bdat['yrms'])
+                xrms_err.append(bdat['xrms_err'])
+                yrms_err.append(bdat['yrms_err'])
 
                 # update saved values
                 self.quad_meas.append(val)
@@ -84,13 +93,13 @@ class Observer:
 
                     # measure bs at this value
                     # returns xrms, yrms, xrms_err, yrms_err
-                    beamsizes = self.get_beamsizes(val)
+                    bdat = self.get_beamsizes(val)
 
                     # add new quad value in same location
-                    self.beam_meas["x"].insert(loc, beamsizes[0])
-                    self.beam_meas["y"].insert(loc, beamsizes[1])
-                    self.beam_meas_err["x"].insert(loc, beamsizes[2])
-                    self.beam_meas_err["y"].insert(loc, beamsizes[3])
+                    self.beam_meas["x"].insert(loc, bdat['xrms'])
+                    self.beam_meas["y"].insert(loc, bdat['yrms'])
+                    self.beam_meas_err["x"].insert(loc, bdat['xrms_err'])
+                    self.beam_meas_err["y"].insert(loc, bdat['yrms_err'])
 
                     xrms.append(self.beam_meas["x"][loc])
                     yrms.append(self.beam_meas["y"][loc])
@@ -112,6 +121,6 @@ class Observer:
         return xrms, yrms, xrms_err, yrms_err
 
     def get_beamsizes(self, val):
-        io = MachineIO(self.config_name, self.config_dict, self.meas_type)
-        io.online = self.online
-        return io.get_beamsizes_machine(val)
+        #self.io = MachineIO(self.config_name, self.config_dict, self.meas_type)
+        #sleep(.1) 
+        return self.io.get_beamsizes_machine(val)
