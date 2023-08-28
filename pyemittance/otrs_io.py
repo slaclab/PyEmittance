@@ -80,6 +80,7 @@ def get_beamsizes_otrs(config_dict,
                         'yrms':     np.nan,
                         'xrms_err': np.nan, 
                         'yrms_err': np.nan,
+                        'extra': bdat['image'],
                            }
 
             if count > 0:
