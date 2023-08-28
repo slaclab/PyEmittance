@@ -98,6 +98,7 @@ def get_beamsizes_otrs(config_dict,
             xamp = bdat['xamp']
             yamp = bdat['yamp']            
 
+            # For legacy logic above
             beamsizes = [xrms, yrms, xrms_err, yrms_err, xamp, yamp]
                             
             count = count + 1
@@ -106,7 +107,7 @@ def get_beamsizes_otrs(config_dict,
 
         bdat = getbeamsizes_from_img(config_dict)
 
-    # Extract beam sizes, convert to meterrs
+    # Extract beam sizes, convert to meters
     xrms = bdat['xrms'] * resolution
     yrms = bdat['yrms'] * resolution
     xrms_err = bdat['xrms_err'] * resolution
@@ -131,6 +132,7 @@ def get_beamsizes_otrs(config_dict,
             'yrms': yrms,
             'xrms_err': xrms_err, 
             'yrms_err':yrms_err,
+            'extra': bdat['image']
            }
 
 
@@ -287,7 +289,7 @@ def getbeamsizes_from_img(config_dict):
             'yrms_err': mean_yrms_err,
             'xamp':     mean_xamp,
             'yamp':     mean_yamp,
-           # 'image':         im,
+            'image':         im,
         }
 
 

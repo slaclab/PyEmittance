@@ -191,10 +191,9 @@ def add_measurements(add_to_side, x_add, x, y, y_err, axis, bs_fn):
     x_add are the quad scan values k in units of 1/m^2""" # TODO: this is wrong
 
     # get new data points
-    idx_size = 1 if axis == "y" else 0
-    idx_err = 3 if axis == "y" else 2
-    new_data = bs_fn(x_add)
-    y_add, y_err_add = new_data[idx_size], new_data[idx_err]
+    new_data = bs_fn(x_add)  
+    y_add     =  new_data[f'{axis}rms_list']
+    y_err_add =  new_data[f'{axis}rms_err_list']
 
     # then append to existing dataset
     if add_to_side == "left":
@@ -374,10 +373,9 @@ def add_measurements_btwn_pnts(x, y, y_err, num_points, axis, bs_fn):
         x_add.append(x[argmin] + mult_fac * step * step_mult[i])
 
     # Take new measurements
-    idx_size = 1 if axis == "y" else 0
-    idx_err = 3 if axis == "y" else 2
     new_data = bs_fn(x_add)
-    y_add, y_err_add = new_data[idx_size], new_data[idx_err]
+    y_add     = new_data[f'{axis}rms_list']
+    y_err_add = new_data[f'{axis}rms_err_list']
 
     # Insert new data into original dataset
     for i in range(0, num_meas):

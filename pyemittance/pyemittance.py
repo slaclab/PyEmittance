@@ -115,9 +115,11 @@ class PyEmittance:
             logger.info("Running offline.")
 
         # get initial beamsizes (rough scan)
-        bs_x_list, bs_y_list, bs_x_list_err, bs_y_list_err = o.measure_beam(
-            self.quad_init
-        )
+        bs_dat = o.measure_beam(self.quad_init)
+        bs_x_list = bs_dat['xrms_list']
+        bs_y_list = bs_dat['yrms_list']
+        bs_x_list_err = bs_dat['xrms_err_list']
+        bs_y_list_err = bs_dat['yrms_err_list']
 
         quad_range_x = self.quad_init
         quad_range_y = self.quad_init
@@ -141,12 +143,14 @@ class PyEmittance:
                 bounds = self.quad_bounds,
             )
             logger.info(f"Adapting ranges for x beam size measurement: {quad_range_x}")
-            new_beamsize_x = o.measure_beam(quad_range_x)
-            bs_x_list, bs_x_list_err = new_beamsize_x[0], new_beamsize_x[2]
+            new_beamsize_x_dat = o.measure_beam(quad_range_x)
+            bs_x_list     = new_beamsize_x_dat['xrms_list']
+            bs_x_list_err = new_beamsize_x_dat['xrms_err_list']
 
             logger.info(f"Adapting ranges for y beam size measurement: {quad_range_y}")
-            new_beamsize_y = o.measure_beam(quad_range_y)
-            bs_y_list, bs_y_list_err = new_beamsize_y[1], new_beamsize_y[3]
+            new_beamsize_y_dat = o.measure_beam(quad_range_y)
+            bs_y_list     = new_beamsize_y_dat['yrms_list']
+            bs_y_list_err = new_beamsize_y_dat['yrms_err_list']
 
         if self.check_sym:
             logger.info('Checking symmetry')
