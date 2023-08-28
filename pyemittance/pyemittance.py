@@ -116,6 +116,7 @@ class PyEmittance:
 
         # get initial beamsizes (rough scan)
         bs_dat = o.measure_beam(self.quad_init)
+        assert isinstance(bs_dat, dict)
         bs_x_list = bs_dat['xrms_list']
         bs_y_list = bs_dat['yrms_list']
         bs_x_list_err = bs_dat['xrms_err_list']
