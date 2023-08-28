@@ -48,6 +48,8 @@ class Observer:
             for val in quad_list:
                 # measure bs at this value
                 bdat = self.get_beamsizes(val)
+                assert isinstance(bdat, dict)
+                
                 xrms.append(    bdat['xrms'])
                 yrms.append(    bdat['yrms'])
                 xrms_err.append(bdat['xrms_err'])

@@ -58,7 +58,12 @@ class MachineIO:
             logger.info("Running wire scanner")
             return get_beamsizes_wire(self.online, self.config_dict)
         elif not self.online:
-            return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
+            # Some dummy
+            return {'xrms': np.random.uniform(0.5e-4, 5e-4),
+                    'yrms': np.random.uniform(1e-4, 6e-4),
+                    'xrms_err': 0,
+                    'yrms_err': 0,
+                   }
         else:
             raise NotImplementedError("No valid measurement type defined.")
     def setquad(self, value):

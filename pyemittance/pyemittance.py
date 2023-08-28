@@ -226,13 +226,15 @@ class PyEmittance:
         logger.info(f"Emmitance calc for {len(quad_range_x)} x points, {len(quad_range_x)} y points" )
         
         # Filter out nans
-        good = np.logical_and(~np.isnan(bs_x_list), ~np.isnan(bs_y_list))
-        quad_range_x = np.array(quad_range_x)[good]
-        quad_range_y = np.array(quad_range_y)[good]
-        bs_x_list =  np.array(bs_x_list)[good]
-        bs_y_list =  np.array(bs_y_list)[good]
-        bs_x_list_err =  np.array(bs_x_list_err)[good]
-        bs_y_list_err =  np.array(bs_y_list_err)[good]
+        good_x = ~np.isnan(bs_x_list)
+        good_y = ~np.isnan(bs_y_list)
+        
+        quad_range_x = np.array(quad_range_x)[good_x]
+        quad_range_y = np.array(quad_range_y)[good_y]
+        bs_x_list =  np.array(bs_x_list)[good_x]
+        bs_y_list =  np.array(bs_y_list)[good_y]
+        bs_x_list_err =  np.array(bs_x_list_err)[good_x]
+        bs_y_list_err =  np.array(bs_y_list_err)[good_y]
         
         ef = EmitCalc(
             {"x": quad_range_x, "y": quad_range_y},
