@@ -12,22 +12,16 @@ logger = logging.getLogger(__name__)
 class MachineIO:
     """Class for handling all machine I/O"""
 
-    def __init__(self, config_name="LCLS_OTR2", config_dict=None, meas_type="OTRS"):
+    def __init__(self, config_dict=None, meas_type="OTRS", online=False):
         # specify OTRS or WIRE scans
         self.meas_type = meas_type
-        self.online = False
-
-
-        # Set configs for measurement
-        # if config is not provided, use LCLS OTR2 as default
-        if config_dict is None and config_name is None:
-            logger.info("No configuration specified. Taking default LCLS-OTR2 configs.")
-            self.config_name = "LCLS_OTR2"
-            self.config_dict = self.load_config()
-        else:
-            self.config_name = config_name
-            self.config_dict = config_dict if config_dict else self.load_config()
-
+        self.online = online
+        
+        # Allow str to load
+        if isinstance(config_dict, str):
+            config_dict = load_configs(self.config_name)        
+        self.config_dict = config_dict
+        
         self.meas_pv_info = self.config_dict["meas_pv_info"]
 
         meas_device = self.meas_pv_info["meas_device"]
@@ -37,7 +31,6 @@ class MachineIO:
             self.settle_time = 0
             logger.warning("No settle_time found in in meas_device, setting to zero")
 
-        
         if "bounds" in meas_device:
             self.bounds = meas_device["bounds"]
         else:
@@ -47,11 +40,6 @@ class MachineIO:
         self.meas_read_pv = PV(self.meas_pv_info["meas_device"]["pv"]["read"])
         self.meas_cntrl_pv = PV(self.meas_pv_info["meas_device"]["pv"]["cntrl"])
 
-    def load_config(self):
-        # if path exists, load from path
-        if self.config_name is not None:
-            self.config_dict = load_configs(self.config_name)
-        return self.config_dict
 
     def get_beamsizes_machine(self, quad_val):
         """Fn that pyemittance.observer calls
@@ -70,7 +58,12 @@ class MachineIO:
             logger.info("Running wire scanner")
             return get_beamsizes_wire(self.online, self.config_dict)
         elif not self.online:
-            return np.random.uniform(0.5e-4, 5e-4), np.random.uniform(1e-4, 6e-4), 0, 0
+            # Some dummy
+            return {'xrms': np.random.uniform(0.5e-4, 5e-4),
+                    'yrms': np.random.uniform(1e-4, 6e-4),
+                    'xrms_err': 0,
+                    'yrms_err': 0,
+                   }
         else:
             raise NotImplementedError("No valid measurement type defined.")
     def setquad(self, value):
