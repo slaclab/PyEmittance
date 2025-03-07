@@ -222,7 +222,7 @@ class BeamSim:
         return sigma_from_twiss(emit, beta, alpha)
     
     def screen_sigma(self, dim='x'):
-        kL = kL_from_machine_value(self.quad_value, self.energy)
+        kL = kL_from_machine_value(self.quad_value, self.energy, self.Lquad)
         sigma0 = self.initial_sigma_matrix2(dim)
         if dim == 'x':
             sign = 1

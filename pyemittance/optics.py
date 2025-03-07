@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def kL_from_machine_value(quad_val, energy):
+def kL_from_machine_value(quad_val, energy, quad_len):
     """
     Calculates quadrupole strength from machine value.
 
@@ -33,9 +33,9 @@ def kL_from_machine_value(quad_val, energy):
     gamma = energy / mec2
     beta = np.sqrt(1 - 1 / gamma**2)
 
-    return c_light*quad_val * 0.1 / (beta * energy) # 1/m^2
+    return c_light*quad_val * quad_len / (beta * energy) # 1/m^2
 
-def machine_value_from_kL(kL, energy):
+def machine_value_from_kL(kL, energy, quad_len):
     """
     Calculates machine value from quadrupole strength.
 
@@ -55,7 +55,7 @@ def machine_value_from_kL(kL, energy):
     """
     gamma = energy / mec2
     beta = np.sqrt(1 - 1 / gamma**2)
-    return kL * beta * energy / c_light * 10 # 1/m -> kG
+    return kL * beta * energy / c_light / quad_len # 1/m -> kG
 
 
 

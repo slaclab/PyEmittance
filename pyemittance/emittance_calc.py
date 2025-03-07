@@ -146,7 +146,7 @@ class EmitCalc:
 
             q = np.array(self.quad_vals[dim])
             # quad vals are passed in machine units
-            kL = kL_from_machine_value(q, self.energy)
+            kL = kL_from_machine_value(q, self.energy, self.quad_len)
 
             bs = self.beam_vals[dim]
             bs_err = self.beam_vals_err[dim]
