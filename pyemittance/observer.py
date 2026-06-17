@@ -55,7 +55,6 @@ class Observer:
                 xrms_err.append(bdat['xrms_err'])
                 yrms_err.append(bdat['yrms_err'])
                 extra.append(bdat.get('extra', None))
-                print(extra)
                 # update saved values
                 self.quad_meas.append(val)
                 self.beam_meas["x"].append(xrms[-1])
