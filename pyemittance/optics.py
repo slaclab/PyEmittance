@@ -12,50 +12,54 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def kL_from_machine_value(quad_val, energy, quad_len):
+def kL_from_machine_value(quad_val, energy, quad_len=None):
     """
-    Calculates quadrupole strength from machine value.
+    Calculates integrated quadrupole strength kL from machine value.
 
     Parameters
     ----------
     quad_val: ndarray
-        integrated quad field -[kG] (SLAC convention)
+        Integrated quad gradient [kG] (SLAC convention: 1 kG = 0.1 T)
 
     energy: float
         Beam energy [eV]
 
+    quad_len: float, optional
+        Unused. Kept for API compatibility.
+
     Returns
     -------
     ndarray
-    Quad strength  [1/m^2]
-
+        Integrated quad strength kL [1/m]
     """
     gamma = energy / mec2
     beta = np.sqrt(1 - 1 / gamma**2)
 
-    return c_light*quad_val * quad_len / (beta * energy) # 1/m^2
+    return c_light * quad_val * 0.1 / (beta * energy)
 
-def machine_value_from_kL(kL, energy, quad_len):
+def machine_value_from_kL(kL, energy, quad_len=None):
     """
     Calculates machine value from quadrupole strength.
 
     Parameters
     ----------
     kL: ndarray
-        integrated quad focusing strength [1/m]
+        Integrated quad focusing strength [1/m]
 
     energy: float
         Beam energy [eV]
 
+    quad_len: float, optional
+        Unused. Kept for API compatibility.
+
     Returns
     -------
     ndarray
-    Integrated quad field [kG] (SLAC positron convention)
-
+        Integrated quad gradient [kG] (SLAC convention: 1 kG = 0.1 T)
     """
     gamma = energy / mec2
     beta = np.sqrt(1 - 1 / gamma**2)
-    return kL * beta * energy / c_light / quad_len # 1/m -> kG
+    return kL * beta * energy / c_light * 10
 
 
 

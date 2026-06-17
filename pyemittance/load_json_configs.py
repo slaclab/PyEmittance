@@ -49,5 +49,3 @@ def load_configs(dir_name="LCLS2_OTR0H04"):
 
 if __name__ == "__main__":
     all_data = load_configs()
-    print(all_data.keys())
-    print(all_data.values())
